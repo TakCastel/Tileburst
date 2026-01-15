@@ -226,16 +226,31 @@
 
   @if (isGameOver()) {
     <div class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
-      <div class="bg-white rounded-2xl p-6 sm:p-8 shadow-2xl text-center flex flex-col gap-4 items-center">
+      <div class="bg-white rounded-2xl p-6 sm:p-8 shadow-2xl text-center flex flex-col gap-4 items-center max-w-md w-full">
         <h2 class="text-4xl sm:text-5xl font-extrabold text-red-500">Fin de Partie</h2>
         <p class="text-slate-600 text-base sm:text-lg">Votre score final est :</p>
         <p class="text-5xl sm:text-6xl font-bold text-amber-500">{{ score() }}</p>
-        <button 
-          (click)="restartGame()" 
-          class="mt-4 bg-green-500 text-white font-bold py-3 px-6 sm:px-8 text-lg sm:text-xl transition-all duration-200 btn-3d"
-          style="--shadow-color: #15803d;">
-          Rejouer
-        </button>
+        <div class="flex flex-col sm:flex-row gap-3 w-full mt-2">
+          <button 
+            (click)="shareScore()" 
+            class="flex-1 bg-blue-500 text-white font-bold py-3 px-6 sm:px-8 text-base sm:text-lg transition-all duration-200 btn-3d flex items-center justify-center gap-2"
+            style="--shadow-color: #2563eb;">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5">
+              <circle cx="18" cy="5" r="3"/>
+              <circle cx="6" cy="12" r="3"/>
+              <circle cx="18" cy="19" r="3"/>
+              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+              <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+            </svg>
+            Partager
+          </button>
+          <button 
+            (click)="restartGame()" 
+            class="flex-1 bg-green-500 text-white font-bold py-3 px-6 sm:px-8 text-base sm:text-lg transition-all duration-200 btn-3d"
+            style="--shadow-color: #15803d;">
+            Rejouer
+          </button>
+        </div>
       </div>
     </div>
   }

@@ -127,4 +127,61 @@ export class AppComponent {
     this.isDragging.set(false);
     this.touchStartPosition = null;
   }
+
+  shareScore(): void {
+    const score = this.score();
+    const gameUrl = 'https://tileburst.netlify.app/';
+    const shareText = `J'ai fait ${score.toLocaleString('fr-FR')} points sur Tileburst ! Tu penses que tu peux me battre ? 🎮\n\n${gameUrl}`;
+    
+    // Utiliser l'API Web Share si disponible (mobile)
+    if (navigator.share) {
+      navigator.share({
+        title: `J'ai fait ${score.toLocaleString('fr-FR')} points sur Tileburst !`,
+        text: shareText,
+        url: gameUrl,
+      }).catch((error) => {
+        // L'utilisateur a annulé ou une erreur s'est produite
+        console.log('Partage annulé:', error);
+        this.fallbackShare(shareText);
+      });
+    } else {
+      // Fallback : copier dans le presse-papiers
+      this.fallbackShare(shareText);
+    }
+  }
+
+  private fallbackShare(text: string): void {
+    // Copier dans le presse-papiers
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(() => {
+        // Afficher un message de confirmation (optionnel)
+        alert('Score copié dans le presse-papiers ! Vous pouvez maintenant le partager.');
+      }).catch((err) => {
+        console.error('Erreur lors de la copie:', err);
+        // Fallback ultime : afficher le texte
+        this.showShareDialog(text);
+      });
+    } else {
+      // Fallback ultime : afficher le texte
+      this.showShareDialog(text);
+    }
+  }
+
+  private showShareDialog(text: string): void {
+    // Créer une zone de texte temporaire pour copier
+    const textarea = document.createElement('textarea');
+    textarea.value = text;
+    textarea.style.position = 'fixed';
+    textarea.style.opacity = '0';
+    document.body.appendChild(textarea);
+    textarea.select();
+    try {
+      document.execCommand('copy');
+      alert('Score copié dans le presse-papiers ! Vous pouvez maintenant le partager.');
+    } catch (err) {
+      // Si tout échoue, afficher le texte
+      prompt('Copiez ce texte pour partager votre score :', text);
+    }
+    document.body.removeChild(textarea);
+  }
 }
