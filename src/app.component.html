@@ -226,7 +226,7 @@
 
   @if (isGameOver()) {
     <div class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
-      <div class="bg-white rounded-2xl p-6 sm:p-8 shadow-2xl text-center flex flex-col gap-4 items-center max-w-md w-full">
+      <div #gameOverModal class="bg-white rounded-2xl p-6 sm:p-8 shadow-2xl text-center flex flex-col gap-4 items-center max-w-md w-full">
         <h2 class="text-4xl sm:text-5xl font-extrabold text-red-500">Fin de Partie</h2>
         <p class="text-slate-600 text-base sm:text-lg">Votre score final est :</p>
         <p class="text-5xl sm:text-6xl font-bold text-amber-500">{{ score() }}</p>

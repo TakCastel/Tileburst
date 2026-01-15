@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, inject, signal } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, signal, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { GameService } from './services/game.service';
 import { GridComponent } from './components/grid/grid.component';
@@ -33,6 +33,7 @@ export class AppComponent {
   isRestartConfirmVisible = signal(false);
   private touchStartPosition: { x: number; y: number } | null = null;
   private isTouchDragging = signal(false);
+  @ViewChild('gameOverModal', { static: false }) gameOverModal!: ElementRef<HTMLElement>;
 
   restartGame(): void {
     this.gameService.startGame();
@@ -128,26 +129,152 @@ export class AppComponent {
     this.touchStartPosition = null;
   }
 
-  shareScore(): void {
+  async shareScore(): Promise<void> {
     const score = this.score();
     const gameUrl = 'https://tileburst.netlify.app/';
-    const shareText = `J'ai fait ${score.toLocaleString('fr-FR')} points sur Tileburst ! Tu penses que tu peux me battre ? 🎮\n\n${gameUrl}`;
+    const shareText = `J'ai fait ${score.toLocaleString('fr-FR')} points sur Tileburst ! Tu penses que tu peux me battre ? 🎮`;
+    const shareTextWithUrl = `${shareText}\n\n${gameUrl}`;
     
-    // Utiliser l'API Web Share si disponible (mobile)
-    if (navigator.share) {
-      navigator.share({
-        title: `J'ai fait ${score.toLocaleString('fr-FR')} points sur Tileburst !`,
-        text: shareText,
-        url: gameUrl,
-      }).catch((error) => {
-        // L'utilisateur a annulé ou une erreur s'est produite
+    try {
+      // Générer un snapshot du modal
+      const imageFile = await this.captureGameOverModal();
+      
+      if (!imageFile) {
+        // Si la capture échoue, fallback simple
+        this.fallbackShare(shareTextWithUrl);
+        return;
+      }
+      
+      // Utiliser l'API Web Share si disponible (mobile)
+      if (navigator.share) {
+        const shareData: ShareData = {
+          title: `J'ai fait ${score.toLocaleString('fr-FR')} points sur Tileburst !`,
+          text: shareText,
+          url: gameUrl,
+        };
+        
+        // Ajouter l'image si disponible et supporté (mobile natif)
+        if ('files' in navigator.share) {
+          try {
+            await (navigator.share as any)({
+              ...shareData,
+              files: [imageFile],
+            });
+            return; // Succès avec image
+          } catch (fileError) {
+            // Si le partage avec fichier échoue, essayer sans fichier
+            console.log('Partage avec fichier échoué, essai sans fichier:', fileError);
+            try {
+              await navigator.share(shareData);
+              return;
+            } catch (shareError) {
+              // Si le partage échoue complètement, fallback
+              await this.shareWithImage(imageFile, shareTextWithUrl);
+            }
+          }
+        } else {
+          // Partage sans fichier (certains navigateurs ne supportent pas files)
+          try {
+            await navigator.share(shareData);
+          } catch (shareError) {
+            await this.shareWithImage(imageFile, shareTextWithUrl);
+          }
+        }
+      } else {
+        // Fallback desktop : copier dans le presse-papiers avec l'image
+        await this.shareWithImage(imageFile, shareTextWithUrl);
+      }
+    } catch (error) {
+      // L'utilisateur a annulé ou une erreur s'est produite
+      if ((error as Error).name !== 'AbortError') {
         console.log('Partage annulé:', error);
-        this.fallbackShare(shareText);
-      });
-    } else {
-      // Fallback : copier dans le presse-papiers
-      this.fallbackShare(shareText);
+        this.fallbackShare(shareTextWithUrl);
+      }
     }
+  }
+
+  private async captureGameOverModal(): Promise<File | null> {
+    try {
+      // Import dynamique de html2canvas
+      const html2canvas = (await import('html2canvas')).default;
+      
+      if (!this.gameOverModal?.nativeElement) {
+        console.warn('Modal de game over non trouvé');
+        return null;
+      }
+
+      const modalElement = this.gameOverModal.nativeElement;
+      
+      // Attendre un peu pour s'assurer que le modal est bien rendu
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Capturer uniquement le contenu du modal (pas le fond noir)
+      const canvas = await html2canvas(modalElement, {
+        backgroundColor: '#ffffff',
+        scale: 3, // Qualité encore meilleure pour le partage
+        logging: false,
+        useCORS: true,
+        allowTaint: false,
+        removeContainer: false,
+        width: modalElement.offsetWidth,
+        height: modalElement.offsetHeight,
+      });
+
+      // Convertir le canvas en blob puis en File
+      return new Promise((resolve) => {
+        canvas.toBlob((blob) => {
+          if (blob) {
+            const score = this.score().toLocaleString('fr-FR').replace(/\s/g, '');
+            const file = new File([blob], `tileburst-score-${score}.png`, { type: 'image/png' });
+            resolve(file);
+          } else {
+            resolve(null);
+          }
+        }, 'image/png', 1.0); // Qualité maximale
+      });
+    } catch (error) {
+      console.error('Erreur lors de la capture du modal:', error);
+      return null;
+    }
+  }
+
+  private async shareWithImage(imageFile: File, text: string): Promise<void> {
+    try {
+      // Essayer de partager avec l'image via l'API Clipboard
+      if (navigator.clipboard && navigator.clipboard.write) {
+        try {
+          const clipboardItem = new ClipboardItem({ 'image/png': imageFile });
+          await navigator.clipboard.write([clipboardItem]);
+          // Copier aussi le texte
+          await navigator.clipboard.writeText(text);
+          alert('Image et texte copiés dans le presse-papiers ! Vous pouvez maintenant les partager (collez l\'image dans WhatsApp, puis le texte).');
+        } catch (clipboardError) {
+          // Si l'image ne peut pas être copiée, au moins copier le texte et télécharger l'image
+          await navigator.clipboard.writeText(text);
+          this.downloadImage(imageFile);
+          alert('Texte copié et image téléchargée ! Partagez l\'image manuellement avec le texte.');
+        }
+      } else {
+        // Fallback : télécharger l'image et copier le texte
+        this.downloadImage(imageFile);
+        this.fallbackShare(text);
+      }
+    } catch (error) {
+      console.error('Erreur lors du partage avec image:', error);
+      this.downloadImage(imageFile);
+      this.fallbackShare(text);
+    }
+  }
+
+  private downloadImage(file: File): void {
+    const url = URL.createObjectURL(file);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'tileburst-score.png';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   }
 
   private fallbackShare(text: string): void {

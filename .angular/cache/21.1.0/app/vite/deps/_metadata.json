@@ -1,31 +1,37 @@
 {
-  "hash": "38b7d744",
-  "configHash": "27cd135d",
-  "lockfileHash": "7aa17c57",
-  "browserHash": "b1100c91",
+  "hash": "a45a45b1",
+  "configHash": "ec0a78c5",
+  "lockfileHash": "26ed173b",
+  "browserHash": "f0daa8f1",
   "optimized": {
     "@angular/common": {
       "src": "../../../../../../node_modules/@angular/common/fesm2022/common.mjs",
       "file": "@angular_common.js",
-      "fileHash": "e1c84454",
+      "fileHash": "8825e93c",
       "needsInterop": false
     },
     "@angular/compiler": {
       "src": "../../../../../../node_modules/@angular/compiler/fesm2022/compiler.mjs",
       "file": "@angular_compiler.js",
-      "fileHash": "3157348b",
+      "fileHash": "1f491c29",
       "needsInterop": false
     },
     "@angular/core": {
       "src": "../../../../../../node_modules/@angular/core/fesm2022/core.mjs",
       "file": "@angular_core.js",
-      "fileHash": "85de2e17",
+      "fileHash": "a06ea9f6",
       "needsInterop": false
     },
     "@angular/platform-browser": {
       "src": "../../../../../../node_modules/@angular/platform-browser/fesm2022/platform-browser.mjs",
       "file": "@angular_platform-browser.js",
-      "fileHash": "c334a3e3",
+      "fileHash": "ae244e78",
+      "needsInterop": false
+    },
+    "html2canvas": {
+      "src": "../../../../../../node_modules/html2canvas/dist/html2canvas.esm.js",
+      "file": "html2canvas.js",
+      "fileHash": "90c3283f",
       "needsInterop": false
     }
   },
