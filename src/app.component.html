@@ -27,6 +27,21 @@
         <div class="flex-grow flex items-center justify-center min-h-[120px]">
             @if (nextTile(); as tile) { <app-tile-preview [tile]="tile"></app-tile-preview> }
         </div>
+        <button 
+          (click)="swapTiles()" 
+          class="w-full bg-purple-400 text-white font-bold py-2 px-4 transition-all duration-200 btn-3d text-sm"
+          style="--shadow-color: #9333ea;"
+          aria-label="Échanger les tuiles">
+          <div class="flex items-center justify-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4">
+              <path d="M8 3 4 7l4 4"/>
+              <path d="M4 7h16"/>
+              <path d="m16 21 4-4-4-4"/>
+              <path d="M20 17H4"/>
+            </svg>
+            Échanger
+          </div>
+        </button>
       </div>
     </aside>
 
@@ -130,6 +145,21 @@
       </button>
     </header>
 
+    <!-- Conseil Stratégique (Mobile) -->
+    <div class="w-full bg-cyan-100/60 rounded-2xl p-3 flex items-start gap-3 mt-1">
+      <div class="flex-shrink-0 bg-cyan-200/70 p-2 rounded-full">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-cyan-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+        </svg>
+      </div>
+      <div class="text-cyan-900 flex-1">
+        <h3 class="font-bold text-xs">Conseil Stratégique</h3>
+        <p class="text-xs leading-snug mt-0.5">
+          Liez <strong>{{ minValidatedGroupSize() }}</strong> blocs de même couleur pour les "valider". Ils vous sauveront quand la grille rétrécira !
+        </p>
+      </div>
+    </div>
+
     <!-- Grid (Mobile) -->
     <div class="w-full flex-grow flex items-center justify-center relative my-2">
       <div class="w-full max-w-full">
@@ -139,16 +169,7 @@
 
     <!-- Footer Controls (Mobile) -->
     <footer class="w-full flex flex-col items-center gap-2 z-10 relative">
-      @if (isHintTooltipVisible()) {
-       <div (click)="toggleHintTooltip()" class="absolute bottom-full mb-2 w-[95%] max-w-md mx-auto bg-slate-800 text-white p-3 rounded-lg shadow-xl text-xs z-20 transition-all duration-200 animate-fade-in-up">
-         <h3 class="font-bold text-cyan-300 mb-1">Conseil Stratégique</h3>
-         <p class="leading-snug">
-            Liez <strong>{{ minValidatedGroupSize() }}</strong> blocs de même couleur pour les "valider". Ils vous sauveront quand la grille rétrécira !
-         </p>
-         <button (click)="toggleHintTooltip(); $event.stopPropagation()" class="absolute -top-1 -right-1 w-5 h-5 bg-slate-600 rounded-full flex items-center justify-center text-white text-xs">&times;</button>
-       </div>
-      }
-      <div class="w-full bg-slate-200/80 backdrop-blur-sm p-2 rounded-2xl shadow-lg grid grid-cols-[1fr_auto_1.75fr_auto] items-center gap-2 h-[85px]">
+      <div class="w-full bg-slate-200/80 backdrop-blur-sm p-2 rounded-2xl shadow-lg grid grid-cols-[1fr_auto_auto_1.75fr] items-center gap-2 h-[85px]">
         
         <div class="flex flex-col items-center justify-center h-full bg-white/50 rounded-lg p-1">
           <span class="text-[10px] text-slate-600 uppercase font-semibold">Prochaine</span>
@@ -156,6 +177,19 @@
             @if (nextTile(); as tile) { <app-tile-preview [tile]="tile"></app-tile-preview> }
           </div>
         </div>
+
+        <button 
+            (click)="swapTiles()" 
+            class="h-full aspect-square bg-purple-400 text-white transition-all duration-200 btn-3d flex items-center justify-center"
+            style="--shadow-color: #9333ea;"
+            aria-label="Échanger les tuiles">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-7 h-7">
+              <path d="M8 3 4 7l4 4"/>
+              <path d="M4 7h16"/>
+              <path d="m16 21 4-4-4-4"/>
+              <path d="M20 17H4"/>
+            </svg>
+        </button>
 
         <button 
             (click)="rotateTile()" 
@@ -180,18 +214,6 @@
           (touchcancel)="onTileTouchCancel()">
           @if (currentTile(); as tile) { <app-tile-preview [tile]="tile"></app-tile-preview> } @else { <div class="text-slate-500 text-sm">Chargement...</div> }
         </div>
-
-        <button 
-          (click)="toggleHintTooltip()" 
-          class="h-full aspect-square bg-amber-400 text-white transition-all duration-200 btn-3d flex items-center justify-center"
-          style="--shadow-color: #d97706;"
-          aria-label="Afficher le conseil">
-           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-7 h-7">
-            <path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/>
-            <path d="M9 18h6"/>
-            <path d="M10 22h4"/>
-          </svg>
-        </button>
 
       </div>
     </footer>

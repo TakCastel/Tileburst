@@ -56,6 +56,10 @@ export class AppComponent {
     this.gameService.rotateCurrentTile();
   }
 
+  swapTiles(): void {
+    this.gameService.swapTiles();
+  }
+
   showTutorial(): void {
     // Forcer l'affichage du tutoriel même si déjà vu
     this.tutorialService.startTutorial(true);

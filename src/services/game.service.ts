@@ -218,6 +218,17 @@ export class GameService {
     this._gameState.update(state => ({ ...state, currentTile: rotatedTile }));
   }
 
+  public swapTiles(): void {
+    const state = this.state();
+    if (!state.currentTile || !state.nextTile) return;
+    
+    this._gameState.update(s => ({
+      ...s,
+      currentTile: s.nextTile,
+      nextTile: s.currentTile
+    }));
+  }
+
   public canPlaceTile(tile: Tile, startRow: number, startCol: number): boolean {
     const grid = this.grid();
     const gridSize = this.gridSize();
