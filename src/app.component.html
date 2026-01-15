@@ -78,29 +78,30 @@
           }
         </div>
       </div>
-      <!-- Bouton Rotation -->
-      <button 
-        (click)="rotateTile()" 
-        class="w-full bg-cyan-400 text-white font-bold py-3 px-4 transition-all duration-200 btn-3d"
-        style="--shadow-color: #0891b2;">
-        Rotation (R)
-      </button>
-      <!-- Bouton Échanger -->
-      <button 
-        (click)="swapTiles()" 
-        class="w-full bg-purple-400 text-white font-bold py-3 px-4 transition-all duration-200 btn-3d"
-        style="--shadow-color: #9333ea;"
-        aria-label="Échanger les tuiles">
-        <div class="flex items-center justify-center gap-2">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4">
-            <path d="M8 3 4 7l4 4"/>
-            <path d="M4 7h16"/>
-            <path d="m16 21 4-4-4-4"/>
-            <path d="M20 17H4"/>
-          </svg>
-          Échanger
-        </div>
-      </button>
+      <!-- Boutons d'action -->
+      <div class="flex flex-col gap-3">
+        <button 
+          (click)="rotateTile()" 
+          class="w-full bg-cyan-400 text-white font-bold py-3 px-4 transition-all duration-200 btn-3d"
+          style="--shadow-color: #0891b2;">
+          Rotation (R)
+        </button>
+        <button 
+          (click)="swapTiles()" 
+          class="w-full bg-purple-400 text-white font-bold py-3 px-4 transition-all duration-200 btn-3d"
+          style="--shadow-color: #9333ea;"
+          aria-label="Échanger les tuiles">
+          <div class="flex items-center justify-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4">
+              <path d="M8 3 4 7l4 4"/>
+              <path d="M4 7h16"/>
+              <path d="m16 21 4-4-4-4"/>
+              <path d="M20 17H4"/>
+            </svg>
+            Échanger
+          </div>
+        </button>
+      </div>
       <!-- Prochaine Tuile -->
       <div class="bg-white rounded-2xl p-4 shadow-lg flex flex-col items-center gap-2">
         <span class="text-[10px] text-slate-500 uppercase font-semibold tracking-wider">Prochaine Tuile</span>
