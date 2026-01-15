@@ -20,7 +20,8 @@
             "tsConfig": "tsconfig.json",
             "styles": [
               "src/styles.css"
-            ]
+            ],
+            "baseHref": "/"
           },
           "configurations": {
             "production": {

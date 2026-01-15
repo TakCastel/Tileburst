@@ -76,7 +76,15 @@ export class GameService {
   public readonly changeDirectionIndex = computed(() => this.state().changeDirectionIndex);
   public readonly isShrinkImminent = computed(() => this.state().isShrinkImminent);
   public readonly minValidatedGroupSize = computed(() => {
-    return this.gridSize() + 2;
+    const size = this.gridSize();
+    // Progression: 6, 8, 10, 12 selon la taille de la grille
+    if (size === 6) return 6;
+    if (size === 7) return 8;
+    if (size === 8) return 10;
+    if (size === 9) return 12;
+    if (size === 10) return 12;
+    // Pour les tailles < 6, on garde une logique de base
+    return size + 2;
   });
 
   private tileIdCounter = 0;
