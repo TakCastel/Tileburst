@@ -411,7 +411,15 @@ export class GameService {
 
   private _updateValidatedGroups(grid: Cell[][]): Cell[][] {
     const gridSize = grid.length;
-    const minSize = this.minValidatedGroupSize();
+    // Calculer minSize basé sur la taille de la grille passée plutôt que sur le state
+    let minSize: number;
+    if (gridSize === 6) minSize = 6;
+    else if (gridSize === 7) minSize = 8;
+    else if (gridSize === 8) minSize = 10;
+    else if (gridSize === 9) minSize = 12;
+    else if (gridSize === 10) minSize = 12;
+    else minSize = gridSize + 2;
+    
     const visited = new Set<string>();
     const newGrid = grid.map(row => row.map(cell => ({...cell, validated: false})));
 
