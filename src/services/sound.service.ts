@@ -5,7 +5,7 @@ import { Injectable, signal } from '@angular/core';
 })
 export class SoundService {
   private audioContext: AudioContext | null = null;
-  private masterVolume = 0.15; // Volume général discret (15%)
+  private masterVolume = 1.0; // Volume général à 100% pour être bien audible
   private isEnabled = true;
   
   // État du son (activé/désactivé) - persiste dans localStorage
