@@ -1,6 +1,7 @@
 import { Injectable, signal, computed, WritableSignal, inject } from '@angular/core';
 import { GameState, Cell, Tile } from '../models/game.model';
 import { TutorialService } from './tutorial.service';
+import { SoundService } from './sound.service';
 
 const COLORS = ['blue', 'red', 'green', 'yellow', 'purple'];
 const TILE_SHAPES = [
@@ -60,6 +61,7 @@ const PRE_SHRINK_DELAY = 1000;
 })
 export class GameService {
   private tutorialService = inject(TutorialService);
+  private soundService = inject(SoundService);
   private _gameState: WritableSignal<GameState> = signal(this.getInitialState());
   
   // Public signals from state
@@ -174,6 +176,7 @@ export class GameService {
       
       if (current && !this.canPlaceTileInAnyRotation(current)) {
           this._gameState.update(s => ({...s, isShrinkImminent: true}));
+          this.soundService.playShrinkWarningSound();
           this.shrinkTimeout = setTimeout(() => {
               if (this.gridSize() > MIN_GRID_SIZE) {
                   this.changeGridSize(-1);
@@ -216,6 +219,7 @@ export class GameService {
     };
     
     this._gameState.update(state => ({ ...state, currentTile: rotatedTile }));
+    this.soundService.playRotateSound();
   }
 
   public swapTiles(): void {
@@ -227,6 +231,7 @@ export class GameService {
       currentTile: s.nextTile,
       nextTile: s.currentTile
     }));
+    this.soundService.playSwapSound();
   }
 
   public canPlaceTile(tile: Tile, startRow: number, startCol: number): boolean {
@@ -363,24 +368,59 @@ export class GameService {
           score: state.score + clearInfo.points
         }));
         
+        // Son de placement suivi du son de suppression
+        this.soundService.playPlaceSound();
+        setTimeout(() => {
+          this.soundService.playClearSound(clearInfo.linesCleared);
+        }, 50);
+        
         setTimeout(() => {
           const finalGrid = gridWithClearing.map((row) =>
             row.map((cell) => cell.clearing ? { color: null, tileId: null } : { ...cell })
           );
-          const finalGridWithValidated = this._updateValidatedGroups(finalGrid);
+          const oldValidatedCount = this.grid().reduce((count, row) => 
+            count + row.filter(cell => cell.validated).length, 0
+          );
+          const { grid: finalGridWithValidated, validatedGroupCount } = this._updateValidatedGroups(finalGrid);
+          const newValidatedCount = finalGridWithValidated.reduce((count, row) => 
+            count + row.filter(cell => cell.validated).length, 0
+          );
+          
+          // Détecter si de nouveaux groupes ont été validés
+          if (newValidatedCount > oldValidatedCount && validatedGroupCount > 0) {
+            this.soundService.playVictorySound(validatedGroupCount);
+          }
+          
           this._gameState.update(state => ({ ...state, grid: finalGridWithValidated, lastPlacedTileId: null }));
           this.changeGridSize(1);
           this.advanceToNextTile();
         }, ANIMATION_DURATION);
 
       } else {
-        const gridWithValidated = this._updateValidatedGroups(gridWithTile);
+        const oldValidatedCount = this.grid().reduce((count, row) => 
+          count + row.filter(cell => cell.validated).length, 0
+        );
+        const { grid: gridWithValidated, validatedGroupCount } = this._updateValidatedGroups(gridWithTile);
+        const newValidatedCount = gridWithValidated.reduce((count, row) => 
+          count + row.filter(cell => cell.validated).length, 0
+        );
+        
         this._gameState.update(state => ({
           ...state,
           grid: gridWithValidated,
           currentTile: null,
           lastPlacedTileId: tile.id,
         }));
+        
+        // Son de placement simple
+        this.soundService.playPlaceSound();
+        
+        // Détecter si de nouveaux groupes ont été validés
+        if (newValidatedCount > oldValidatedCount && validatedGroupCount > 0) {
+          setTimeout(() => {
+            this.soundService.playVictorySound(validatedGroupCount);
+          }, 100);
+        }
         
         setTimeout(() => {
           this._gameState.update(s => ({...s, lastPlacedTileId: null}));
@@ -409,7 +449,7 @@ export class GameService {
     return clearInfo.cellsToClear;
   }
 
-  private _updateValidatedGroups(grid: Cell[][]): Cell[][] {
+  private _updateValidatedGroups(grid: Cell[][]): { grid: Cell[][]; validatedGroupCount: number } {
     const gridSize = grid.length;
     // Calculer minSize basé sur la taille de la grille passée plutôt que sur le state
     let minSize: number;
@@ -422,6 +462,7 @@ export class GameService {
     
     const visited = new Set<string>();
     const newGrid = grid.map(row => row.map(cell => ({...cell, validated: false})));
+    let validatedGroupCount = 0;
 
     for (let r = 0; r < gridSize; r++) {
         for (let c = 0; c < gridSize; c++) {
@@ -453,6 +494,7 @@ export class GameService {
             }
             
             if (currentGroup.size >= minSize) {
+                validatedGroupCount++;
                 currentGroup.forEach(cellKey => {
                     const [row, col] = cellKey.split(',').map(Number);
                     newGrid[row][col].validated = true;
@@ -461,7 +503,7 @@ export class GameService {
         }
     }
 
-    return newGrid;
+    return { grid: newGrid, validatedGroupCount };
   }
 
   private changeGridSize(delta: 1 | -1): void {
@@ -488,12 +530,14 @@ export class GameService {
             }
         }
 
+        const { grid: validatedGrid } = this._updateValidatedGroups(newGrid);
         this._gameState.update(state => ({
             ...state,
-            grid: this._updateValidatedGroups(newGrid),
+            grid: validatedGrid,
             gridSize: newSize,
             changeDirectionIndex: (state.changeDirectionIndex + 1) % 4
         }));
+        this.soundService.playExpandSound();
     } else { // Shrinking
         this._gameState.update(state => ({ ...state, isShrinking: true }));
         const grid = this.grid();
@@ -513,6 +557,9 @@ export class GameService {
             
             const points = validatedCellsToClear.size * 15 * this.scoreMultiplier();
             this._gameState.update(state => ({ ...state, grid: gridWithClearing, score: state.score + points }));
+
+            // Son de suppression des cellules validées
+            this.soundService.playClearSound(Math.ceil(validatedCellsToClear.size / 3));
 
             setTimeout(() => {
                 const gridAfterClear = grid.map((row, r) =>
@@ -573,13 +620,17 @@ export class GameService {
             }
         }
         
+        const { grid: validatedGrid } = this._updateValidatedGroups(newGrid);
         this._gameState.update(state => ({ 
           ...state, 
-          grid: this._updateValidatedGroups(newGrid), 
+          grid: validatedGrid, 
           gridSize: newSize, 
           isShrinking: false,
           changeDirectionIndex: (state.changeDirectionIndex + 1) % 4
         }));
+        
+        // Son de réduction de grille
+        this.soundService.playShrinkSound();
 
         if (this.currentTile() && !this.canPlaceTileInAnyRotation(this.currentTile()!)) {
             this._gameState.update(s => ({...s, isGameOver: true }));

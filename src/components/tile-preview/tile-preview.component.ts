@@ -41,4 +41,16 @@ export class TilePreviewComponent {
       'grid-template-columns': `repeat(${tile.width}, minmax(0, 1fr))`
     };
   });
+
+  cellSize = computed(() => {
+    const tile = this.tile();
+    // Taille maximale du conteneur (peut être ajustée selon les besoins)
+    const maxContainerSize = 100; // pixels
+    const gap = 2; // gap-0.5 = 2px
+    const maxDimension = Math.max(tile.width, tile.height);
+    // Calculer la taille de cellule pour que la tuile s'adapte au conteneur
+    const cellSize = Math.floor((maxContainerSize - (maxDimension - 1) * gap) / maxDimension);
+    // Limiter entre une taille minimale et maximale raisonnable
+    return Math.max(10, Math.min(cellSize, 20));
+  });
 }
