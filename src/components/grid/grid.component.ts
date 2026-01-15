@@ -165,14 +165,17 @@ export class GridComponent {
     const rect = gridElement.getBoundingClientRect();
     
     let x: number, y: number;
-    if (event instanceof TouchEvent) {
+    // Vérifier si c'est un TouchEvent en utilisant la propriété 'touches'
+    if ('touches' in event || 'changedTouches' in event) {
+      const touchEvent = event as TouchEvent;
       // Utiliser changedTouches pour touchend, touches pour touchmove/touchstart
-      const touch = event.touches.length > 0 ? event.touches[0] : 
-                   (event.changedTouches.length > 0 ? event.changedTouches[0] : null);
+      const touch = (touchEvent.touches && touchEvent.touches.length > 0) ? touchEvent.touches[0] : 
+                   ((touchEvent.changedTouches && touchEvent.changedTouches.length > 0) ? touchEvent.changedTouches[0] : null);
       if (!touch) return;
       x = touch.clientX - rect.left;
       y = touch.clientY - rect.top;
-    } else if (event instanceof MouseEvent || event instanceof DragEvent) {
+    } else if ('clientX' in event && 'clientY' in event) {
+      // MouseEvent ou DragEvent
       x = event.clientX - rect.left;
       y = event.clientY - rect.top;
     } else {
