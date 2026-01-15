@@ -1,0 +1,556 @@
+import { Injectable, signal, computed, WritableSignal, inject } from '@angular/core';
+import { GameState, Cell, Tile } from '../models/game.model';
+import { TutorialService } from './tutorial.service';
+
+const COLORS = ['blue', 'red', 'green', 'yellow', 'purple'];
+const TILE_SHAPES = [
+  // 1x1
+  { shape: [[1]] },
+  // 1x2
+  { shape: [[1, 1]] },
+  // 1x3
+  { shape: [[1, 1, 1]] },
+  // L-3
+  { shape: [[1, 0], [1, 1]] },
+  // O - 4
+  { shape: [[1, 1], [1, 1]] },
+  // I - 4
+  { shape: [[1, 1, 1, 1]] },
+  // T - 4
+  { shape: [[0, 1, 0], [1, 1, 1]] },
+  // L - 4
+  { shape: [[1, 0, 0], [1, 1, 1]] },
+  // S - 4
+  { shape: [[0, 1, 1], [1, 1, 0]] },
+];
+
+const PENTOMINO_SHAPES = [
+  // I-5
+  { shape: [[1, 1, 1, 1, 1]] },
+  // L-5
+  { shape: [[1, 0], [1, 0], [1, 0], [1, 1]] },
+  // T-5
+  { shape: [[1, 1, 1], [0, 1, 0]] },
+  // P-5
+  { shape: [[1, 1], [1, 1], [1, 0]] },
+  // X-5 (plus)
+  { shape: [[0, 1, 0], [1, 1, 1], [0, 1, 0]] },
+];
+
+const HEXOMINO_SHAPES = [
+  // I-6
+  { shape: [[1, 1, 1, 1, 1, 1]] },
+  // 2x3
+  { shape: [[1, 1, 1], [1, 1, 1]] },
+  // C-6
+  { shape: [[1, 1], [1, 0], [1, 1]] },
+  // Stairs
+  { shape: [[1, 0, 0], [1, 1, 0], [0, 1, 1]] },
+];
+
+const MIN_GRID_SIZE = 4;
+const MAX_GRID_SIZE = 10;
+const STARTING_GRID_SIZE = 6;
+const ANIMATION_DURATION = 300;
+const SHRINK_WARNING_DURATION = 1500;
+const PRE_SHRINK_DELAY = 1000;
+
+@Injectable({
+  providedIn: 'root',
+})
+export class GameService {
+  private tutorialService = inject(TutorialService);
+  private _gameState: WritableSignal<GameState> = signal(this.getInitialState());
+  
+  // Public signals from state
+  public readonly state = this._gameState.asReadonly();
+  public readonly grid = computed(() => this.state().grid);
+  public readonly score = computed(() => this.state().score);
+  public readonly currentTile = computed(() => this.state().currentTile);
+  public readonly nextTile = computed(() => this.state().nextTile);
+  public readonly isGameOver = computed(() => this.state().isGameOver);
+  public readonly gridSize = computed(() => this.state().gridSize);
+  public readonly scoreMultiplier = computed(() => this.state().gridSize - (MIN_GRID_SIZE - 1));
+  public readonly lastPlacedTileId = computed(() => this.state().lastPlacedTileId);
+  public readonly isShrinking = computed(() => this.state().isShrinking);
+  public readonly changeDirectionIndex = computed(() => this.state().changeDirectionIndex);
+  public readonly isShrinkImminent = computed(() => this.state().isShrinkImminent);
+  public readonly minValidatedGroupSize = computed(() => {
+    return this.gridSize() + 2;
+  });
+
+  private tileIdCounter = 0;
+  private shrinkTimeout: any = null;
+
+  constructor() {
+    this.startGame();
+  }
+  
+  private getInitialState(gridSize = STARTING_GRID_SIZE, score = 0): GameState {
+    return {
+      grid: this.createEmptyGrid(gridSize),
+      gridSize,
+      score,
+      currentTile: null,
+      nextTile: null,
+      isGameOver: false,
+      lastPlacedTileId: null,
+      isShrinking: false,
+      changeDirectionIndex: 0,
+      isShrinkImminent: false,
+    };
+  }
+
+  public startGame(): void {
+    clearTimeout(this.shrinkTimeout);
+    const initialState = this.getInitialState();
+    initialState.currentTile = this._generateRandomTile();
+    initialState.nextTile = this._generateRandomTile();
+    this._gameState.set(initialState);
+
+    if (initialState.currentTile && !this.canPlaceTileInAnyRotation(initialState.currentTile)) {
+        this._gameState.update(state => ({...state, isGameOver: true}));
+    }
+    this.tutorialService.startTutorial();
+  }
+
+  private createEmptyGrid(size: number): Cell[][] {
+    return Array.from({ length: size }, () =>
+      Array.from({ length: size }, () => ({ color: null, tileId: null }))
+    );
+  }
+  
+  private _generateRandomTile(): Tile {
+    let availableShapes = [...TILE_SHAPES];
+    const size = this.gridSize();
+
+    if (size >= 8) {
+      availableShapes.push(...PENTOMINO_SHAPES);
+    }
+    if (size >= 9) {
+      availableShapes.push(...HEXOMINO_SHAPES);
+    }
+
+    const randomShapeDef = availableShapes[Math.floor(Math.random() * availableShapes.length)];
+    const randomColor = COLORS[Math.floor(Math.random() * COLORS.length)];
+    const shape = randomShapeDef.shape;
+    const height = shape.length;
+    const width = shape[0].length;
+
+    return {
+      id: ++this.tileIdCounter,
+      shape,
+      color: randomColor,
+      height,
+      width,
+      barycenter: {
+        r: Math.floor(height / 2),
+        c: Math.floor(width / 2),
+      },
+    };
+  }
+
+  private advanceToNextTile(): void {
+      clearTimeout(this.shrinkTimeout);
+      const state = this.state();
+      const current = state.nextTile;
+      const next = this._generateRandomTile();
+
+      this._gameState.update(s => ({...s, currentTile: current, nextTile: next }));
+      
+      if (current && !this.canPlaceTileInAnyRotation(current)) {
+          this._gameState.update(s => ({...s, isShrinkImminent: true}));
+          this.shrinkTimeout = setTimeout(() => {
+              if (this.gridSize() > MIN_GRID_SIZE) {
+                  this.changeGridSize(-1);
+              } else {
+                  this._gameState.update(s => ({...s, isGameOver: true }));
+              }
+              this._gameState.update(s => ({...s, isShrinkImminent: false}));
+          }, PRE_SHRINK_DELAY);
+      }
+  }
+
+  public rotateCurrentTile(): void {
+    const tile = this.currentTile();
+    if (!tile) return;
+
+    const shape = tile.shape;
+    const height = tile.height;
+    const width = tile.width;
+    
+    const newShape: number[][] = Array.from({ length: width }, () => Array(height).fill(0));
+
+    for (let r = 0; r < height; r++) {
+        for (let c = 0; c < width; c++) {
+            newShape[c][height - 1 - r] = shape[r][c];
+        }
+    }
+
+    const newHeight = width;
+    const newWidth = height;
+
+    const rotatedTile: Tile = {
+        ...tile,
+        shape: newShape,
+        height: newHeight,
+        width: newWidth,
+        barycenter: {
+          r: Math.floor(newHeight / 2),
+          c: Math.floor(newWidth / 2),
+        },
+    };
+    
+    this._gameState.update(state => ({ ...state, currentTile: rotatedTile }));
+  }
+
+  public canPlaceTile(tile: Tile, startRow: number, startCol: number): boolean {
+    const grid = this.grid();
+    const gridSize = this.gridSize();
+    for (let r = 0; r < tile.height; r++) {
+      for (let c = 0; c < tile.width; c++) {
+        if (tile.shape[r][c] === 1) {
+          const gridRow = startRow + r;
+          const gridCol = startCol + c;
+          if (
+            gridRow >= gridSize ||
+            gridCol >= gridSize ||
+            gridRow < 0 ||
+            gridCol < 0 ||
+            grid[gridRow][gridCol].color !== null
+          ) {
+            return false;
+          }
+        }
+      }
+    }
+    return true;
+  }
+
+  private canPlaceTileAnywhere(tile: Tile): boolean {
+    const gridSize = this.gridSize();
+    const startRowOffset = -tile.height + 1;
+    const startColOffset = -tile.width + 1;
+    for (let r = startRowOffset; r < gridSize; r++) {
+        for (let c = startColOffset; c < gridSize; c++) {
+            if (this.canPlaceTile(tile, r, c)) {
+                return true;
+            }
+        }
+    }
+    return false;
+  }
+
+  public canPlaceTileInAnyRotation(tile: Tile): boolean {
+    let tempTile: Tile = JSON.parse(JSON.stringify(tile)); 
+
+    for (let i = 0; i < 4; i++) {
+        if (this.canPlaceTileAnywhere(tempTile)) {
+            return true;
+        }
+        const shape = tempTile.shape;
+        const height = tempTile.height;
+        const width = tempTile.width;
+        
+        const newShape: number[][] = Array.from({ length: width }, () => Array(height).fill(0));
+        for (let r = 0; r < height; r++) {
+            for (let c = 0; c < width; c++) {
+                newShape[c][height - 1 - r] = shape[r][c];
+            }
+        }
+        tempTile.shape = newShape;
+        tempTile.height = width;
+        tempTile.width = height;
+    }
+
+    return false;
+  }
+
+  private _findCompletedLines(grid: Cell[][]): { cellsToClear: Set<string>; points: number; linesCleared: number; } {
+    const gridSize = grid.length;
+    const cellsToClear = new Set<string>();
+    let linesCleared = 0;
+
+    for (let r = 0; r < gridSize; r++) {
+        const firstColor = grid[r][0].color;
+        if (firstColor === null) continue;
+        if (grid[r].every(cell => cell.color === firstColor)) {
+            linesCleared++;
+            for (let c = 0; c < gridSize; c++) {
+                cellsToClear.add(`${r},${c}`);
+            }
+        }
+    }
+
+    for (let c = 0; c < gridSize; c++) {
+        const firstColor = grid[0][c].color;
+        if (firstColor === null) continue;
+        let isFullLine = true;
+        for (let r = 1; r < gridSize; r++) {
+            if (grid[r][c].color !== firstColor) {
+                isFullLine = false;
+                break;
+            }
+        }
+        if (isFullLine) {
+            linesCleared++;
+            for (let r = 0; r < gridSize; r++) {
+                cellsToClear.add(`${r},${c}`);
+            }
+        }
+    }
+
+    const points = linesCleared * gridSize * 25 * this.scoreMultiplier();
+    return { cellsToClear, points, linesCleared };
+  }
+  
+  public placeTile(tile: Tile, startRow: number, startCol: number): void {
+      if (!this.canPlaceTile(tile, startRow, startCol)) return;
+
+      let gridWithTile = this.grid().map(row => row.map(cell => ({ ...cell })));
+      for (let r = 0; r < tile.height; r++) {
+        for (let c = 0; c < tile.width; c++) {
+          if (tile.shape[r][c] === 1) {
+            const gridRow = startRow + r;
+            const gridCol = startCol + c;
+            gridWithTile[gridRow][gridCol] = { color: tile.color, tileId: tile.id };
+          }
+        }
+      }
+
+      const clearInfo = this._findCompletedLines(gridWithTile);
+
+      if (clearInfo.linesCleared > 0) {
+        const gridWithClearing = gridWithTile.map((row, r) =>
+          row.map((cell, c) => {
+            if (clearInfo.cellsToClear.has(`${r},${c}`)) {
+              return { ...cell, clearing: true };
+            }
+            return cell;
+          })
+        );
+        
+        this._gameState.update(state => ({
+          ...state,
+          grid: gridWithClearing,
+          currentTile: null,
+          lastPlacedTileId: tile.id,
+          score: state.score + clearInfo.points
+        }));
+        
+        setTimeout(() => {
+          const finalGrid = gridWithClearing.map((row) =>
+            row.map((cell) => cell.clearing ? { color: null, tileId: null } : { ...cell })
+          );
+          const finalGridWithValidated = this._updateValidatedGroups(finalGrid);
+          this._gameState.update(state => ({ ...state, grid: finalGridWithValidated, lastPlacedTileId: null }));
+          this.changeGridSize(1);
+          this.advanceToNextTile();
+        }, ANIMATION_DURATION);
+
+      } else {
+        const gridWithValidated = this._updateValidatedGroups(gridWithTile);
+        this._gameState.update(state => ({
+          ...state,
+          grid: gridWithValidated,
+          currentTile: null,
+          lastPlacedTileId: tile.id,
+        }));
+        
+        setTimeout(() => {
+          this._gameState.update(s => ({...s, lastPlacedTileId: null}));
+          this.advanceToNextTile();
+        }, ANIMATION_DURATION);
+      }
+  }
+
+  public previewLineClears(grid: Cell[][], tile: Tile, startRow: number, startCol: number): Set<string> {
+    const tempGrid = grid.map(row => row.map(cell => ({ ...cell })));
+    const gridSize = this.gridSize();
+
+    for (let r = 0; r < tile.height; r++) {
+      for (let c = 0; c < tile.width; c++) {
+        if (tile.shape[r][c] === 1) {
+          const gridRow = startRow + r;
+          const gridCol = startCol + c;
+          if (gridRow >= 0 && gridRow < gridSize && gridCol >= 0 && gridCol < gridSize) {
+            tempGrid[gridRow][gridCol] = { ...tempGrid[gridRow][gridCol], color: tile.color, tileId: tile.id };
+          }
+        }
+      }
+    }
+
+    const clearInfo = this._findCompletedLines(tempGrid);
+    return clearInfo.cellsToClear;
+  }
+
+  private _updateValidatedGroups(grid: Cell[][]): Cell[][] {
+    const gridSize = grid.length;
+    const minSize = this.minValidatedGroupSize();
+    const visited = new Set<string>();
+    const newGrid = grid.map(row => row.map(cell => ({...cell, validated: false})));
+
+    for (let r = 0; r < gridSize; r++) {
+        for (let c = 0; c < gridSize; c++) {
+            const key = `${r},${c}`;
+            if (visited.has(key) || newGrid[r][c].color === null) {
+                continue;
+            }
+
+            const currentGroup = new Set<string>();
+            const queue: {r: number, c: number}[] = [{ r, c }];
+            visited.add(key);
+            const colorToFind = newGrid[r][c].color;
+
+            while (queue.length > 0) {
+                const { r: cr, c: cc } = queue.shift()!;
+                currentGroup.add(`${cr},${cc}`);
+                
+                const neighbors = [[cr - 1, cc], [cr + 1, cc], [cr, cc - 1], [cr, cc + 1]];
+                for (const [nr, nc] of neighbors) {
+                    const nKey = `${nr},${nc}`;
+                    if (
+                        nr >= 0 && nr < gridSize && nc >= 0 && nc < gridSize && 
+                        !visited.has(nKey) && newGrid[nr][nc].color === colorToFind
+                    ) {
+                        visited.add(nKey);
+                        queue.push({r: nr, c: nc});
+                    }
+                }
+            }
+            
+            if (currentGroup.size >= minSize) {
+                currentGroup.forEach(cellKey => {
+                    const [row, col] = cellKey.split(',').map(Number);
+                    newGrid[row][col].validated = true;
+                });
+            }
+        }
+    }
+
+    return newGrid;
+  }
+
+  private changeGridSize(delta: 1 | -1): void {
+    const oldState = this.state();
+    const newSize = oldState.gridSize + delta;
+
+    if (newSize < MIN_GRID_SIZE || newSize > MAX_GRID_SIZE || oldState.isShrinking) {
+        return;
+    }
+
+    if (delta === 1) { // Expanding
+        const oldSize = oldState.gridSize;
+        const newGrid = this.createEmptyGrid(newSize);
+        const dir = this.changeDirectionIndex();
+
+        for (let r = 0; r < oldSize; r++) {
+            for (let c = 0; c < oldSize; c++) {
+                switch (dir) {
+                    case 0: newGrid[r][c] = oldState.grid[r][c]; break; // Expand BR -> Copy to TL
+                    case 1: newGrid[r][c + 1] = oldState.grid[r][c]; break; // Expand BL -> Copy to TR
+                    case 2: newGrid[r + 1][c + 1] = oldState.grid[r][c]; break; // Expand TL -> Copy to BR
+                    case 3: newGrid[r + 1][c] = oldState.grid[r][c]; break; // Expand TR -> Copy to BL
+                }
+            }
+        }
+
+        this._gameState.update(state => ({
+            ...state,
+            grid: this._updateValidatedGroups(newGrid),
+            gridSize: newSize,
+            changeDirectionIndex: (state.changeDirectionIndex + 1) % 4
+        }));
+    } else { // Shrinking
+        this._gameState.update(state => ({ ...state, isShrinking: true }));
+        const grid = this.grid();
+        const validatedCellsToClear = new Set<string>();
+        grid.forEach((row, r) => {
+            row.forEach((cell, c) => {
+                if (cell.validated) {
+                    validatedCellsToClear.add(`${r},${c}`);
+                }
+            });
+        });
+
+        if (validatedCellsToClear.size > 0) {
+            const gridWithClearing = grid.map((row, r) =>
+                row.map((cell, c) => validatedCellsToClear.has(`${r},${c}`) ? { ...cell, clearing: true, validated: false } : cell)
+            );
+            
+            const points = validatedCellsToClear.size * 15 * this.scoreMultiplier();
+            this._gameState.update(state => ({ ...state, grid: gridWithClearing, score: state.score + points }));
+
+            setTimeout(() => {
+                const gridAfterClear = grid.map((row, r) =>
+                    row.map((cell, c) => validatedCellsToClear.has(`${r},${c}`) ? { color: null, tileId: null } : cell)
+                );
+                this.startShrinkWarningPhase(gridAfterClear);
+            }, ANIMATION_DURATION);
+        } else {
+            this.startShrinkWarningPhase(grid);
+        }
+    }
+  }
+
+  private startShrinkWarningPhase(grid: Cell[][]): void {
+    const oldSize = grid.length;
+    const newSize = oldSize - 1;
+    const dir = this.changeDirectionIndex();
+
+    if (newSize < MIN_GRID_SIZE) {
+        this._gameState.update(s => ({...s, isGameOver: true, isShrinking: false }));
+        return;
+    }
+
+    const cellsToWarn = new Set<string>();
+    for (let r = 0; r < oldSize; r++) {
+        for (let c = 0; c < oldSize; c++) {
+            if (grid[r][c].color) {
+                let shouldWarn = false;
+                switch(dir) {
+                    case 0: shouldWarn = r >= newSize || c >= newSize; break;
+                    case 1: shouldWarn = r >= newSize || c < 1; break;
+                    case 2: shouldWarn = r < 1 || c < 1; break;
+                    case 3: shouldWarn = r < 1 || c >= newSize; break;
+                }
+                if (shouldWarn) cellsToWarn.add(`${r},${c}`);
+            }
+        }
+    }
+
+    const gridWithWarning = grid.map((row, r) =>
+        row.map((cell, c) => {
+            return cellsToWarn.has(`${r},${c}`) ? { ...cell, shrinking: true } : cell;
+        })
+    );
+    
+    this._gameState.update(state => ({ ...state, grid: gridWithWarning }));
+  
+    setTimeout(() => {
+        const newGrid = this.createEmptyGrid(newSize);
+        for (let r = 0; r < newSize; r++) {
+            for (let c = 0; c < newSize; c++) {
+                switch (dir) {
+                    case 0: newGrid[r][c] = grid[r][c]; break;
+                    case 1: newGrid[r][c] = grid[r][c + 1]; break;
+                    case 2: newGrid[r][c] = grid[r + 1][c + 1]; break;
+                    case 3: newGrid[r][c] = grid[r + 1][c]; break;
+                }
+            }
+        }
+        
+        this._gameState.update(state => ({ 
+          ...state, 
+          grid: this._updateValidatedGroups(newGrid), 
+          gridSize: newSize, 
+          isShrinking: false,
+          changeDirectionIndex: (state.changeDirectionIndex + 1) % 4
+        }));
+
+        if (this.currentTile() && !this.canPlaceTileInAnyRotation(this.currentTile()!)) {
+            this._gameState.update(s => ({...s, isGameOver: true }));
+        }
+    }, SHRINK_WARNING_DURATION);
+  }
+}

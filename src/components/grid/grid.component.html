@@ -1,0 +1,32 @@
+<div class="relative">
+  <app-grid-indicator></app-grid-indicator>
+  <div 
+    class="grid gap-2 p-2 bg-slate-100 rounded-2xl shadow-inner aspect-square max-w-full"
+    [class.pointer-events-none]="isShrinking()"
+    [style]="gridStyles()"
+    (mouseleave)="onGridMouseLeave()"
+    (mousemove)="onGridMouseMove($event)"
+    (click)="onGridClick()"
+    (dragover)="onDragOver($event)"
+    (dragleave)="onDragLeave($event)"
+    (drop)="onDrop($event)">
+    @for (row of grid(); track $index; let r = $index) {
+      @for (cell of row; track $index; let c = $index) {
+        <div 
+          class="w-full h-full transition-all duration-150 ease-in-out relative"
+          [class]="getCellClass(r, c)">
+          @if(grid()[r][c].validated) {
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-1/2 h-1/2 text-white/90">
+              <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+            </svg>
+          }
+        </div>
+      }
+    }
+  </div>
+  @if (isShrinking()) {
+    <div class="absolute inset-0 bg-white/50 backdrop-blur-sm flex items-center justify-center rounded-lg z-10">
+       <p class="text-xl font-bold text-red-600 bg-white/80 px-4 py-2 rounded-lg shadow-lg animate-pulse">La grille rétrécit !</p>
+    </div>
+  }
+</div>

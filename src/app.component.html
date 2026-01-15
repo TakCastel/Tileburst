@@ -1,0 +1,245 @@
+<main class="w-full font-sans antialiased">
+
+  <!-- ======================= -->
+  <!-- == DESKTOP LAYOUT  == -->
+  <!-- ======================= -->
+  <div class="hidden lg:grid min-h-screen w-full max-w-screen-xl mx-auto grid-cols-[1fr_auto_1fr] gap-8 items-start p-8">
+    
+    <!-- == HEADER (Desktop) == -->
+    <header class="w-full text-center mb-6 col-span-3">
+        <h1 class="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-800 tracking-tight">Tileburst</h1>
+    </header>
+
+    <!-- == PANNEAU GAUCHE (Desktop) == -->
+    <aside class="flex flex-col gap-6 justify-self-end w-64">
+      <!-- Score -->
+      <div class="bg-white rounded-2xl p-6 shadow-lg">
+        <div class="flex justify-center text-center">
+          <div>
+            <span class="text-xs text-slate-500 uppercase font-semibold tracking-wider">Score</span>
+            <p class="text-5xl font-bold text-amber-500">{{ score() }}</p>
+          </div>
+        </div>
+      </div>
+      <!-- Prochaine Tuile -->
+      <div class="bg-white rounded-2xl p-6 shadow-lg flex flex-col items-center gap-4">
+        <span class="text-xs text-slate-500 uppercase font-semibold tracking-wider">Prochaine Tuile</span>
+        <div class="flex-grow flex items-center justify-center min-h-[120px]">
+            @if (nextTile(); as tile) { <app-tile-preview [tile]="tile"></app-tile-preview> }
+        </div>
+      </div>
+    </aside>
+
+    <!-- == CENTRE (GRILLE) (Desktop) == -->
+    <div class="w-[500px] max-w-full">
+        <app-grid></app-grid>
+    </div>
+
+    <!-- == PANNEAU DROIT (Desktop) == -->
+    <aside class="flex flex-col gap-6 justify-self-start w-64">
+      <!-- Tuile Actuelle -->
+      <div class="bg-white rounded-2xl p-6 shadow-lg flex flex-col items-center gap-4">
+        <span class="text-xs text-slate-500 uppercase font-semibold tracking-wider">Tuile Actuelle</span>
+        <div 
+          class="flex-grow flex items-center justify-center w-full min-h-[120px] cursor-pointer"
+          [class.opacity-50]="isDragging()"
+          draggable="true"
+          (click)="rotateTile()"
+          (dragstart)="onDragStart($event)"
+          (dragend)="onDragEnd()">
+          @if (currentTile(); as tile) {
+              <app-tile-preview [tile]="tile"></app-tile-preview>
+          }
+        </div>
+      </div>
+       <!-- Info Box -->
+      <div class="bg-cyan-100/60 rounded-2xl p-4 flex items-start gap-4">
+        <div class="flex-shrink-0 bg-cyan-200/70 p-2 rounded-full">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-cyan-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+          </svg>
+        </div>
+        <div class="text-cyan-900">
+          <h3 class="font-bold text-sm">Conseil Stratégique</h3>
+          <p class="text-sm leading-snug mt-1">
+            Liez <strong>{{ minValidatedGroupSize() }}</strong> blocs de même couleur pour les "valider". Ils vous sauveront quand la grille rétrécira !
+          </p>
+        </div>
+      </div>
+      <!-- Boutons d'action -->
+      <div class="flex flex-col gap-3">
+        <button 
+          (click)="rotateTile()" 
+          class="w-full bg-cyan-400 text-white font-bold py-3 px-4 transition-all duration-200 btn-3d"
+          style="--shadow-color: #0891b2;">
+          Rotation (R)
+        </button>
+        <button 
+          (click)="showTutorial()" 
+          class="w-full bg-slate-500 text-white font-bold py-3 px-4 transition-all duration-200 btn-3d"
+          style="--shadow-color: #475569;">
+          Comment Jouer
+        </button>
+        <button 
+          (click)="restartGame()" 
+          class="w-full bg-green-500 text-white font-bold py-3 px-4 transition-all duration-200 btn-3d"
+          style="--shadow-color: #15803d;">
+          Nouvelle Partie
+        </button>
+      </div>
+    </aside>
+  </div>
+
+
+  <!-- ===================== -->
+  <!-- == MOBILE LAYOUT   == -->
+  <!-- ===================== -->
+  <div class="flex lg:hidden w-full max-w-md h-[100svh] flex-col items-center p-2 mx-auto">
+    <!-- Header (Mobile) -->
+    <header class="w-full grid grid-cols-[auto_1fr_auto] items-center gap-2 z-10 p-1">
+      <button 
+        (click)="showRestartConfirm()" 
+        class="w-11 h-11 bg-green-500 text-white transition-all duration-200 btn-3d flex items-center justify-center"
+        style="--shadow-color: #15803d;"
+        aria-label="Nouvelle Partie">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6">
+          <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+          <path d="M3 3v5h5"/>
+        </svg>
+      </button>
+
+      <div class="bg-white rounded-2xl p-2 shadow-lg text-center">
+        <span class="text-xs text-slate-500 uppercase font-semibold tracking-wider">Score</span>
+        <p class="text-3xl font-bold text-amber-500 leading-none">{{ score() }}</p>
+      </div>
+
+      <button 
+        (click)="showTutorial()" 
+        class="w-11 h-11 bg-slate-500 text-white transition-all duration-200 btn-3d flex items-center justify-center"
+        style="--shadow-color: #475569;"
+        aria-label="Comment Jouer">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6">
+          <circle cx="12" cy="12" r="10"/>
+          <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+          <path d="M12 17h.01"/>
+        </svg>
+      </button>
+    </header>
+
+    <!-- Grid (Mobile) -->
+    <div class="w-full flex-grow flex items-center justify-center relative my-2">
+      <div class="w-full max-w-full">
+        <app-grid></app-grid>
+      </div>
+    </div>
+
+    <!-- Footer Controls (Mobile) -->
+    <footer class="w-full flex flex-col items-center gap-2 z-10 relative">
+      @if (isHintTooltipVisible()) {
+       <div (click)="toggleHintTooltip()" class="absolute bottom-full mb-2 w-[95%] max-w-md mx-auto bg-slate-800 text-white p-3 rounded-lg shadow-xl text-xs z-20 transition-all duration-200 animate-fade-in-up">
+         <h3 class="font-bold text-cyan-300 mb-1">Conseil Stratégique</h3>
+         <p class="leading-snug">
+            Liez <strong>{{ minValidatedGroupSize() }}</strong> blocs de même couleur pour les "valider". Ils vous sauveront quand la grille rétrécira !
+         </p>
+         <button (click)="toggleHintTooltip(); $event.stopPropagation()" class="absolute -top-1 -right-1 w-5 h-5 bg-slate-600 rounded-full flex items-center justify-center text-white text-xs">&times;</button>
+       </div>
+      }
+      <div class="w-full bg-slate-200/80 backdrop-blur-sm p-2 rounded-2xl shadow-lg grid grid-cols-[1fr_auto_1.75fr_auto] items-center gap-2 h-[85px]">
+        
+        <div class="flex flex-col items-center justify-center h-full bg-white/50 rounded-lg p-1">
+          <span class="text-[10px] text-slate-600 uppercase font-semibold">Prochaine</span>
+          <div class="flex-grow flex items-center justify-center">
+            @if (nextTile(); as tile) { <app-tile-preview [tile]="tile"></app-tile-preview> }
+          </div>
+        </div>
+
+        <button 
+            (click)="rotateTile()" 
+            class="h-full aspect-square bg-cyan-400 text-white transition-all duration-200 btn-3d flex items-center justify-center"
+            style="--shadow-color: #0891b2;"
+            aria-label="Rotation">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-7 h-7">
+              <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/>
+              <path d="M21 3v5h-5"/>
+            </svg>
+        </button>
+
+        <div 
+          class="h-full w-full flex items-center justify-center bg-white/50 rounded-lg cursor-grab active:cursor-grabbing"
+          [class.opacity-50]="isDragging()"
+          draggable="true"
+          (dragstart)="onDragStart($event)"
+          (dragend)="onDragEnd()">
+          @if (currentTile(); as tile) { <app-tile-preview [tile]="tile"></app-tile-preview> } @else { <div class="text-slate-500 text-sm">Chargement...</div> }
+        </div>
+
+        <button 
+          (click)="toggleHintTooltip()" 
+          class="h-full aspect-square bg-amber-400 text-white transition-all duration-200 btn-3d flex items-center justify-center"
+          style="--shadow-color: #d97706;"
+          aria-label="Afficher le conseil">
+           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-7 h-7">
+            <path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/>
+            <path d="M9 18h6"/>
+            <path d="M10 22h4"/>
+          </svg>
+        </button>
+
+      </div>
+    </footer>
+  </div>
+
+
+  <!-- ===================== -->
+  <!-- == SHARED MODALS   == -->
+  <!-- ===================== -->
+  @if (isRestartConfirmVisible()) {
+    <div class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
+      <div class="bg-white rounded-2xl p-6 sm:p-8 shadow-2xl text-center flex flex-col gap-4 items-center">
+        <h2 class="text-2xl sm:text-3xl font-bold text-slate-800">Recommencer ?</h2>
+        <p class="text-slate-600 text-base">Êtes-vous sûr de vouloir commencer une nouvelle partie ? Votre score actuel sera perdu.</p>
+        <div class="flex gap-4 mt-4 w-full">
+            <button 
+              (click)="hideRestartConfirm()" 
+              class="w-full bg-slate-500 text-white font-bold py-3 px-6 transition-all duration-200 btn-3d"
+              style="--shadow-color: #475569;">
+              Non
+            </button>
+            <button 
+              (click)="confirmAndRestart()" 
+              class="w-full bg-green-500 text-white font-bold py-3 px-6 transition-all duration-200 btn-3d"
+              style="--shadow-color: #15803d;">
+              Oui
+            </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  @if (isGameOver()) {
+    <div class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
+      <div class="bg-white rounded-2xl p-6 sm:p-8 shadow-2xl text-center flex flex-col gap-4 items-center">
+        <h2 class="text-4xl sm:text-5xl font-extrabold text-red-500">Fin de Partie</h2>
+        <p class="text-slate-600 text-base sm:text-lg">Votre score final est :</p>
+        <p class="text-5xl sm:text-6xl font-bold text-amber-500">{{ score() }}</p>
+        <button 
+          (click)="restartGame()" 
+          class="mt-4 bg-green-500 text-white font-bold py-3 px-6 sm:px-8 text-lg sm:text-xl transition-all duration-200 btn-3d"
+          style="--shadow-color: #15803d;">
+          Rejouer
+        </button>
+      </div>
+    </div>
+  }
+
+  <app-tutorial></app-tutorial>
+</main>
+<style>
+  @keyframes fade-in-up {
+    0% { opacity: 0; transform: translateY(10px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+  .animate-fade-in-up {
+    animation: fade-in-up 0.2s ease-out forwards;
+  }
+</style>

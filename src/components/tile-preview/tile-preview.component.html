@@ -1,0 +1,17 @@
+@if (tile(); as currentTile) {
+  <div class="grid gap-1.5" [style]="gridStyles()">
+    @for (row of currentTile.shape; track $index) {
+      @for (cell of row; track $index) {
+        <div class="w-5 h-5 md:w-6 md:h-6">
+          @if (cell === 1) {
+            <div 
+              class="w-full h-full rounded-md transition-all tile-preview-piece" 
+              [class]="backgroundColorClass()"
+              [style]="shadowStyle()">
+            </div>
+          }
+        </div>
+      }
+    }
+  </div>
+}

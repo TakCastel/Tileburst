@@ -1,0 +1,148 @@
+@if (isTutorialActive() && currentStep(); as step) {
+  <div class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-2 sm:p-4" (click)="close()">
+    <div class="relative bg-white rounded-2xl p-4 sm:p-6 md:p-8 shadow-2xl w-full max-w-md sm:max-w-lg md:max-w-2xl max-h-[95vh] sm:max-h-[90vh] overflow-y-auto flex flex-col gap-4 sm:gap-6" (click)="$event.stopPropagation()">
+      
+      <button 
+        (click)="close()" 
+        class="absolute top-3 right-3 sm:top-4 sm:right-4 w-8 h-8 bg-slate-100 text-slate-600 hover:bg-slate-200 rounded-full flex items-center justify-center transition-colors duration-200 z-10"
+        aria-label="Fermer le tutoriel">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5">
+            <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
+        </svg>
+      </button>
+
+      <!-- Content -->
+      <div class="text-center">
+          <h2 class="text-2xl sm:text-3xl font-bold text-cyan-600 mb-2">{{ step.title }}</h2>
+          <p class="text-slate-500 text-sm mb-4">Étape {{ activeStepIndex()! + 1 }} sur {{ totalSteps }}</p>
+          <p class="text-slate-600 text-base sm:text-lg mb-4 sm:mb-6">{{ step.content }}</p>
+      </div>
+
+      <!-- Visual Aid -->
+      <div class="bg-slate-100 p-2 sm:p-4 rounded-lg flex-grow flex items-center justify-center min-h-[240px] sm:min-h-[300px]">
+        @switch (step.id) {
+          @case ('welcome') {
+            <div class="flex flex-col gap-2 sm:gap-4 items-center text-center">
+              <p class="text-sm sm:text-base font-semibold text-slate-700">Faites glisser une tuile comme celle-ci...</p>
+              <div class="grid grid-cols-2 gap-1.5 w-12">
+                <div class="w-6 h-6 bg-green-400 cell-3d rounded-md"></div>
+                <div class="w-6 h-6 bg-green-400 cell-3d rounded-md"></div>
+                <div class="w-6 h-6 bg-green-400 cell-3d rounded-md col-span-2"></div>
+              </div>
+              <p class="text-xl sm:text-2xl font-bold text-slate-500">&darr;</p>
+              <p class="text-sm sm:text-base font-semibold text-slate-700">...sur la grille de jeu.</p>
+              <div class="grid grid-cols-5 gap-1 sm:gap-1.5 p-1 sm:p-2 bg-slate-200 rounded-lg w-40 h-40 sm:w-48 sm:h-48">
+                  @for (_ of [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24]; track $index) { <div class="bg-slate-300/50 cell-empty rounded-sm sm:rounded-md"></div> }
+              </div>
+            </div>
+          }
+          @case ('clearing') {
+            <div class="flex flex-col gap-2 sm:gap-4 items-center text-center">
+              <p class="text-sm sm:text-base font-semibold text-slate-700">Remplissez une ligne avec la même couleur...</p>
+              <div class="grid grid-cols-5 gap-1 sm:gap-1.5 p-1 sm:p-2 bg-slate-200 rounded-lg w-40 h-40 sm:w-48 sm:h-48">
+                @for (_ of [0,1,2,3]; track $index) { <div class="bg-red-400 cell-3d rounded-sm sm:rounded-md"></div> }
+                <div class="bg-red-400/50 rounded-sm sm:rounded-md"></div>
+                @for (_ of [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]; track $index) { <div class="bg-slate-300/50 cell-empty rounded-sm sm:rounded-md"></div> }
+              </div>
+              <p class="text-xl sm:text-2xl font-bold text-slate-500">&darr;</p>
+              <p class="text-sm sm:text-base font-semibold text-slate-700">...pour l'effacer !</p>
+              <div class="grid grid-cols-5 gap-1 sm:gap-1.5 p-1 sm:p-2 bg-slate-200 rounded-lg w-40 h-40 sm:w-48 sm:h-48">
+                @for (_ of [0,1,2,3,4]; track $index) { <div class="bg-red-400 cell-3d rounded-sm sm:rounded-md animate-place"></div> }
+                @for (_ of [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]; track $index) { <div class="bg-slate-300/50 cell-empty rounded-sm sm:rounded-md"></div> }
+              </div>
+            </div>
+          }
+          @case ('validated') {
+            <div class="flex flex-col gap-2 sm:gap-4 items-center text-center">
+               <p class="text-sm sm:text-base font-semibold text-slate-700">Connectez un grand groupe de la même couleur.</p>
+               <div class="grid grid-cols-6 gap-1 sm:gap-1.5 p-1 sm:p-2 bg-slate-200 rounded-lg w-44 h-44 sm:w-56 sm:h-56">
+                  <!-- validated blocks -->
+                  <div class="bg-purple-400 cell-3d rounded-sm sm:rounded-md validated relative"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor" class="absolute-center w-1/2 h-1/2 text-white/90"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" /></svg></div>
+                  <div class="bg-purple-400 cell-3d rounded-sm sm:rounded-md validated relative"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor" class="absolute-center w-1/2 h-1/2 text-white/90"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" /></svg></div>
+                  <div class="bg-slate-300/50 cell-empty rounded-sm sm:rounded-md"></div>
+                  <div class="bg-purple-400 cell-3d rounded-sm sm:rounded-md validated relative"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor" class="absolute-center w-1/2 h-1/2 text-white/90"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" /></svg></div>
+                  <div class="bg-purple-400 cell-3d rounded-sm sm:rounded-md validated relative"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor" class="absolute-center w-1/2 h-1/2 text-white/90"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" /></svg></div>
+                   <div class="bg-slate-300/50 cell-empty rounded-sm sm:rounded-md"></div>
+                  <!-- row 2 -->
+                  <div class="bg-slate-300/50 cell-empty rounded-sm sm:rounded-md"></div>
+                  <div class="bg-purple-400 cell-3d rounded-sm sm:rounded-md validated relative"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor" class="absolute-center w-1/2 h-1/2 text-white/90"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" /></svg></div>
+                  <div class="bg-purple-400 cell-3d rounded-sm sm:rounded-md validated relative"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor" class="absolute-center w-1/2 h-1/2 text-white/90"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" /></svg></div>
+                  <div class="bg-purple-400 cell-3d rounded-sm sm:rounded-md validated relative"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor" class="absolute-center w-1/2 h-1/2 text-white/90"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" /></svg></div>
+                  <div class="bg-slate-300/50 cell-empty rounded-sm sm:rounded-md"></div>
+                  <div class="bg-slate-300/50 cell-empty rounded-sm sm:rounded-md"></div>
+                  @for (_ of [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23]; track $index) { <div class="bg-slate-300/50 cell-empty rounded-sm sm:rounded-md"></div> }
+               </div>
+            </div>
+          }
+          @case ('shrinking') {
+             <div class="flex flex-col gap-2 sm:gap-4 items-center text-center">
+              <p class="text-sm sm:text-base font-semibold text-slate-700">Si vous êtes bloqué, la grille rétrécit...</p>
+              <div class="grid grid-cols-6 gap-1 sm:gap-1.5 p-1 sm:p-2 bg-slate-200 rounded-lg w-44 h-44 sm:w-56 sm:h-56">
+                @for (r of [0,1,2,3,4,5]; track r) {
+                  @for (c of [0,1,2,3,4,5]; track c) {
+                    <div class="rounded-sm sm:rounded-md" [class]="(r === 5 || c === 5) ? 'cell-shrinking-warning' : 'bg-slate-300/50 cell-empty'"></div>
+                  }
+                }
+              </div>
+               <p class="text-xl sm:text-2xl font-bold text-slate-500">&darr;</p>
+                <p class="text-sm sm:text-base font-semibold text-slate-700">...à une taille plus petite.</p>
+              <div class="grid grid-cols-5 gap-1 sm:gap-1.5 p-1 sm:p-2 bg-slate-200 rounded-lg w-40 h-40 sm:w-48 sm:h-48">
+                 @for (_ of [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24]; track $index) { <div class="bg-slate-300/50 cell-empty rounded-sm sm:rounded-md"></div> }
+              </div>
+            </div>
+          }
+          @case('goal') {
+            <div class="flex flex-col gap-2 sm:gap-4 items-center text-center">
+                <p class="text-base sm:text-lg font-semibold text-slate-700">Visez le meilleur score !</p>
+                <div class="text-5xl sm:text-6xl font-bold text-amber-500">
+                  10,000
+                </div>
+                <p class="text-sm sm:text-base text-slate-600">Combinez stratégie et un peu de chance.</p>
+            </div>
+          }
+        }
+      </div>
+
+      <!-- Navigation -->
+      <div class="flex justify-between items-center mt-2 sm:mt-4">
+        @if (!isFirstStep()) {
+          <button 
+            (click)="previous()"
+            class="bg-slate-300 text-slate-700 font-bold py-2 px-4 sm:px-6 text-sm sm:text-base transition-all duration-200 btn-3d"
+            style="--shadow-color: #94a3b8;"
+            >
+            Précédent
+          </button>
+        } @else {
+          <!-- Placeholder to align the 'Next' button correctly on the first step -->
+          <div></div>
+        }
+
+        @if (isLastStep()) {
+          <button 
+            (click)="close()" 
+            class="bg-green-500 text-white font-bold py-2 px-4 sm:px-6 text-sm sm:text-base transition-all duration-200 btn-3d"
+            style="--shadow-color: #15803d;">
+            Jouer !
+          </button>
+        } @else {
+          <button 
+            (click)="next()"
+            class="bg-cyan-500 text-white font-bold py-2 px-4 sm:px-6 text-sm sm:text-base transition-all duration-200 btn-3d"
+            style="--shadow-color: #0891b2;">
+            Suivant
+          </button>
+        }
+      </div>
+
+    </div>
+  </div>
+}
+<style>
+.absolute-center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+</style>
