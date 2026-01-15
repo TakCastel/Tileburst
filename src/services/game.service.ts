@@ -89,9 +89,15 @@ export class GameService {
 
   private tileIdCounter = 0;
   private shrinkTimeout: any = null;
+  private isFirstGame = true;
 
   constructor() {
     this.startGame();
+    // Démarrer le tutoriel seulement au premier chargement de l'app
+    if (this.isFirstGame) {
+      this.tutorialService.startTutorial();
+      this.isFirstGame = false;
+    }
   }
   
   private getInitialState(gridSize = STARTING_GRID_SIZE, score = 0): GameState {
@@ -119,7 +125,7 @@ export class GameService {
     if (initialState.currentTile && !this.canPlaceTileInAnyRotation(initialState.currentTile)) {
         this._gameState.update(state => ({...state, isGameOver: true}));
     }
-    this.tutorialService.startTutorial();
+    // Ne pas démarrer le tutoriel lors d'un rejeu
   }
 
   private createEmptyGrid(size: number): Cell[][] {

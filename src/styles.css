@@ -102,3 +102,24 @@
 .animate-fade-in-up {
   animation: fade-in-up 0.2s ease-out forwards;
 }
+
+/* Amélioration du drag and drop tactile sur mobile */
+.touch-none {
+  touch-action: none;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Amélioration de la fluidité tactile */
+@media (hover: none) and (pointer: coarse) {
+  /* Sur les appareils tactiles uniquement */
+  .touch-none {
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  /* Amélioration de la réactivité des cellules de grille */
+  app-grid .grid > div {
+    touch-action: none;
+  }
+}

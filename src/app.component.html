@@ -41,12 +41,16 @@
       <div class="bg-white rounded-2xl p-6 shadow-lg flex flex-col items-center gap-4">
         <span class="text-xs text-slate-500 uppercase font-semibold tracking-wider">Tuile Actuelle</span>
         <div 
-          class="flex-grow flex items-center justify-center w-full min-h-[120px] cursor-pointer"
+          class="flex-grow flex items-center justify-center w-full min-h-[120px] cursor-pointer touch-none"
           [class.opacity-50]="isDragging()"
           draggable="true"
           (click)="rotateTile()"
           (dragstart)="onDragStart($event)"
-          (dragend)="onDragEnd()">
+          (dragend)="onDragEnd()"
+          (touchstart)="onTileTouchStart($event)"
+          (touchmove)="onTileTouchMove($event)"
+          (touchend)="onTileTouchEnd($event)"
+          (touchcancel)="onTileTouchCancel()">
           @if (currentTile(); as tile) {
               <app-tile-preview [tile]="tile"></app-tile-preview>
           }
@@ -165,11 +169,15 @@
         </button>
 
         <div 
-          class="h-full w-full flex items-center justify-center bg-white/50 rounded-lg cursor-grab active:cursor-grabbing"
+          class="h-full w-full flex items-center justify-center bg-white/50 rounded-lg cursor-grab active:cursor-grabbing touch-none select-none"
           [class.opacity-50]="isDragging()"
           draggable="true"
           (dragstart)="onDragStart($event)"
-          (dragend)="onDragEnd()">
+          (dragend)="onDragEnd()"
+          (touchstart)="onTileTouchStart($event)"
+          (touchmove)="onTileTouchMove($event)"
+          (touchend)="onTileTouchEnd($event)"
+          (touchcancel)="onTileTouchCancel()">
           @if (currentTile(); as tile) { <app-tile-preview [tile]="tile"></app-tile-preview> } @else { <div class="text-slate-500 text-sm">Chargement...</div> }
         </div>
 

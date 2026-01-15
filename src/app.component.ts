@@ -31,6 +31,8 @@ export class AppComponent {
   isDragging = signal(false);
   isHintTooltipVisible = signal(false);
   isRestartConfirmVisible = signal(false);
+  private touchStartPosition: { x: number; y: number } | null = null;
+  private isTouchDragging = signal(false);
 
   restartGame(): void {
     this.gameService.startGame();
@@ -54,7 +56,8 @@ export class AppComponent {
   }
 
   showTutorial(): void {
-    this.tutorialService.startTutorial();
+    // Forcer l'affichage du tutoriel même si déjà vu
+    this.tutorialService.startTutorial(true);
   }
 
   toggleHintTooltip(): void {
@@ -72,5 +75,56 @@ export class AppComponent {
 
   onDragEnd(): void {
     this.isDragging.set(false);
+  }
+
+  // Gestion des événements tactiles pour mobile
+  onTileTouchStart(event: TouchEvent): void {
+    if (!this.currentTile()) return;
+    const touch = event.touches[0];
+    this.touchStartPosition = { x: touch.clientX, y: touch.clientY };
+    this.isTouchDragging.set(true);
+    this.isDragging.set(true);
+    // Empêcher le scroll et les actions par défaut pendant le drag
+    event.preventDefault();
+    event.stopPropagation();
+  }
+
+  onTileTouchMove(event: TouchEvent): void {
+    if (!this.isTouchDragging() || !this.touchStartPosition) return;
+    // Empêcher le scroll pendant le drag
+    event.preventDefault();
+    event.stopPropagation();
+  }
+
+  onTileTouchEnd(event: TouchEvent): void {
+    if (!this.isTouchDragging()) return;
+    
+    // Vérifier si c'était un tap (pas un drag)
+    const touch = event.changedTouches[0];
+    if (this.touchStartPosition) {
+      const deltaX = Math.abs(touch.clientX - this.touchStartPosition.x);
+      const deltaY = Math.abs(touch.clientY - this.touchStartPosition.y);
+      
+      // Si le mouvement est très petit, considérer comme un tap (rotation)
+      // Augmenté le seuil à 15px pour être plus tolérant
+      if (deltaX < 15 && deltaY < 15) {
+        // Petit délai pour éviter les conflits avec le drop
+        setTimeout(() => {
+          this.rotateTile();
+        }, 50);
+      }
+    }
+    
+    this.isTouchDragging.set(false);
+    this.isDragging.set(false);
+    this.touchStartPosition = null;
+    event.preventDefault();
+    event.stopPropagation();
+  }
+
+  onTileTouchCancel(): void {
+    this.isTouchDragging.set(false);
+    this.isDragging.set(false);
+    this.touchStartPosition = null;
   }
 }

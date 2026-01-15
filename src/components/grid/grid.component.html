@@ -1,7 +1,7 @@
 <div class="relative">
   <app-grid-indicator></app-grid-indicator>
   <div 
-    class="grid gap-2 p-2 bg-slate-100 rounded-2xl shadow-inner aspect-square max-w-full"
+    class="grid gap-2 p-2 bg-slate-100 rounded-2xl shadow-inner aspect-square max-w-full touch-none"
     [class.pointer-events-none]="isShrinking()"
     [style]="gridStyles()"
     (mouseleave)="onGridMouseLeave()"
@@ -9,7 +9,11 @@
     (click)="onGridClick()"
     (dragover)="onDragOver($event)"
     (dragleave)="onDragLeave($event)"
-    (drop)="onDrop($event)">
+    (drop)="onDrop($event)"
+    (touchstart)="onTouchStart($event)"
+    (touchmove)="onTouchMove($event)"
+    (touchend)="onTouchEnd($event)"
+    (touchcancel)="onTouchEnd($event)">
     @for (row of grid(); track $index; let r = $index) {
       @for (cell of row; track $index; let c = $index) {
         <div 

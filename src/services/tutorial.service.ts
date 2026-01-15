@@ -34,6 +34,8 @@ const TUTORIAL_STEPS: TutorialStep[] = [
   }
 ];
 
+const TUTORIAL_SEEN_KEY = 'tileburst_tutorial_seen';
+
 @Injectable({
   providedIn: 'root',
 })
@@ -52,12 +54,37 @@ export class TutorialService {
   isFirstStep = computed(() => this.activeStepIndex() === 0);
   isLastStep = computed(() => this.activeStepIndex() === this.allSteps.length - 1);
 
-  public startTutorial(): void {
+  constructor() {
+    // Vérifier si le tutoriel a déjà été vu au démarrage
+    this.hasSeenTutorial();
+  }
+
+  private hasSeenTutorial(): boolean {
+    if (typeof window === 'undefined' || !window.localStorage) {
+      return false;
+    }
+    return localStorage.getItem(TUTORIAL_SEEN_KEY) === 'true';
+  }
+
+  private markTutorialAsSeen(): void {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      localStorage.setItem(TUTORIAL_SEEN_KEY, 'true');
+    }
+  }
+
+  public startTutorial(force: boolean = false): void {
+    // Si on force (bouton "Comment Jouer"), toujours démarrer
+    // Sinon, vérifier si déjà vu
+    if (!force && this.hasSeenTutorial()) {
+      return;
+    }
     this.activeStepIndex.set(0);
   }
 
   public endTutorial(): void {
     this.activeStepIndex.set(null);
+    // Marquer comme vu quand on ferme le tutoriel
+    this.markTutorialAsSeen();
   }
 
   public goToNextStep(): void {

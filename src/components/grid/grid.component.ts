@@ -27,6 +27,7 @@ export class GridComponent {
   private isPlacementValid = signal(false);
   private lastHoveredCell = signal<{row: number, col: number} | null>(null);
   private previewStartPosition = signal<{row: number, col: number} | null>(null);
+  private lastTouchTime = 0;
 
   private readonly COLOR_PALETTE: { [key: string]: { bg: string } } = {
     blue:   { bg: 'bg-cyan-400' },
@@ -159,11 +160,24 @@ export class GridComponent {
     return classes;
   }
 
-  private _updateHoveredCellFromEvent(event: MouseEvent | DragEvent): void {
+  private _updateHoveredCellFromEvent(event: MouseEvent | DragEvent | TouchEvent): void {
     const gridElement = event.currentTarget as HTMLElement;
     const rect = gridElement.getBoundingClientRect();
-    const x = event.clientX - rect.left;
-    const y = event.clientY - rect.top;
+    
+    let x: number, y: number;
+    if (event instanceof TouchEvent) {
+      // Utiliser changedTouches pour touchend, touches pour touchmove/touchstart
+      const touch = event.touches.length > 0 ? event.touches[0] : 
+                   (event.changedTouches.length > 0 ? event.changedTouches[0] : null);
+      if (!touch) return;
+      x = touch.clientX - rect.left;
+      y = touch.clientY - rect.top;
+    } else if (event instanceof MouseEvent || event instanceof DragEvent) {
+      x = event.clientX - rect.left;
+      y = event.clientY - rect.top;
+    } else {
+      return;
+    }
     
     const gridSize = this.gridSize();
     if (rect.width === 0 || rect.height === 0) return;
@@ -171,8 +185,9 @@ export class GridComponent {
     const cellWidth = rect.width / gridSize;
     const cellHeight = rect.height / gridSize;
 
-    const col = Math.floor(x / cellWidth);
-    const row = Math.floor(y / cellHeight);
+    // S'assurer que les coordonnées sont dans les limites
+    const col = Math.max(0, Math.min(gridSize - 1, Math.floor(x / cellWidth)));
+    const row = Math.max(0, Math.min(gridSize - 1, Math.floor(y / cellHeight)));
 
     if (this.lastHoveredCell()?.row !== row || this.lastHoveredCell()?.col !== col) {
       this.lastHoveredCell.set({ row, col });
@@ -195,12 +210,20 @@ export class GridComponent {
 
   onGridClick(): void {
     if (this.isShrinking()) return;
+    
+    // Éviter les doubles déclenchements après un événement tactile
+    const now = Date.now();
+    if (now - this.lastTouchTime < 300) {
+      return;
+    }
 
     const tile = this.currentTile();
     const startPos = this.previewStartPosition();
     
     if (tile && this.isPlacementValid() && startPos) {
         this.gameService.placeTile(tile, startPos.row, startPos.col);
+        // Réinitialiser l'état après placement
+        this.lastHoveredCell.set(null);
     }
   }
 
@@ -217,6 +240,40 @@ export class GridComponent {
     event.preventDefault();
     if (this.isShrinking()) return;
     this.onGridClick();
+    this.onGridMouseLeave();
+  }
+
+  // Gestion des événements tactiles pour mobile
+  onTouchStart(event: TouchEvent): void {
+    if (!this.currentTile() || this.isShrinking()) return;
+    event.preventDefault();
+    event.stopPropagation();
+    this.lastTouchTime = Date.now();
+    // Mettre à jour immédiatement pour un feedback instantané
+    this._updateHoveredCellFromEvent(event);
+  }
+
+  onTouchMove(event: TouchEvent): void {
+    if (!this.currentTile() || this.isShrinking()) return;
+    event.preventDefault();
+    event.stopPropagation();
+    // Mettre à jour en temps réel pendant le mouvement
+    this._updateHoveredCellFromEvent(event);
+  }
+
+  onTouchEnd(event: TouchEvent): void {
+    if (this.isShrinking()) return;
+    event.preventDefault();
+    event.stopPropagation();
+    this.lastTouchTime = Date.now();
+    // Placer la tuile si valide
+    const tile = this.currentTile();
+    const startPos = this.previewStartPosition();
+    
+    if (tile && this.isPlacementValid() && startPos) {
+        this.gameService.placeTile(tile, startPos.row, startPos.col);
+    }
+    // Nettoyer l'état
     this.onGridMouseLeave();
   }
 }
