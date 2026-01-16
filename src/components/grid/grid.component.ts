@@ -5,6 +5,7 @@ import { Tile, Cell } from '../../models/game.model';
 import { GridIndicatorComponent } from '../grid-indicator/grid-indicator.component';
 import { ThemeService } from '../../services/theme.service';
 import { I18nService } from '../../services/i18n.service';
+import { OptionsService } from '../../services/options.service';
 
 @Component({
   selector: 'app-grid',
@@ -12,11 +13,15 @@ import { I18nService } from '../../services/i18n.service';
   standalone: true,
   imports: [CommonModule, GridIndicatorComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: {
+    'class': 'block w-full h-full'
+  }
 })
 export class GridComponent {
   protected gameService = inject(GameService);
   protected i18n = inject(I18nService);
   private themeService = inject(ThemeService);
+  private optionsService = inject(OptionsService);
   private cdr = inject(ChangeDetectorRef);
   
   grid = this.gameService.grid;
@@ -35,14 +40,10 @@ export class GridComponent {
   private previewStartPosition = signal<{row: number, col: number} | null>(null);
   private lastTouchTime = 0;
 
-  private readonly COLOR_PALETTE: { [key: string]: { bg: string } } = {
-    blue:   { bg: 'bg-cyan-400' },
-    red:    { bg: 'bg-red-400' },
-    green:  { bg: 'bg-green-400' },
-    yellow: { bg: 'bg-amber-400' },
-    purple: { bg: 'bg-violet-400' },
-  };
   private readonly DEFAULT_COLOR = { bg: 'bg-gray-400' };
+  
+  colorPalette = this.optionsService.colorPalette;
+  shapeMode = this.optionsService.shapeMode;
 
   gridStyles = computed(() => ({
     'grid-template-columns': `repeat(${this.gridSize()}, minmax(0, 1fr))`,
@@ -52,6 +53,13 @@ export class GridComponent {
     // Forcer la détection de changement quand le thème change
     effect(() => {
       this.isDarkMode();
+      this.cdr.markForCheck();
+    });
+
+    // Forcer la mise à jour quand les options changent
+    effect(() => {
+      this.colorPalette();
+      this.shapeMode();
       this.cdr.markForCheck();
     });
 
@@ -94,7 +102,35 @@ export class GridComponent {
   
   private getBackgroundColorClass(color: string | null | undefined): string {
     if (!color) return 'bg-slate-100';
-    return (this.COLOR_PALETTE[color] || this.DEFAULT_COLOR).bg;
+    const palette = this.optionsService.getColorPaletteClasses(this.colorPalette());
+    return (palette[color] || this.DEFAULT_COLOR).bg;
+  }
+  
+  getShapeForColor(color: string | null | undefined): 'square' | 'circle' | 'triangle' | 'cross' | 'star' | null {
+    if (!color || this.shapeMode() === 'none') return null;
+    return this.optionsService.getShapeForColor(color);
+  }
+  
+  getShapeColorClass(color: string | null | undefined): string {
+    if (!color) return '';
+    const palette = this.optionsService.getColorPaletteClasses(this.colorPalette());
+    const colorDef = palette[color] || this.DEFAULT_COLOR;
+    // Retourner une version plus sombre de la couleur selon la palette
+    const darkerMap: { [key: string]: string } = {
+      // Normal
+      'bg-cyan-400': 'bg-cyan-600',
+      'bg-red-400': 'bg-red-600',
+      'bg-green-400': 'bg-green-600',
+      'bg-amber-400': 'bg-amber-600',
+      'bg-violet-400': 'bg-violet-600',
+      // High contrast
+      'bg-blue-600': 'bg-blue-800',
+      'bg-red-600': 'bg-red-800',
+      'bg-green-600': 'bg-green-800',
+      'bg-yellow-500': 'bg-yellow-700',
+      'bg-purple-600': 'bg-purple-800',
+    };
+    return darkerMap[colorDef.bg] || 'bg-slate-600';
   }
   
   getCellClass(row: number, col: number): string {

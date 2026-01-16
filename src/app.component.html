@@ -17,16 +17,9 @@
           [style.--shadow-color]="isSoundEnabled() ? '#64748b' : '#475569'"
           [attr.aria-label]="i18n.t().toggleSound">
           @if (isSoundEnabled()) {
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 text-white">
-              <path d="M11 5L6 9H2v6h4l5 4V5z"/>
-              <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/>
-            </svg>
+            <lucide-angular [img]="Volume2Icon" class="w-5 h-5 text-white"></lucide-angular>
           } @else {
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 text-white">
-              <path d="M11 5L6 9H2v6h4l5 4V5z"/>
-              <line x1="23" y1="9" x2="17" y2="15"/>
-              <line x1="17" y1="9" x2="23" y2="15"/>
-            </svg>
+            <lucide-angular [img]="VolumeXIcon" class="w-5 h-5 text-white"></lucide-angular>
           }
         </button>
         <button 
@@ -35,23 +28,12 @@
           [style.--shadow-color]="'#475569'"
           [attr.aria-label]="i18n.t().toggleDarkMode">
           @if (isDarkMode()) {
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 text-white">
-              <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
-            </svg>
+            <lucide-angular [img]="MoonIcon" class="w-5 h-5 text-white"></lucide-angular>
           } @else {
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 text-white">
-              <circle cx="12" cy="12" r="4"/>
-              <path d="M12 2v2"/>
-              <path d="M12 20v2"/>
-              <path d="m4.93 4.93 1.41 1.41"/>
-              <path d="m17.66 17.66 1.41 1.41"/>
-              <path d="M2 12h2"/>
-              <path d="M20 12h2"/>
-              <path d="m6.34 17.66-1.41 1.41"/>
-              <path d="m19.07 4.93-1.41 1.41"/>
-            </svg>
+            <lucide-angular [img]="SunIcon" class="w-5 h-5 text-white"></lucide-angular>
           }
         </button>
+        <app-options-menu></app-options-menu>
     </header>
 
     <!-- == PANNEAU GAUCHE (Desktop) == -->
@@ -62,6 +44,12 @@
           <div>
             <span class="text-xs text-slate-500 dark:text-slate-400 uppercase font-semibold tracking-wider">{{ i18n.t().score }}</span>
             <p class="text-5xl font-bold text-amber-500">{{ score() }}</p>
+            @if (bestScore() > 0) {
+              <div class="mt-2">
+                <span class="text-[10px] text-slate-400 dark:text-slate-500 uppercase font-semibold tracking-wider">{{ i18n.t().bestScore }}</span>
+                <p class="text-lg font-semibold text-slate-600 dark:text-slate-400">{{ bestScore() }}</p>
+              </div>
+            }
           </div>
         </div>
       </div>
@@ -158,80 +146,71 @@
   <!-- ===================== -->
   <!-- == MOBILE LAYOUT   == -->
   <!-- ===================== -->
-  <div class="flex lg:hidden w-full max-w-md h-[100svh] flex-col items-center p-2 mx-auto">
+  <div class="flex lg:hidden w-full h-[100svh] flex-col mx-auto px-1.5">
     <!-- Header (Mobile) -->
-    <header class="w-full flex flex-col items-center gap-2 z-10 p-1">
-      <div class="flex items-center justify-center gap-3">
-        <h1 class="text-2xl font-bold text-slate-800 dark:text-slate-100 tracking-tight">Tileburst</h1>
+    <header class="w-full flex flex-col items-center gap-2.5 z-10 pt-2 pb-1">
+      <div class="flex items-center justify-center gap-2">
+        <h1 class="text-lg font-bold text-slate-800 dark:text-slate-100 tracking-tight">Tileburst</h1>
         <app-language-selector></app-language-selector>
         <button 
           (click)="toggleSound()" 
-          class="w-9 h-9 transition-all duration-200 btn-3d flex items-center justify-center rounded-full"
+          class="w-8 h-8 transition-all duration-200 btn-3d flex items-center justify-center rounded-full"
           [class.bg-slate-600]="!isSoundEnabled()"
           [class.bg-slate-400]="isSoundEnabled()"
           [style.--shadow-color]="isSoundEnabled() ? '#64748b' : '#475569'"
           [attr.aria-label]="i18n.t().toggleSound">
           @if (isSoundEnabled()) {
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-white">
-              <path d="M11 5L6 9H2v6h4l5 4V5z"/>
-              <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/>
-            </svg>
+            <lucide-angular [img]="Volume2Icon" class="w-3.5 h-3.5 text-white"></lucide-angular>
           } @else {
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-white">
-              <path d="M11 5L6 9H2v6h4l5 4V5z"/>
-              <line x1="23" y1="9" x2="17" y2="15"/>
-              <line x1="17" y1="9" x2="23" y2="15"/>
-            </svg>
+            <lucide-angular [img]="VolumeXIcon" class="w-3.5 h-3.5 text-white"></lucide-angular>
           }
         </button>
         <button 
           (click)="toggleTheme()" 
-          class="w-9 h-9 transition-all duration-200 btn-3d flex items-center justify-center rounded-full bg-slate-500 dark:bg-slate-600"
+          class="w-8 h-8 transition-all duration-200 btn-3d flex items-center justify-center rounded-full bg-slate-500 dark:bg-slate-600"
           [style.--shadow-color]="'#475569'"
           [attr.aria-label]="i18n.t().toggleDarkMode">
           @if (isDarkMode()) {
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-white">
-              <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
-            </svg>
+            <lucide-angular [img]="MoonIcon" class="w-3.5 h-3.5 text-white"></lucide-angular>
           } @else {
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-white">
-              <circle cx="12" cy="12" r="4"/>
-              <path d="M12 2v2"/>
-              <path d="M12 20v2"/>
-              <path d="m4.93 4.93 1.41 1.41"/>
-              <path d="m17.66 17.66 1.41 1.41"/>
-              <path d="M2 12h2"/>
-              <path d="M20 12h2"/>
-              <path d="m6.34 17.66-1.41 1.41"/>
-              <path d="m19.07 4.93-1.41 1.41"/>
-            </svg>
+            <lucide-angular [img]="SunIcon" class="w-3.5 h-3.5 text-white"></lucide-angular>
           }
         </button>
+        <app-options-menu></app-options-menu>
       </div>
       
-      <div class="w-full grid grid-cols-[auto_1fr_auto] items-center gap-2">
+      <div class="w-full grid grid-cols-[auto_1fr_1fr_auto] items-center gap-1.5">
         <button 
           (click)="showRestartConfirm()" 
-          class="w-11 h-11 bg-green-500 text-white transition-all duration-200 btn-3d flex items-center justify-center"
+          class="w-8 h-8 bg-green-500 text-white transition-all duration-200 btn-3d flex items-center justify-center"
           style="--shadow-color: #15803d;"
           [attr.aria-label]="i18n.t().newGameButton">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4">
             <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
             <path d="M3 3v5h5"/>
           </svg>
         </button>
 
-        <div class="bg-white dark:bg-slate-800 rounded-2xl p-2 shadow-lg text-center">
-          <span class="text-xs text-slate-500 dark:text-slate-400 uppercase font-semibold tracking-wider">{{ i18n.t().score }}</span>
-          <p class="text-3xl font-bold text-amber-500 leading-none">{{ score() }}</p>
+        <div class="bg-white dark:bg-slate-800 rounded-lg p-1 shadow-lg text-center">
+          <span class="text-[9px] text-slate-500 dark:text-slate-400 uppercase font-semibold tracking-wider">{{ i18n.t().score }}</span>
+          <p class="text-xl font-bold text-amber-500 leading-none">{{ score() }}</p>
         </div>
+
+        @if (bestScore() > 0) {
+          <div class="bg-white dark:bg-slate-800 rounded-lg p-1 shadow-lg text-center">
+            <span class="text-[9px] text-slate-500 dark:text-slate-400 uppercase font-semibold tracking-wider">{{ i18n.t().bestScore }}</span>
+            <p class="text-xl font-bold text-amber-500 leading-none">{{ bestScore() }}</p>
+          </div>
+        } @else {
+          <div></div>
+        }
 
         <button 
           (click)="showTutorial()" 
-          class="w-11 h-11 bg-slate-500 text-white transition-all duration-200 btn-3d flex items-center justify-center"
+          class="w-8 h-8 bg-slate-500 text-white transition-all duration-200 btn-3d flex items-center justify-center"
           style="--shadow-color: #475569;"
           [attr.aria-label]="i18n.t().howToPlayButton">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4">
             <circle cx="12" cy="12" r="10"/>
             <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
             <path d="M12 17h.01"/>
@@ -241,31 +220,29 @@
     </header>
 
     <!-- Conseil Stratégique (Mobile) -->
-    <div class="w-full bg-cyan-100/60 dark:bg-cyan-900/60 rounded-2xl p-3 flex items-start gap-3 mt-1">
-      <div class="flex-shrink-0 bg-cyan-200/70 dark:bg-cyan-800/70 p-2 rounded-full">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-cyan-700 dark:text-cyan-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+    <div class="w-full bg-cyan-100/60 dark:bg-cyan-900/60 rounded-xl p-1.5 flex items-start gap-1.5 mt-2">
+      <div class="flex-shrink-0 bg-cyan-200/70 dark:bg-cyan-800/70 p-1 rounded-full">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 text-cyan-700 dark:text-cyan-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
           <path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
         </svg>
       </div>
-      <div class="text-cyan-900 dark:text-cyan-100 flex-1">
-        <h3 class="font-bold text-xs">{{ i18n.t().strategicTip }}</h3>
-        <p class="text-xs leading-snug mt-0.5" [innerHTML]="i18n.translateWithParams('strategicTipText', minValidatedGroupSize().toString())"></p>
+      <div class="text-cyan-900 dark:text-cyan-100 flex-1 min-w-0">
+        <h3 class="font-bold text-[9px] leading-tight">{{ i18n.t().strategicTip }}</h3>
+        <p class="text-[8px] leading-tight mt-0.5" [innerHTML]="i18n.translateWithParams('strategicTipText', minValidatedGroupSize().toString())"></p>
       </div>
     </div>
 
     <!-- Grid (Mobile) -->
-    <div class="w-full flex-grow flex items-center justify-center relative my-2">
-      <div class="w-full max-w-full">
-        <app-grid></app-grid>
-      </div>
+    <div class="w-full flex-grow relative my-1 min-h-0 max-h-full -mx-1.5 flex items-center justify-center overflow-hidden">
+      <app-grid></app-grid>
     </div>
 
     <!-- Footer Controls (Mobile) -->
-    <footer class="w-full flex flex-col items-center gap-2 z-10 relative">
-      <div class="w-full bg-slate-200/80 dark:bg-slate-700/80 backdrop-blur-sm p-2 rounded-2xl shadow-lg grid grid-cols-[1fr_auto_auto_1.75fr] items-center gap-2 h-[85px]">
+    <footer class="w-full flex flex-col items-center z-10 relative pb-1.5">
+      <div class="w-full bg-slate-200/80 dark:bg-slate-700/80 backdrop-blur-sm p-1 rounded-xl shadow-lg grid grid-cols-[1fr_auto_auto_1.75fr] items-center gap-1 h-[65px]">
         
-        <div class="flex flex-col items-center justify-center h-full bg-white/50 dark:bg-slate-800/50 rounded-lg p-1">
-          <span class="text-[10px] text-slate-600 dark:text-slate-300 uppercase font-semibold">{{ i18n.t().nextTile }}</span>
+        <div class="flex flex-col items-center justify-center h-full bg-white/50 dark:bg-slate-800/50 rounded-lg p-0.5">
+          <span class="text-[8px] text-slate-600 dark:text-slate-300 uppercase font-semibold">{{ i18n.t().nextTile }}</span>
           <div class="flex-grow flex items-center justify-center">
             @if (nextTile(); as tile) { <app-tile-preview [tile]="tile"></app-tile-preview> }
           </div>
@@ -276,7 +253,7 @@
             class="h-full aspect-square bg-purple-400 text-white transition-all duration-200 btn-3d flex items-center justify-center"
             style="--shadow-color: #9333ea;"
             [attr.aria-label]="i18n.t().swapTilesButton">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-7 h-7">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5">
               <path d="M8 3 4 7l4 4"/>
               <path d="M4 7h16"/>
               <path d="m16 21 4-4-4-4"/>
@@ -289,7 +266,7 @@
             class="h-full aspect-square bg-cyan-400 text-white transition-all duration-200 btn-3d flex items-center justify-center"
             style="--shadow-color: #0891b2;"
             [attr.aria-label]="i18n.t().rotateButton">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-7 h-7">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5">
               <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/>
               <path d="M21 3v5h-5"/>
             </svg>
@@ -305,7 +282,7 @@
           (touchmove)="onTileTouchMove($event)"
           (touchend)="onTileTouchEnd($event)"
           (touchcancel)="onTileTouchCancel()">
-          @if (currentTile(); as tile) { <app-tile-preview [tile]="tile"></app-tile-preview> } @else { <div class="text-slate-500 dark:text-slate-400 text-sm">{{ i18n.t().loading }}</div> }
+          @if (currentTile(); as tile) { <app-tile-preview [tile]="tile"></app-tile-preview> } @else { <div class="text-slate-500 dark:text-slate-400 text-[10px]">{{ i18n.t().loading }}</div> }
         </div>
 
       </div>
@@ -317,20 +294,20 @@
   <!-- == SHARED MODALS   == -->
   <!-- ===================== -->
   @if (isRestartConfirmVisible()) {
-    <div class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
-      <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 sm:p-8 shadow-2xl text-center flex flex-col gap-4 items-center">
-        <h2 class="text-2xl sm:text-3xl font-bold text-slate-800 dark:text-slate-100">{{ i18n.t().restartConfirm }}</h2>
-        <p class="text-slate-600 dark:text-slate-300 text-base">{{ i18n.t().restartConfirmText }}</p>
-        <div class="flex gap-4 mt-4 w-full">
+    <div class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-3">
+      <div class="bg-white dark:bg-slate-800 rounded-xl lg:rounded-2xl p-4 lg:p-6 sm:p-8 shadow-2xl text-center flex flex-col gap-3 lg:gap-4 items-center max-w-sm w-full">
+        <h2 class="text-lg lg:text-2xl sm:text-3xl font-bold text-slate-800 dark:text-slate-100">{{ i18n.t().restartConfirm }}</h2>
+        <p class="text-slate-600 dark:text-slate-300 text-sm lg:text-base">{{ i18n.t().restartConfirmText }}</p>
+        <div class="flex gap-3 lg:gap-4 mt-2 lg:mt-4 w-full">
             <button 
               (click)="hideRestartConfirm()" 
-              class="w-full bg-slate-500 text-white font-bold py-3 px-6 transition-all duration-200 btn-3d"
+              class="w-full bg-slate-500 text-white font-bold py-2 lg:py-3 px-4 lg:px-6 text-sm lg:text-base transition-all duration-200 btn-3d"
               style="--shadow-color: #475569;">
               {{ i18n.t().no }}
             </button>
             <button 
               (click)="confirmAndRestart()" 
-              class="w-full bg-green-500 text-white font-bold py-3 px-6 transition-all duration-200 btn-3d"
+              class="w-full bg-green-500 text-white font-bold py-2 lg:py-3 px-4 lg:px-6 text-sm lg:text-base transition-all duration-200 btn-3d"
               style="--shadow-color: #15803d;">
               {{ i18n.t().yes }}
             </button>
@@ -340,17 +317,17 @@
   }
 
   @if (isGameOver()) {
-    <div class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
-      <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 sm:p-8 shadow-2xl text-center flex flex-col gap-4 items-center max-w-md w-full">
-        <h2 class="text-4xl sm:text-5xl font-extrabold text-red-500">{{ i18n.t().gameOver }}</h2>
-        <p class="text-slate-600 dark:text-slate-300 text-base sm:text-lg">{{ i18n.t().finalScore }}</p>
-        <p class="text-5xl sm:text-6xl font-bold text-amber-500">{{ score() }}</p>
-        <div class="flex flex-col sm:flex-row gap-3 w-full mt-2">
+    <div class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-3">
+      <div class="bg-white dark:bg-slate-800 rounded-xl lg:rounded-2xl p-4 lg:p-6 sm:p-8 shadow-2xl text-center flex flex-col gap-3 lg:gap-4 items-center max-w-sm w-full">
+        <h2 class="text-2xl lg:text-4xl sm:text-5xl font-extrabold text-red-500">{{ i18n.t().gameOver }}</h2>
+        <p class="text-slate-600 dark:text-slate-300 text-sm lg:text-base sm:text-lg">{{ i18n.t().finalScore }}</p>
+        <p class="text-3xl lg:text-5xl sm:text-6xl font-bold text-amber-500">{{ score() }}</p>
+        <div class="flex flex-col sm:flex-row gap-2 lg:gap-3 w-full mt-1 lg:mt-2">
           <button 
             (click)="shareScore()" 
-            class="flex-1 bg-blue-500 text-white font-bold py-3 px-6 sm:px-8 text-base sm:text-lg transition-all duration-200 btn-3d flex items-center justify-center gap-2"
+            class="flex-1 bg-blue-500 text-white font-bold py-2 lg:py-3 px-4 lg:px-6 sm:px-8 text-sm lg:text-base sm:text-lg transition-all duration-200 btn-3d flex items-center justify-center gap-2"
             style="--shadow-color: #2563eb;">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 lg:w-5 lg:h-5">
               <circle cx="18" cy="5" r="3"/>
               <circle cx="6" cy="12" r="3"/>
               <circle cx="18" cy="19" r="3"/>
@@ -361,7 +338,7 @@
           </button>
           <button 
             (click)="restartGame()" 
-            class="flex-1 bg-green-500 text-white font-bold py-3 px-6 sm:px-8 text-base sm:text-lg transition-all duration-200 btn-3d"
+            class="flex-1 bg-green-500 text-white font-bold py-2 lg:py-3 px-4 lg:px-6 sm:px-8 text-sm lg:text-base sm:text-lg transition-all duration-200 btn-3d"
             style="--shadow-color: #15803d;">
             {{ i18n.t().playAgain }}
           </button>

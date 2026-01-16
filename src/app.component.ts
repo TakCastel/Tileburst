@@ -9,12 +9,14 @@ import { SoundService } from './services/sound.service';
 import { ThemeService } from './services/theme.service';
 import { I18nService } from './services/i18n.service';
 import { LanguageSelectorComponent } from './components/language-selector/language-selector.component';
+import { OptionsMenuComponent } from './components/options-menu/options-menu.component';
+import { LucideAngularModule, Volume2, VolumeX, Sun, Moon } from 'lucide-angular';
 
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
   standalone: true,
-  imports: [CommonModule, GridComponent, TilePreviewComponent, TutorialComponent, LanguageSelectorComponent],
+  imports: [CommonModule, GridComponent, TilePreviewComponent, TutorialComponent, LanguageSelectorComponent, OptionsMenuComponent, LucideAngularModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
     '(window:keydown.r)': 'rotateTile()',
@@ -28,7 +30,14 @@ export class AppComponent {
   protected themeService = inject(ThemeService);
   protected i18n = inject(I18nService);
 
+  // Icônes Lucide
+  readonly Volume2Icon = Volume2;
+  readonly VolumeXIcon = VolumeX;
+  readonly SunIcon = Sun;
+  readonly MoonIcon = Moon;
+
   score = this.gameService.score;
+  bestScore = this.gameService.bestScore;
   gridSize = this.gameService.gridSize;
   currentTile = this.gameService.currentTile;
   nextTile = this.gameService.nextTile;

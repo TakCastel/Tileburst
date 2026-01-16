@@ -55,6 +55,8 @@ const STARTING_GRID_SIZE = 6;
 const ANIMATION_DURATION = 300;
 const SHRINK_WARNING_DURATION = 1500;
 const PRE_SHRINK_DELAY = 1000;
+const STORAGE_KEY_GAME_STATE = 'tileburst_game_state';
+const STORAGE_KEY_BEST_SCORE = 'tileburst_best_score';
 
 @Injectable({
   providedIn: 'root',
@@ -92,9 +94,18 @@ export class GameService {
   private tileIdCounter = 0;
   private shrinkTimeout: any = null;
   private isFirstGame = true;
+  private _bestScore: WritableSignal<number> = signal(this.loadBestScore());
+
+  public readonly bestScore = this._bestScore.asReadonly();
 
   constructor() {
-    this.startGame();
+    // Essayer de restaurer l'état sauvegardé
+    const savedState = this.loadGameState();
+    if (savedState && !savedState.isGameOver) {
+      this.restoreGameState(savedState);
+    } else {
+      this.startGame();
+    }
     // Démarrer le tutoriel seulement au premier chargement de l'app
     if (this.isFirstGame) {
       this.tutorialService.startTutorial();
@@ -117,16 +128,141 @@ export class GameService {
     };
   }
 
+  private saveGameState(): void {
+    try {
+      const state = this.state();
+      // Ne pas sauvegarder les propriétés temporaires d'animation
+      const stateToSave: Partial<GameState> = {
+        grid: state.grid.map(row => row.map(cell => ({
+          color: cell.color,
+          tileId: cell.tileId,
+          validated: cell.validated,
+          // Ne pas sauvegarder clearing et shrinking
+        }))),
+        gridSize: state.gridSize,
+        score: state.score,
+        currentTile: state.currentTile,
+        nextTile: state.nextTile,
+        isGameOver: state.isGameOver,
+        changeDirectionIndex: state.changeDirectionIndex,
+      };
+      localStorage.setItem(STORAGE_KEY_GAME_STATE, JSON.stringify(stateToSave));
+    } catch (error) {
+      console.error('Erreur lors de la sauvegarde:', error);
+    }
+  }
+
+  private loadGameState(): Partial<GameState> | null {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY_GAME_STATE);
+      if (saved) {
+        return JSON.parse(saved);
+      }
+    } catch (error) {
+      console.error('Erreur lors du chargement:', error);
+    }
+    return null;
+  }
+
+  private restoreGameState(savedState: Partial<GameState>): void {
+    try {
+      const restoredState: GameState = {
+        grid: savedState.grid || this.createEmptyGrid(savedState.gridSize || STARTING_GRID_SIZE),
+        gridSize: savedState.gridSize || STARTING_GRID_SIZE,
+        score: savedState.score || 0,
+        currentTile: savedState.currentTile || null,
+        nextTile: savedState.nextTile || null,
+        isGameOver: savedState.isGameOver || false,
+        lastPlacedTileId: null,
+        isShrinking: false,
+        changeDirectionIndex: savedState.changeDirectionIndex || 0,
+        isShrinkImminent: false,
+      };
+
+      // Restaurer le compteur de tileId
+      if (restoredState.currentTile) {
+        this.tileIdCounter = Math.max(this.tileIdCounter, restoredState.currentTile.id);
+      }
+      if (restoredState.nextTile) {
+        this.tileIdCounter = Math.max(this.tileIdCounter, restoredState.nextTile.id);
+      }
+      // Vérifier aussi les tuiles dans la grille
+      restoredState.grid.forEach(row => {
+        row.forEach(cell => {
+          if (cell.tileId !== null) {
+            this.tileIdCounter = Math.max(this.tileIdCounter, cell.tileId);
+          }
+        });
+      });
+
+      this._gameState.set(restoredState);
+      
+      // Mettre à jour le meilleur score si nécessaire
+      this.updateBestScore(restoredState.score);
+    } catch (error) {
+      console.error('Erreur lors de la restauration:', error);
+      this.startGame();
+    }
+  }
+
+  private loadBestScore(): number {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY_BEST_SCORE);
+      if (saved) {
+        const score = parseInt(saved, 10);
+        return isNaN(score) ? 0 : score;
+      }
+    } catch (error) {
+      console.error('Erreur lors du chargement du meilleur score:', error);
+    }
+    return 0;
+  }
+
+  private saveBestScore(score: number): void {
+    try {
+      localStorage.setItem(STORAGE_KEY_BEST_SCORE, score.toString());
+      this._bestScore.set(score);
+    } catch (error) {
+      console.error('Erreur lors de la sauvegarde du meilleur score:', error);
+    }
+  }
+
+  private updateBestScore(currentScore: number): void {
+    const bestScore = this._bestScore();
+    if (currentScore > bestScore) {
+      this.saveBestScore(currentScore);
+    }
+  }
+
+  public resetBestScore(): void {
+    try {
+      localStorage.removeItem(STORAGE_KEY_BEST_SCORE);
+      this._bestScore.set(0);
+    } catch (error) {
+      console.error('Erreur lors de la réinitialisation du meilleur score:', error);
+    }
+  }
+
   public startGame(): void {
     clearTimeout(this.shrinkTimeout);
+    // Effacer l'état sauvegardé
+    try {
+      localStorage.removeItem(STORAGE_KEY_GAME_STATE);
+    } catch (error) {
+      console.error('Erreur lors de la suppression de l\'état sauvegardé:', error);
+    }
+    
     const initialState = this.getInitialState();
     initialState.currentTile = this._generateRandomTile();
     initialState.nextTile = this._generateRandomTile();
     this._gameState.set(initialState);
+    this.saveGameState();
 
     // Vérifier si au moins une des deux tuiles peut être placée
     if (!this.canPlaceAtLeastOneTile(initialState.currentTile, initialState.nextTile)) {
         this._gameState.update(state => ({...state, isGameOver: true}));
+        this.updateBestScore(initialState.score);
+        this.saveGameState();
     }
     // Ne pas démarrer le tutoriel lors d'un rejeu
   }
@@ -178,15 +314,22 @@ export class GameService {
       // Vérifier si au moins une des deux tuiles peut être placée
       if (!this.canPlaceAtLeastOneTile(current, next)) {
           this._gameState.update(s => ({...s, isShrinkImminent: true}));
+          this.saveGameState();
           this.soundService.playShrinkWarningSound();
           this.shrinkTimeout = setTimeout(() => {
               if (this.gridSize() > MIN_GRID_SIZE) {
                   this.changeGridSize(-1);
               } else {
+                  const finalScore = this.state().score;
                   this._gameState.update(s => ({...s, isGameOver: true }));
+                  this.updateBestScore(finalScore);
+                  this.saveGameState();
               }
               this._gameState.update(s => ({...s, isShrinkImminent: false}));
+              this.saveGameState();
           }, PRE_SHRINK_DELAY);
+      } else {
+          this.saveGameState();
       }
   }
 
@@ -221,6 +364,7 @@ export class GameService {
     };
     
     this._gameState.update(state => ({ ...state, currentTile: rotatedTile }));
+    this.saveGameState();
     this.soundService.playRotateSound();
   }
 
@@ -233,6 +377,7 @@ export class GameService {
       currentTile: s.nextTile,
       nextTile: s.currentTile
     }));
+    this.saveGameState();
     this.soundService.playSwapSound();
   }
 
@@ -371,13 +516,17 @@ export class GameService {
           })
         );
         
+        const currentState = this.state();
+        const newScore = currentState.score + clearInfo.points;
         this._gameState.update(state => ({
           ...state,
           grid: gridWithClearing,
           currentTile: null,
           lastPlacedTileId: tile.id,
-          score: state.score + clearInfo.points
+          score: newScore
         }));
+        this.updateBestScore(newScore);
+        this.saveGameState();
         
         // Son de placement suivi du son de suppression
         this.soundService.playPlaceSound();
@@ -403,6 +552,7 @@ export class GameService {
           }
           
           this._gameState.update(state => ({ ...state, grid: finalGridWithValidated, lastPlacedTileId: null }));
+          this.saveGameState();
           this.changeGridSize(1);
           this.advanceToNextTile();
         }, ANIMATION_DURATION);
@@ -422,6 +572,7 @@ export class GameService {
           currentTile: null,
           lastPlacedTileId: tile.id,
         }));
+        this.saveGameState();
         
         // Son de placement simple
         this.soundService.playPlaceSound();
@@ -435,6 +586,7 @@ export class GameService {
         
         setTimeout(() => {
           this._gameState.update(s => ({...s, lastPlacedTileId: null}));
+          this.saveGameState();
           this.advanceToNextTile();
         }, ANIMATION_DURATION);
       }
@@ -548,6 +700,7 @@ export class GameService {
             gridSize: newSize,
             changeDirectionIndex: (state.changeDirectionIndex + 1) % 4
         }));
+        this.saveGameState();
         this.soundService.playExpandSound();
     } else { // Shrinking
         this._gameState.update(state => ({ ...state, isShrinking: true }));
@@ -567,7 +720,11 @@ export class GameService {
             );
             
             const points = validatedCellsToClear.size * 15 * this.scoreMultiplier();
-            this._gameState.update(state => ({ ...state, grid: gridWithClearing, score: state.score + points }));
+            const currentState = this.state();
+            const newScore = currentState.score + points;
+            this._gameState.update(state => ({ ...state, grid: gridWithClearing, score: newScore }));
+            this.updateBestScore(newScore);
+            this.saveGameState();
 
             // Son de suppression des cellules validées
             this.soundService.playClearSound(Math.ceil(validatedCellsToClear.size / 3));
@@ -590,7 +747,10 @@ export class GameService {
     const dir = this.changeDirectionIndex();
 
     if (newSize < MIN_GRID_SIZE) {
+        const finalScore = this.state().score;
         this._gameState.update(s => ({...s, isGameOver: true, isShrinking: false }));
+        this.updateBestScore(finalScore);
+        this.saveGameState();
         return;
     }
 
@@ -639,13 +799,17 @@ export class GameService {
           isShrinking: false,
           changeDirectionIndex: (state.changeDirectionIndex + 1) % 4
         }));
+        this.saveGameState();
         
         // Son de réduction de grille
         this.soundService.playShrinkSound();
 
         // Vérifier si au moins une des deux tuiles peut être placée après le shrink
         if (!this.canPlaceAtLeastOneTile(this.currentTile(), this.nextTile())) {
+            const finalScore = this.state().score;
             this._gameState.update(s => ({...s, isGameOver: true }));
+            this.updateBestScore(finalScore);
+            this.saveGameState();
         }
     }, SHRINK_WARNING_DURATION);
   }

@@ -1,37 +1,37 @@
 {
-  "hash": "a45a45b1",
-  "configHash": "ec0a78c5",
-  "lockfileHash": "26ed173b",
-  "browserHash": "f0daa8f1",
+  "hash": "1ecc2518",
+  "configHash": "05eed67c",
+  "lockfileHash": "6ab2048a",
+  "browserHash": "073e87f8",
   "optimized": {
     "@angular/common": {
       "src": "../../../../../../node_modules/@angular/common/fesm2022/common.mjs",
       "file": "@angular_common.js",
-      "fileHash": "8825e93c",
+      "fileHash": "f58abd5e",
       "needsInterop": false
     },
     "@angular/compiler": {
       "src": "../../../../../../node_modules/@angular/compiler/fesm2022/compiler.mjs",
       "file": "@angular_compiler.js",
-      "fileHash": "1f491c29",
+      "fileHash": "276ed86e",
       "needsInterop": false
     },
     "@angular/core": {
       "src": "../../../../../../node_modules/@angular/core/fesm2022/core.mjs",
       "file": "@angular_core.js",
-      "fileHash": "a06ea9f6",
+      "fileHash": "8d2130c8",
       "needsInterop": false
     },
     "@angular/platform-browser": {
       "src": "../../../../../../node_modules/@angular/platform-browser/fesm2022/platform-browser.mjs",
       "file": "@angular_platform-browser.js",
-      "fileHash": "ae244e78",
+      "fileHash": "d272c773",
       "needsInterop": false
     },
-    "html2canvas": {
-      "src": "../../../../../../node_modules/html2canvas/dist/html2canvas.esm.js",
-      "file": "html2canvas.js",
-      "fileHash": "90c3283f",
+    "lucide-angular": {
+      "src": "../../../../../../node_modules/lucide-angular/fesm2020/lucide-angular.mjs",
+      "file": "lucide-angular.js",
+      "fileHash": "caf304ab",
       "needsInterop": false
     }
   },

@@ -1,0 +1,175 @@
+<div class="relative">
+  <button
+    data-options-trigger
+    (click)="toggleMenu()"
+    class="w-8 h-8 lg:w-10 lg:h-10 transition-all duration-200 btn-3d flex items-center justify-center rounded-full bg-slate-500 dark:bg-slate-600"
+    [style.--shadow-color]="'#475569'"
+    [attr.aria-label]="i18n.t().options || 'Options'"
+    [attr.aria-expanded]="isOpen()">
+    <lucide-angular [img]="SettingsIcon" class="w-3.5 h-3.5 lg:w-5 lg:h-5 text-white"></lucide-angular>
+  </button>
+  
+  @if (isOpen()) {
+    <div 
+      class="fixed inset-0 bg-black bg-opacity-30 z-40 transition-opacity duration-300"
+      [class.animate-fade-in]="!isClosing()"
+      [class.animate-fade-out]="isClosing()"
+      (click)="closeMenu()"></div>
+    <div 
+      class="fixed top-0 right-0 h-full w-full sm:w-[90vw] sm:max-w-md bg-white dark:bg-slate-900 shadow-xl dark:shadow-[0_0_25px_rgba(0,0,0,0.5)] border-l border-slate-200 dark:border-slate-800 z-50 overflow-y-auto transition-transform duration-300"
+      [class.animate-slide-in-right]="!isClosing()"
+      [class.animate-slide-out-right]="isClosing()">
+      <div class="p-4 lg:p-6 space-y-4 lg:space-y-6 flex flex-col h-full">
+        <!-- Header -->
+        <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3 lg:pb-4 mb-4 lg:mb-6">
+          <h2 class="text-lg lg:text-2xl font-bold text-slate-800 dark:text-slate-50">{{ i18n.t().options || 'Options' }}</h2>
+          <button
+            (click)="closeMenu()"
+            class="w-7 h-7 lg:w-8 lg:h-8 flex items-center justify-center rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+            [attr.aria-label]="i18n.t().close">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 lg:w-5 lg:h-5 text-slate-600 dark:text-slate-400">
+              <line x1="18" y1="6" x2="6" y2="18"/>
+              <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Palette de couleurs -->
+        <div class="space-y-2 lg:space-y-3">
+          <h3 class="text-xs lg:text-base font-semibold text-slate-700 dark:text-slate-400 uppercase tracking-wider mb-1.5 lg:mb-2">{{ i18n.t().colorPalette || 'Palette de couleurs' }}</h3>
+          <div class="grid grid-cols-3 gap-1 lg:gap-1.5 sm:gap-2">
+            @for (palette of colorPalettes; track palette.value) {
+              <button
+                (click)="setColorPalette(palette.value)"
+                class="px-1.5 py-1 lg:px-2 lg:py-1 sm:px-3 sm:py-2.5 rounded-lg transition-all text-[10px] lg:text-xs sm:text-sm font-medium btn-3d"
+                [class.bg-cyan-500]="colorPalette() === palette.value"
+                [class.dark:bg-cyan-600]="colorPalette() === palette.value"
+                [class.text-white]="colorPalette() === palette.value"
+                [class.bg-slate-50]="colorPalette() !== palette.value"
+                [class.dark:bg-slate-800]="colorPalette() !== palette.value"
+                [class.text-slate-800]="colorPalette() !== palette.value"
+                [class.dark:text-slate-300]="colorPalette() !== palette.value"
+                [style.--shadow-color]="colorPalette() === palette.value ? '#0891b2' : (isDarkMode() ? '#334155' : '#cbd5e1')">
+                {{ palette.label }}
+              </button>
+            }
+          </div>
+        </div>
+
+        <!-- Son -->
+        <div class="space-y-2 lg:space-y-3">
+          <h3 class="text-xs lg:text-base font-semibold text-slate-700 dark:text-slate-400 uppercase tracking-wider mb-1.5 lg:mb-2">{{ i18n.t().sound || 'Son' }}</h3>
+          <div class="bg-white dark:bg-slate-800 rounded-xl lg:rounded-2xl p-3 lg:p-4 shadow-sm dark:shadow-none border border-slate-200 dark:border-slate-700">
+            <div class="flex items-center justify-between gap-3 lg:gap-4">
+              <span class="text-sm lg:text-base text-slate-700 dark:text-slate-300 font-medium flex-1">
+                {{ isSoundEnabled() ? (i18n.t().soundOn || 'Activé') : (i18n.t().soundOff || 'Désactivé') }}
+              </span>
+              <button
+                (click)="toggleSound()"
+                type="button"
+                class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900"
+                [class.bg-cyan-500]="isSoundEnabled()"
+                [class.dark:bg-cyan-600]="isSoundEnabled()"
+                [class.bg-slate-400]="!isSoundEnabled()"
+                [class.dark:bg-slate-600]="!isSoundEnabled()"
+                role="switch"
+                [attr.aria-checked]="isSoundEnabled()">
+                <span class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out"
+                      [class.translate-x-5]="isSoundEnabled()"
+                      [class.translate-x-0]="!isSoundEnabled()"></span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Thème -->
+        <div class="space-y-2 lg:space-y-3">
+          <h3 class="text-xs lg:text-base font-semibold text-slate-700 dark:text-slate-400 uppercase tracking-wider mb-1.5 lg:mb-2">{{ i18n.t().toggleDarkMode || 'Thème' }}</h3>
+          <div class="bg-white dark:bg-slate-800 rounded-xl lg:rounded-2xl p-3 lg:p-4 shadow-sm dark:shadow-none border border-slate-200 dark:border-slate-700">
+            <div class="flex items-center justify-between gap-3 lg:gap-4">
+              <span class="text-sm lg:text-base text-slate-700 dark:text-slate-300 font-medium flex-1">
+                {{ isDarkMode() ? (i18n.t().darkMode || 'Sombre') : (i18n.t().lightMode || 'Clair') }}
+              </span>
+              <button
+                (click)="toggleTheme()"
+                type="button"
+                class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900"
+                [class.bg-cyan-500]="isDarkMode()"
+                [class.dark:bg-cyan-600]="isDarkMode()"
+                [class.bg-slate-400]="!isDarkMode()"
+                [class.dark:bg-slate-600]="!isDarkMode()"
+                role="switch"
+                [attr.aria-checked]="isDarkMode()">
+                <span class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out"
+                      [class.translate-x-5]="isDarkMode()"
+                      [class.translate-x-0]="!isDarkMode()"></span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Langue -->
+        <div class="space-y-2 lg:space-y-3">
+          <h3 class="text-xs lg:text-base font-semibold text-slate-700 dark:text-slate-400 uppercase tracking-wider mb-1.5 lg:mb-2">{{ i18n.t().language || 'Langue' }}</h3>
+          <div class="bg-white dark:bg-slate-800 rounded-xl lg:rounded-2xl p-3 lg:p-4 shadow-sm dark:shadow-none border border-slate-200 dark:border-slate-700">
+            <div class="relative" data-language-dropdown>
+              <button
+                (click)="toggleLanguageDropdown()"
+                class="w-full px-3 lg:px-4 py-2 lg:py-2.5 rounded-lg border-2 border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-left flex items-center justify-between transition-all hover:bg-slate-50 dark:hover:bg-slate-800"
+                [attr.aria-expanded]="isLanguageDropdownOpen()">
+                <span class="text-sm lg:text-base text-slate-800 dark:text-slate-200 font-medium">
+                  {{ i18n.languageNames[i18n.getLanguage()] }}
+                </span>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" 
+                     class="w-3.5 h-3.5 lg:w-4 lg:h-4 text-slate-600 dark:text-slate-400 transition-transform"
+                     [class.rotate-180]="isLanguageDropdownOpen()">
+                  <path d="m6 9 6 6 6-6"/>
+                </svg>
+              </button>
+              
+              @if (isLanguageDropdownOpen()) {
+                <div class="absolute top-full left-0 right-0 mt-1.5 lg:mt-2 bg-white dark:bg-slate-800 rounded-lg shadow-lg dark:shadow-[0_4px_6px_-1px_rgba(0,0,0,0.3)] border border-slate-200 dark:border-slate-700 py-1.5 lg:py-2 z-50 max-h-64 overflow-y-auto">
+                  @for (lang of i18n.availableLanguages; track lang) {
+                    <button
+                      (click)="setLanguage(lang)"
+                      class="w-full px-3 lg:px-4 py-1.5 lg:py-2 text-left hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors flex items-center justify-between"
+                      [class.bg-cyan-100]="i18n.getLanguage() === lang"
+                      [class.dark:bg-cyan-900]="i18n.getLanguage() === lang"
+                      [class.dark:text-cyan-100]="i18n.getLanguage() === lang">
+                      <span class="text-sm lg:text-base text-slate-700 dark:text-slate-300" [class.text-cyan-900]="i18n.getLanguage() === lang">{{ i18n.languageNames[lang] }}</span>
+                      @if (i18n.getLanguage() === lang) {
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-3.5 h-3.5 lg:w-4 lg:h-4 text-cyan-600 dark:text-cyan-300">
+                          <path d="M20 6 9 17l-5-5"/>
+                        </svg>
+                      }
+                    </button>
+                  }
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+
+
+        <!-- Réinitialiser le score max -->
+        <div class="space-y-2 lg:space-y-3 mt-auto">
+          <h3 class="text-xs lg:text-base font-semibold text-slate-700 dark:text-slate-400 uppercase tracking-wider mb-1.5 lg:mb-2">{{ i18n.t().bestScore || 'Meilleur score' }}</h3>
+          <div class="bg-white dark:bg-slate-800 rounded-xl lg:rounded-2xl p-3 lg:p-4 shadow-sm dark:shadow-none border border-slate-200 dark:border-slate-700">
+            <div class="flex items-center justify-between gap-2 lg:gap-4">
+              <div class="flex flex-col">
+                <span class="text-[10px] lg:text-xs text-slate-500 dark:text-slate-400 uppercase font-semibold tracking-wider">{{ i18n.t().currentBestScore || 'Score actuel' }}</span>
+                <span class="text-xl lg:text-2xl font-bold text-amber-500 dark:text-amber-400">{{ bestScore() }}</span>
+              </div>
+              <button
+                (click)="resetBestScore()"
+                class="px-3 lg:px-4 py-1.5 lg:py-2 bg-red-500 hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700 text-white rounded-lg transition-all duration-200 btn-3d text-xs lg:text-sm font-medium"
+                style="--shadow-color: #dc2626;">
+                {{ i18n.t().reset || 'Réinitialiser' }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>
