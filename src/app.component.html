@@ -116,7 +116,7 @@
         <div class="flex gap-3">
           <button 
             (click)="rotateTile()" 
-            class="flex-1 bg-cyan-400 text-white font-bold py-3 px-4 transition-all duration-200 btn-3d"
+            class="flex-1 bg-cyan-400 text-white font-bold py-3 px-4 transition-all duration-200 btn-3d whitespace-nowrap"
             style="--shadow-color: #0891b2;"
             [attr.aria-label]="i18n.t().rotateButton">
             {{ i18n.t().rotate }}
@@ -124,7 +124,7 @@
           @if (canMirrorTile()) {
             <button 
               (click)="mirrorTile()" 
-              class="flex-1 bg-violet-400 text-white font-bold py-3 px-4 transition-all duration-200 btn-3d"
+              class="flex-1 bg-violet-400 text-white font-bold py-3 px-4 transition-all duration-200 btn-3d whitespace-nowrap"
               style="--shadow-color: #9333ea;"
               [attr.aria-label]="i18n.t().mirrorButton">
               {{ i18n.t().mirror }}
