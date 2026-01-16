@@ -1,3 +1,6 @@
+@if (showLandingPage()) {
+  <app-landing-page></app-landing-page>
+} @else {
 <main class="w-full font-sans antialiased">
 
   <!-- ======================= -->
@@ -7,7 +10,7 @@
     
     <!-- == HEADER (Desktop) == -->
     <header class="w-full text-center mb-6 col-span-3 flex items-center justify-center gap-4">
-        <h1 class="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-800 dark:text-slate-100 tracking-tight">Tileburst</h1>
+        <h1 class="text-3xl sm:text-4xl lg:text-5xl font-tileburst text-slate-800 dark:text-slate-100 tracking-tight">Tileburst</h1>
         <app-language-selector></app-language-selector>
         <button 
           (click)="toggleSound()" 
@@ -110,12 +113,24 @@
       </div>
       <!-- Boutons d'action -->
       <div class="flex flex-col gap-3">
-        <button 
-          (click)="rotateTile()" 
-          class="w-full bg-cyan-400 text-white font-bold py-3 px-4 transition-all duration-200 btn-3d"
-          style="--shadow-color: #0891b2;">
-          {{ i18n.t().rotate }}
-        </button>
+        <div class="flex gap-3">
+          <button 
+            (click)="rotateTile()" 
+            class="flex-1 bg-cyan-400 text-white font-bold py-3 px-4 transition-all duration-200 btn-3d"
+            style="--shadow-color: #0891b2;"
+            [attr.aria-label]="i18n.t().rotateButton">
+            {{ i18n.t().rotate }}
+          </button>
+          @if (canMirrorTile()) {
+            <button 
+              (click)="mirrorTile()" 
+              class="flex-1 bg-violet-400 text-white font-bold py-3 px-4 transition-all duration-200 btn-3d"
+              style="--shadow-color: #9333ea;"
+              [attr.aria-label]="i18n.t().mirrorButton">
+              {{ i18n.t().mirror }}
+            </button>
+          }
+        </div>
         <button 
           (click)="swapTiles()" 
           class="w-full bg-purple-400 text-white font-bold py-3 px-4 transition-all duration-200 btn-3d"
@@ -150,7 +165,7 @@
     <!-- Header (Mobile) -->
     <header class="w-full flex flex-col items-center gap-2.5 z-10 pt-2 pb-1">
       <div class="flex items-center justify-center gap-2">
-        <h1 class="text-lg font-bold text-slate-800 dark:text-slate-100 tracking-tight">Tileburst</h1>
+        <h1 class="text-lg font-tileburst text-slate-800 dark:text-slate-100 tracking-tight">Tileburst</h1>
         <app-language-selector></app-language-selector>
         <button 
           (click)="toggleSound()" 
@@ -239,50 +254,80 @@
 
     <!-- Footer Controls (Mobile) -->
     <footer class="w-full flex flex-col items-center z-10 relative pb-1.5">
-      <div class="w-full bg-slate-200/80 dark:bg-slate-700/80 backdrop-blur-sm p-1 rounded-xl shadow-lg grid grid-cols-[1fr_auto_auto_1.75fr] items-center gap-1 h-[65px]">
+      <div class="w-full bg-slate-200/80 dark:bg-slate-700/80 backdrop-blur-sm p-1 rounded-xl shadow-lg flex flex-col gap-1">
         
-        <div class="flex flex-col items-center justify-center h-full bg-white/50 dark:bg-slate-800/50 rounded-lg p-0.5">
-          <span class="text-[8px] text-slate-600 dark:text-slate-300 uppercase font-semibold">{{ i18n.t().nextTile }}</span>
-          <div class="flex-grow flex items-center justify-center">
-            @if (nextTile(); as tile) { <app-tile-preview [tile]="tile"></app-tile-preview> }
+        <!-- Ligne 1: Tuile suivante + Bouton échanger -->
+        <div class="grid grid-cols-[1fr_auto] items-center gap-1 h-[50px]">
+          <div class="relative flex items-center justify-center h-full bg-white/50 dark:bg-slate-800/50 rounded-lg p-0.5">
+            <span class="absolute top-0.5 left-1/2 -translate-x-1/2 text-[8px] text-slate-600 dark:text-slate-300 uppercase font-semibold whitespace-nowrap z-10">{{ i18n.t().nextTile }}</span>
+            <div class="flex items-center justify-center w-full h-full pt-2">
+              @if (nextTile(); as tile) { <app-tile-preview [tile]="tile"></app-tile-preview> }
+            </div>
           </div>
+
+          <button 
+              (click)="swapTiles()" 
+              class="h-full aspect-square bg-purple-400 text-white transition-all duration-200 btn-3d flex items-center justify-center"
+              style="--shadow-color: #9333ea;"
+              [attr.aria-label]="i18n.t().swapTilesButton">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5">
+                <path d="M8 3 4 7l4 4"/>
+                <path d="M4 7h16"/>
+                <path d="m16 21 4-4-4-4"/>
+                <path d="M20 17H4"/>
+              </svg>
+          </button>
         </div>
 
-        <button 
-            (click)="swapTiles()" 
-            class="h-full aspect-square bg-purple-400 text-white transition-all duration-200 btn-3d flex items-center justify-center"
-            style="--shadow-color: #9333ea;"
-            [attr.aria-label]="i18n.t().swapTilesButton">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5">
-              <path d="M8 3 4 7l4 4"/>
-              <path d="M4 7h16"/>
-              <path d="m16 21 4-4-4-4"/>
-              <path d="M20 17H4"/>
-            </svg>
-        </button>
+        <!-- Ligne 2: Tuile actuelle + Boutons (rotation et miroir si applicable) -->
+        <div class="grid items-center gap-1 h-[50px]"
+             [class.grid-cols-[1fr_auto]]="!canMirrorTile()"
+             [class.grid-cols-[1fr_auto_auto]]="canMirrorTile()">
+          
+          <div 
+            class="h-full w-full flex items-center justify-center bg-white/50 dark:bg-slate-800/50 rounded-lg cursor-grab active:cursor-grabbing touch-none select-none overflow-hidden"
+            [class.opacity-50]="isDragging()"
+            draggable="true"
+            (dragstart)="onDragStart($event)"
+            (dragend)="onDragEnd()"
+            (touchstart)="onTileTouchStart($event)"
+            (touchmove)="onTileTouchMove($event)"
+            (touchend)="onTileTouchEnd($event)"
+            (touchcancel)="onTileTouchCancel()">
+            @if (currentTile(); as tile) { 
+              <div class="flex items-center justify-center w-full h-full">
+                <app-tile-preview [tile]="tile"></app-tile-preview>
+              </div>
+            } @else { 
+              <div class="text-slate-500 dark:text-slate-400 text-[10px]">{{ i18n.t().loading }}</div> 
+            }
+          </div>
 
-        <button 
-            (click)="rotateTile()" 
-            class="h-full aspect-square bg-cyan-400 text-white transition-all duration-200 btn-3d flex items-center justify-center"
-            style="--shadow-color: #0891b2;"
-            [attr.aria-label]="i18n.t().rotateButton">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5">
-              <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/>
-              <path d="M21 3v5h-5"/>
-            </svg>
-        </button>
+          @if (canMirrorTile()) {
+            <button 
+                (click)="mirrorTile()" 
+                class="h-full aspect-square bg-violet-400 text-white transition-all duration-200 btn-3d flex items-center justify-center"
+                style="--shadow-color: #9333ea;"
+                [attr.aria-label]="i18n.t().mirrorButton">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5">
+                  <path d="M8 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h3"/>
+                  <path d="M16 3h3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-3"/>
+                  <path d="M12 22v-4"/>
+                  <path d="M12 6V2"/>
+                </svg>
+            </button>
+          }
 
-        <div 
-          class="h-full w-full flex items-center justify-center bg-white/50 dark:bg-slate-800/50 rounded-lg cursor-grab active:cursor-grabbing touch-none select-none"
-          [class.opacity-50]="isDragging()"
-          draggable="true"
-          (dragstart)="onDragStart($event)"
-          (dragend)="onDragEnd()"
-          (touchstart)="onTileTouchStart($event)"
-          (touchmove)="onTileTouchMove($event)"
-          (touchend)="onTileTouchEnd($event)"
-          (touchcancel)="onTileTouchCancel()">
-          @if (currentTile(); as tile) { <app-tile-preview [tile]="tile"></app-tile-preview> } @else { <div class="text-slate-500 dark:text-slate-400 text-[10px]">{{ i18n.t().loading }}</div> }
+          <button 
+              (click)="rotateTile()" 
+              class="h-full aspect-square bg-cyan-400 text-white transition-all duration-200 btn-3d flex items-center justify-center"
+              style="--shadow-color: #0891b2;"
+              [attr.aria-label]="i18n.t().rotateButton">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5">
+                <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/>
+                <path d="M21 3v5h-5"/>
+              </svg>
+          </button>
         </div>
 
       </div>
@@ -349,3 +394,4 @@
 
   <app-tutorial></app-tutorial>
 </main>
+}

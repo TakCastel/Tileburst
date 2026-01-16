@@ -81,12 +81,12 @@ export class TilePreviewComponent {
     const tile = this.tile();
     // Taille maximale du conteneur - plus petite sur mobile
     const isMobile = typeof window !== 'undefined' && window.innerWidth < 1024;
-    const maxContainerSize = isMobile ? 60 : 100; // pixels
+    const maxContainerSize = isMobile ? 45 : 100; // pixels - réduit de 60 à 45 sur mobile
     const gap = 2; // gap-0.5 = 2px
     const maxDimension = Math.max(tile.width, tile.height);
     // Calculer la taille de cellule pour que la tuile s'adapte au conteneur
     const cellSize = Math.floor((maxContainerSize - (maxDimension - 1) * gap) / maxDimension);
     // Limiter entre une taille minimale et maximale raisonnable
-    return Math.max(8, Math.min(cellSize, isMobile ? 14 : 20));
+    return Math.max(6, Math.min(cellSize, isMobile ? 12 : 20)); // Réduit de 8/14 à 6/12 sur mobile
   });
 }

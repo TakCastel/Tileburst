@@ -2,19 +2,63 @@
 <img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
 </div>
 
-# Run and deploy your AI Studio app
+# Tileburst - Jeu de puzzle stratégique
 
-This contains everything you need to run your app locally.
+Tileburst est un jeu de puzzle stratégique où vous placez des tuiles sur une grille, formez des lignes et des groupes validés pour marquer des points.
 
-View your app in AI Studio: https://ai.studio/apps/drive/1M4Ls5r4gGkMPsCFk6dMXBAHTTplpbfDD
+## 🌐 Application Web (PWA)
 
-## Run Locally
+Tileburst fonctionne comme une **Progressive Web App (PWA)** :
+- ✅ Installable sur mobile et desktop
+- ✅ Mode hors ligne
+- ✅ Expérience native-like
+- ✅ Compatible iOS et Android via navigateur
 
-**Prerequisites:**  Node.js
+## 📱 Applications Mobiles Natives
 
+Tileburst peut également être compilé en applications natives iOS et Android via **Capacitor**.
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+Consultez [MOBILE_SETUP.md](MOBILE_SETUP.md) pour les instructions détaillées.
+
+## 🚀 Démarrage rapide
+
+**Prérequis:** Node.js
+
+1. Installer les dépendances:
+   ```bash
+   npm install
+   ```
+
+2. Lancer l'application en mode développement:
+   ```bash
+   npm run dev
+   ```
+
+3. Construire pour la production:
+   ```bash
+   npm run build
+   ```
+
+## 📦 Scripts disponibles
+
+- `npm run dev` - Démarrer le serveur de développement
+- `npm run build` - Construire pour la production
+- `npm run preview` - Prévisualiser la version de production
+
+### Scripts Capacitor (applications natives)
+
+- `npm run cap:add:ios` - Ajouter la plateforme iOS
+- `npm run cap:add:android` - Ajouter la plateforme Android
+- `npm run cap:sync` - Synchroniser avec les projets natifs
+- `npm run cap:open:ios` - Ouvrir le projet iOS dans Xcode
+- `npm run cap:open:android` - Ouvrir le projet Android dans Android Studio
+
+## 🎨 Icônes PWA
+
+Avant de déployer, générez les icônes de l'application :
+- Consultez [MOBILE_SETUP.md](MOBILE_SETUP.md) pour les instructions
+- Ou utilisez un service en ligne comme https://realfavicongenerator.net/
+
+## 📚 Documentation
+
+- [Guide de configuration mobile](MOBILE_SETUP.md) - Instructions complètes pour iOS et Android

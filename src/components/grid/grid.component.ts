@@ -343,4 +343,73 @@ export class GridComponent {
     // Nettoyer l'état
     this.onGridMouseLeave();
   }
+
+  // Gestion des événements de drag depuis la tuile
+  onTileDragMove(event: CustomEvent): void {
+    if (!this.currentTile() || this.isShrinking()) return;
+    const gridElement = event.detail.target as HTMLElement;
+    if (!gridElement) return;
+    
+    // Utiliser les coordonnées directement pour mettre à jour la position
+    this._updateHoveredCellFromCoordinates(
+      event.detail.clientX,
+      event.detail.clientY,
+      gridElement
+    );
+  }
+
+  onTileDragEnd(event: CustomEvent): void {
+    if (this.isShrinking()) return;
+    const gridElement = event.detail.target as HTMLElement;
+    if (!gridElement) return;
+    
+    // Utiliser les coordonnées directement pour mettre à jour la position finale
+    this._updateHoveredCellFromCoordinates(
+      event.detail.clientX,
+      event.detail.clientY,
+      gridElement
+    );
+    
+    // Placer la tuile si valide
+    const tile = this.currentTile();
+    const startPos = this.previewStartPosition();
+    
+    if (tile && this.isPlacementValid() && startPos) {
+        this.gameService.placeTile(tile, startPos.row, startPos.col);
+    }
+    // Nettoyer l'état
+    this.onGridMouseLeave();
+  }
+
+  private _updateHoveredCellFromCoordinates(clientX: number, clientY: number, gridElement: HTMLElement): void {
+    const rect = gridElement.getBoundingClientRect();
+    const computedStyle = window.getComputedStyle(gridElement);
+    
+    // Récupérer le padding réellement appliqué
+    const paddingTop = parseFloat(computedStyle.paddingTop) || 0;
+    const paddingLeft = parseFloat(computedStyle.paddingLeft) || 0;
+    const paddingBottom = parseFloat(computedStyle.paddingBottom) || 0;
+    const paddingRight = parseFloat(computedStyle.paddingRight) || 0;
+    
+    const x = clientX - rect.left - paddingLeft;
+    const y = clientY - rect.top - paddingTop;
+    
+    const gridSize = this.gridSize();
+    if (rect.width === 0 || rect.height === 0) return;
+
+    // Soustraire le padding des dimensions pour obtenir la zone de la grille
+    const gridWidth = rect.width - paddingLeft - paddingRight;
+    const gridHeight = rect.height - paddingTop - paddingBottom;
+
+    const cellWidth = gridWidth / gridSize;
+    const cellHeight = gridHeight / gridSize;
+
+    // S'assurer que les coordonnées sont dans les limites
+    const col = Math.max(0, Math.min(gridSize - 1, Math.floor(x / cellWidth)));
+    const row = Math.max(0, Math.min(gridSize - 1, Math.floor(y / cellHeight)));
+
+    if (this.lastHoveredCell()?.row !== row || this.lastHoveredCell()?.col !== col) {
+      this.lastHoveredCell.set({ row, col });
+    }
+  }
 }

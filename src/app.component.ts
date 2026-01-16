@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, inject, signal } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { GameService } from './services/game.service';
 import { GridComponent } from './components/grid/grid.component';
@@ -10,25 +10,59 @@ import { ThemeService } from './services/theme.service';
 import { I18nService } from './services/i18n.service';
 import { LanguageSelectorComponent } from './components/language-selector/language-selector.component';
 import { OptionsMenuComponent } from './components/options-menu/options-menu.component';
+import { LandingPageComponent } from './components/landing-page/landing-page.component';
 import { LucideAngularModule, Volume2, VolumeX, Sun, Moon } from 'lucide-angular';
 
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
   standalone: true,
-  imports: [CommonModule, GridComponent, TilePreviewComponent, TutorialComponent, LanguageSelectorComponent, OptionsMenuComponent, LucideAngularModule],
+  imports: [CommonModule, GridComponent, TilePreviewComponent, TutorialComponent, LanguageSelectorComponent, OptionsMenuComponent, LandingPageComponent, LucideAngularModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
     '(window:keydown.r)': 'rotateTile()',
     '(window:keydown.space)': 'rotateTile()',
+    '(window:keydown.t)': 'onMirrorKeyPress()',
+    '(window:keydown.s)': 'onSwapKeyPress()',
   },
 })
-export class AppComponent {
+export class AppComponent implements OnInit {
   protected gameService = inject(GameService);
   protected tutorialService = inject(TutorialService);
   protected soundService = inject(SoundService);
   protected themeService = inject(ThemeService);
   protected i18n = inject(I18nService);
+
+  // État de la landing page
+  showLandingPage = signal(true);
+
+  ngOnInit(): void {
+    // Ne pas afficher la landing page dans les apps natives Capacitor
+    // Les apps natives doivent lancer directement le jeu
+    const isCapacitorApp = (window as any).Capacitor !== undefined;
+    if (isCapacitorApp) {
+      this.showLandingPage.set(false);
+      this.gameService.startGame();
+      return;
+    }
+
+    // Pour le site web uniquement : vérifier si l'utilisateur a déjà visité
+    const hasVisited = localStorage.getItem('tileburst_has_visited');
+    if (hasVisited === 'true') {
+      this.showLandingPage.set(false);
+    }
+
+    // Écouter l'événement pour lancer le jeu
+    window.addEventListener('start-game', () => {
+      this.startGame();
+    });
+  }
+
+  startGame(): void {
+    this.showLandingPage.set(false);
+    localStorage.setItem('tileburst_has_visited', 'true');
+    this.gameService.startGame();
+  }
 
   // Icônes Lucide
   readonly Volume2Icon = Volume2;
@@ -51,6 +85,7 @@ export class AppComponent {
   isRestartConfirmVisible = signal(false);
   private touchStartPosition: { x: number; y: number } | null = null;
   private isTouchDragging = signal(false);
+  private touchDragElement: HTMLElement | null = null;
 
   restartGame(): void {
     this.gameService.startGame();
@@ -73,8 +108,31 @@ export class AppComponent {
     this.gameService.rotateCurrentTile();
   }
 
+  mirrorTile(): void {
+    this.gameService.mirrorCurrentTile();
+  }
+
+  onMirrorKeyPress(): void {
+    if (this.canMirrorTile()) {
+      this.mirrorTile();
+    }
+  }
+
+  canMirrorTile(): boolean {
+    return this.gameService.canMirrorTile(this.currentTile());
+  }
+
   swapTiles(): void {
     this.gameService.swapTiles();
+  }
+
+  onSwapKeyPress(): void {
+    // Ne pas déclencher le swap si on est en train de taper dans un input
+    const activeElement = document.activeElement;
+    if (activeElement && (activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA')) {
+      return;
+    }
+    this.swapTiles();
   }
 
   showTutorial(): void {
@@ -114,6 +172,7 @@ export class AppComponent {
     this.touchStartPosition = { x: touch.clientX, y: touch.clientY };
     this.isTouchDragging.set(true);
     this.isDragging.set(true);
+    this.touchDragElement = event.currentTarget as HTMLElement;
     // Empêcher le scroll et les actions par défaut pendant le drag
     event.preventDefault();
     event.stopPropagation();
@@ -124,30 +183,79 @@ export class AppComponent {
     // Empêcher le scroll pendant le drag
     event.preventDefault();
     event.stopPropagation();
+    
+    // Trouver l'élément sous le doigt (la grille) et mettre à jour la position
+    const touch = event.touches[0];
+    const elementBelow = document.elementFromPoint(touch.clientX, touch.clientY);
+    
+    // Si on est sur la grille, créer un événement personnalisé pour mettre à jour la position
+    if (elementBelow) {
+      const gridElement = elementBelow.closest('app-grid')?.querySelector('.grid') as HTMLElement;
+      if (gridElement) {
+        // Créer un événement touchmove personnalisé avec les coordonnées
+        const customEvent = new CustomEvent('tile-drag-move', {
+          detail: {
+            clientX: touch.clientX,
+            clientY: touch.clientY,
+            target: gridElement
+          },
+          bubbles: true
+        });
+        gridElement.dispatchEvent(customEvent);
+      }
+    }
   }
 
   onTileTouchEnd(event: TouchEvent): void {
     if (!this.isTouchDragging()) return;
     
-    // Vérifier si c'était un tap (pas un drag)
     const touch = event.changedTouches[0];
-    if (this.touchStartPosition) {
-      const deltaX = Math.abs(touch.clientX - this.touchStartPosition.x);
-      const deltaY = Math.abs(touch.clientY - this.touchStartPosition.y);
-      
-      // Si le mouvement est très petit, considérer comme un tap (rotation)
-      // Augmenté le seuil à 15px pour être plus tolérant
-      if (deltaX < 15 && deltaY < 15) {
-        // Petit délai pour éviter les conflits avec le drop
-        setTimeout(() => {
-          this.rotateTile();
-        }, 50);
+    if (!this.touchStartPosition) {
+      this.isTouchDragging.set(false);
+      this.isDragging.set(false);
+      this.touchStartPosition = null;
+      this.touchDragElement = null;
+      return;
+    }
+    
+    const deltaX = Math.abs(touch.clientX - this.touchStartPosition.x);
+    const deltaY = Math.abs(touch.clientY - this.touchStartPosition.y);
+    
+    // Si le mouvement est très petit, considérer comme un tap (rotation)
+    if (deltaX < 15 && deltaY < 15) {
+      // Petit délai pour éviter les conflits avec le drop
+      setTimeout(() => {
+        this.rotateTile();
+      }, 50);
+      this.isTouchDragging.set(false);
+      this.isDragging.set(false);
+      this.touchStartPosition = null;
+      this.touchDragElement = null;
+      return;
+    }
+    
+    // Si on a dragué, vérifier si on est sur la grille et placer la tuile
+    const elementBelow = document.elementFromPoint(touch.clientX, touch.clientY);
+    if (elementBelow) {
+      const gridElement = elementBelow.closest('app-grid')?.querySelector('.grid') as HTMLElement;
+      if (gridElement) {
+        // Créer un événement personnalisé pour déclencher le placement
+        const customEvent = new CustomEvent('tile-drag-end', {
+          detail: {
+            clientX: touch.clientX,
+            clientY: touch.clientY,
+            target: gridElement
+          },
+          bubbles: true
+        });
+        gridElement.dispatchEvent(customEvent);
       }
     }
     
     this.isTouchDragging.set(false);
     this.isDragging.set(false);
     this.touchStartPosition = null;
+    this.touchDragElement = null;
     event.preventDefault();
     event.stopPropagation();
   }
@@ -156,6 +264,7 @@ export class AppComponent {
     this.isTouchDragging.set(false);
     this.isDragging.set(false);
     this.touchStartPosition = null;
+    this.touchDragElement = null;
   }
 
   async shareScore(): Promise<void> {

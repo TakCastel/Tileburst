@@ -368,6 +368,64 @@ export class GameService {
     this.soundService.playRotateSound();
   }
 
+  public mirrorCurrentTile(): void {
+    const tile = this.currentTile();
+    if (!tile) return;
+
+    const shape = tile.shape;
+    const height = tile.height;
+    const width = tile.width;
+    
+    // Miroir horizontal : inverser les colonnes
+    const newShape: number[][] = Array.from({ length: height }, () => Array(width).fill(0));
+
+    for (let r = 0; r < height; r++) {
+        for (let c = 0; c < width; c++) {
+            newShape[r][width - 1 - c] = shape[r][c];
+        }
+    }
+
+    const mirroredTile: Tile = {
+        ...tile,
+        shape: newShape,
+        height: height,
+        width: width,
+        barycenter: {
+          r: Math.floor(height / 2),
+          c: Math.floor(width / 2),
+        },
+    };
+    
+    this._gameState.update(state => ({ ...state, currentTile: mirroredTile }));
+    this.saveGameState();
+    this.soundService.playRotateSound();
+  }
+
+  public canMirrorTile(tile: Tile | null): boolean {
+    if (!tile) return false;
+    
+    // Les pièces symétriques n'ont pas besoin de miroir
+    // Vérifier si la pièce est asymétrique horizontalement
+    const shape = tile.shape;
+    const height = shape.length;
+    const width = shape[0].length;
+    
+    // Si la pièce est symétrique horizontalement, le miroir ne change rien
+    let isSymmetric = true;
+    for (let r = 0; r < height; r++) {
+        for (let c = 0; c < Math.floor(width / 2); c++) {
+            if (shape[r][c] !== shape[r][width - 1 - c]) {
+                isSymmetric = false;
+                break;
+            }
+        }
+        if (!isSymmetric) break;
+    }
+    
+    // Retourner true si la pièce n'est pas symétrique (peut être miroirée)
+    return !isSymmetric;
+  }
+
   public swapTiles(): void {
     const state = this.state();
     if (!state.currentTile || !state.nextTile) return;

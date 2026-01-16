@@ -240,3 +240,10 @@
 .animate-slide-out-right {
   animation: slide-out-right 0.3s cubic-bezier(0.4, 0, 1, 1) forwards;
 }
+
+/* Titre Tileburst avec police Bungee */
+.font-tileburst {
+  font-family: 'Bungee', cursive;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+}

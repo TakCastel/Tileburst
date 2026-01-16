@@ -1,5 +1,5 @@
 @if (tile(); as currentTile) {
-  <div class="flex items-center justify-center max-w-[80px] max-h-[80px] lg:max-w-[120px] lg:max-h-[120px]">
+  <div class="flex items-center justify-center max-w-[60px] max-h-[60px] lg:max-w-[120px] lg:max-h-[120px]">
     <div class="grid gap-0.5" [style]="gridStyles()">
       @for (row of currentTile.shape; track $index) {
         @for (cell of row; track $index) {

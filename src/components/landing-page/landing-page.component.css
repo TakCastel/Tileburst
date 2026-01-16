@@ -1,0 +1,210 @@
+/* Title */
+h1 {
+  font-family: 'Bungee', cursive;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+}
+
+/* App Store Badge */
+.app-store-badge {
+  display: inline-block;
+  height: 3.5rem;
+  padding: 0 1rem;
+  background-color: #000;
+  border-radius: 0.5rem;
+  transition: transform 0.2s, opacity 0.2s;
+  text-decoration: none;
+  position: relative;
+}
+
+.app-store-badge:hover {
+  transform: scale(1.05);
+  opacity: 0.9;
+}
+
+.app-store-badge.disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.app-store-badge.disabled:hover {
+  transform: none;
+  opacity: 0.6;
+}
+
+.dark .app-store-badge {
+  background-color: #fff;
+}
+
+.app-store-badge-content {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  height: 100%;
+}
+
+.app-store-logo {
+  width: 1.5rem;
+  height: 1.5rem;
+  fill: #fff;
+  flex-shrink: 0;
+}
+
+.dark .app-store-logo {
+  fill: #000;
+}
+
+.app-store-text {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  line-height: 1;
+}
+
+.app-store-text-small {
+  font-size: 0.625rem;
+  font-weight: 400;
+  color: #fff;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.125rem;
+}
+
+.dark .app-store-text-small {
+  color: #000;
+}
+
+.app-store-text-large {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #fff;
+  letter-spacing: 0.05em;
+}
+
+.dark .app-store-text-large {
+  color: #000;
+}
+
+/* Google Play Badge */
+.google-play-badge {
+  display: inline-block;
+  height: 3.5rem;
+  padding: 0 1rem;
+  background-color: #000;
+  border-radius: 0.5rem;
+  transition: transform 0.2s, opacity 0.2s;
+  text-decoration: none;
+  position: relative;
+}
+
+.google-play-badge:hover {
+  transform: scale(1.05);
+  opacity: 0.9;
+}
+
+.google-play-badge.disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.google-play-badge.disabled:hover {
+  transform: none;
+  opacity: 0.6;
+}
+
+.google-play-badge-content {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  height: 100%;
+}
+
+.google-play-logo {
+  width: 1.5rem;
+  height: 1.5rem;
+  fill: #fff;
+  flex-shrink: 0;
+}
+
+.google-play-text {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  line-height: 1;
+}
+
+.google-play-text-small {
+  font-size: 0.625rem;
+  font-weight: 400;
+  color: #fff;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.125rem;
+}
+
+.google-play-text-large {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #fff;
+  letter-spacing: 0.05em;
+}
+
+/* Coming Soon Overlay */
+.coming-soon-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(0, 0, 0, 0.7);
+  border-radius: 0.5rem;
+  backdrop-filter: blur(2px);
+}
+
+.coming-soon-text {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #fff;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: 0.25rem 0.5rem;
+  background-color: rgba(0, 0, 0, 0.5);
+  border-radius: 0.25rem;
+}
+
+.dark .coming-soon-overlay {
+  background-color: rgba(255, 255, 255, 0.7);
+}
+
+.dark .coming-soon-text {
+  color: #000;
+  background-color: rgba(255, 255, 255, 0.5);
+}
+
+/* Responsive */
+@media (min-width: 768px) {
+  .app-store-badge,
+  .google-play-badge {
+    height: 3.75rem;
+    padding: 0 1.25rem;
+  }
+
+  .app-store-logo,
+  .google-play-logo {
+    width: 1.75rem;
+    height: 1.75rem;
+  }
+
+  .app-store-text-small,
+  .google-play-text-small {
+    font-size: 0.6875rem;
+  }
+
+  .app-store-text-large,
+  .google-play-text-large {
+    font-size: 1rem;
+  }
+}
