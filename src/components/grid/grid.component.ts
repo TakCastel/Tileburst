@@ -216,6 +216,13 @@ export class GridComponent {
   private _updateHoveredCellFromEvent(event: MouseEvent | DragEvent | TouchEvent): void {
     const gridElement = event.currentTarget as HTMLElement;
     const rect = gridElement.getBoundingClientRect();
+    const computedStyle = window.getComputedStyle(gridElement);
+    
+    // Récupérer le padding réellement appliqué
+    const paddingTop = parseFloat(computedStyle.paddingTop) || 0;
+    const paddingLeft = parseFloat(computedStyle.paddingLeft) || 0;
+    const paddingBottom = parseFloat(computedStyle.paddingBottom) || 0;
+    const paddingRight = parseFloat(computedStyle.paddingRight) || 0;
     
     let x: number, y: number;
     // Vérifier si c'est un TouchEvent en utilisant la propriété 'touches'
@@ -225,12 +232,12 @@ export class GridComponent {
       const touch = (touchEvent.touches && touchEvent.touches.length > 0) ? touchEvent.touches[0] : 
                    ((touchEvent.changedTouches && touchEvent.changedTouches.length > 0) ? touchEvent.changedTouches[0] : null);
       if (!touch) return;
-      x = touch.clientX - rect.left;
-      y = touch.clientY - rect.top;
+      x = touch.clientX - rect.left - paddingLeft;
+      y = touch.clientY - rect.top - paddingTop;
     } else if ('clientX' in event && 'clientY' in event) {
       // MouseEvent ou DragEvent
-      x = event.clientX - rect.left;
-      y = event.clientY - rect.top;
+      x = event.clientX - rect.left - paddingLeft;
+      y = event.clientY - rect.top - paddingTop;
     } else {
       return;
     }
@@ -238,8 +245,12 @@ export class GridComponent {
     const gridSize = this.gridSize();
     if (rect.width === 0 || rect.height === 0) return;
 
-    const cellWidth = rect.width / gridSize;
-    const cellHeight = rect.height / gridSize;
+    // Soustraire le padding des dimensions pour obtenir la zone de la grille
+    const gridWidth = rect.width - paddingLeft - paddingRight;
+    const gridHeight = rect.height - paddingTop - paddingBottom;
+
+    const cellWidth = gridWidth / gridSize;
+    const cellHeight = gridHeight / gridSize;
 
     // S'assurer que les coordonnées sont dans les limites
     const col = Math.max(0, Math.min(gridSize - 1, Math.floor(x / cellWidth)));
