@@ -124,7 +124,8 @@ export class GameService {
     initialState.nextTile = this._generateRandomTile();
     this._gameState.set(initialState);
 
-    if (initialState.currentTile && !this.canPlaceTileInAnyRotation(initialState.currentTile)) {
+    // Vérifier si au moins une des deux tuiles peut être placée
+    if (!this.canPlaceAtLeastOneTile(initialState.currentTile, initialState.nextTile)) {
         this._gameState.update(state => ({...state, isGameOver: true}));
     }
     // Ne pas démarrer le tutoriel lors d'un rejeu
@@ -174,7 +175,8 @@ export class GameService {
 
       this._gameState.update(s => ({...s, currentTile: current, nextTile: next }));
       
-      if (current && !this.canPlaceTileInAnyRotation(current)) {
+      // Vérifier si au moins une des deux tuiles peut être placée
+      if (!this.canPlaceAtLeastOneTile(current, next)) {
           this._gameState.update(s => ({...s, isShrinkImminent: true}));
           this.soundService.playShrinkWarningSound();
           this.shrinkTimeout = setTimeout(() => {
@@ -272,6 +274,8 @@ export class GameService {
   }
 
   public canPlaceTileInAnyRotation(tile: Tile): boolean {
+    if (!tile) return false;
+    
     let tempTile: Tile = JSON.parse(JSON.stringify(tile)); 
 
     for (let i = 0; i < 4; i++) {
@@ -294,6 +298,13 @@ export class GameService {
     }
 
     return false;
+  }
+
+  private canPlaceAtLeastOneTile(currentTile: Tile | null, nextTile: Tile | null): boolean {
+    // Si au moins une des deux tuiles peut être placée, le jeu continue
+    const canPlaceCurrent = currentTile ? this.canPlaceTileInAnyRotation(currentTile) : false;
+    const canPlaceNext = nextTile ? this.canPlaceTileInAnyRotation(nextTile) : false;
+    return canPlaceCurrent || canPlaceNext;
   }
 
   private _findCompletedLines(grid: Cell[][]): { cellsToClear: Set<string>; points: number; linesCleared: number; } {
@@ -632,7 +643,8 @@ export class GameService {
         // Son de réduction de grille
         this.soundService.playShrinkSound();
 
-        if (this.currentTile() && !this.canPlaceTileInAnyRotation(this.currentTile()!)) {
+        // Vérifier si au moins une des deux tuiles peut être placée après le shrink
+        if (!this.canPlaceAtLeastOneTile(this.currentTile(), this.nextTile())) {
             this._gameState.update(s => ({...s, isGameOver: true }));
         }
     }, SHRINK_WARNING_DURATION);
