@@ -7,14 +7,15 @@
     
     <!-- == HEADER (Desktop) == -->
     <header class="w-full text-center mb-6 col-span-3 flex items-center justify-center gap-4">
-        <h1 class="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-800 tracking-tight">Tileburst</h1>
+        <h1 class="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-800 dark:text-slate-100 tracking-tight">Tileburst</h1>
+        <app-language-selector></app-language-selector>
         <button 
           (click)="toggleSound()" 
           class="w-10 h-10 transition-all duration-200 btn-3d flex items-center justify-center rounded-full"
           [class.bg-slate-600]="!isSoundEnabled()"
           [class.bg-slate-400]="isSoundEnabled()"
           [style.--shadow-color]="isSoundEnabled() ? '#64748b' : '#475569'"
-          aria-label="Activer/Désactiver le son">
+          [attr.aria-label]="i18n.t().toggleSound">
           @if (isSoundEnabled()) {
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 text-white">
               <path d="M11 5L6 9H2v6h4l5 4V5z"/>
@@ -28,31 +29,52 @@
             </svg>
           }
         </button>
+        <button 
+          (click)="toggleTheme()" 
+          class="w-10 h-10 transition-all duration-200 btn-3d flex items-center justify-center rounded-full bg-slate-500 dark:bg-slate-600"
+          [style.--shadow-color]="'#475569'"
+          [attr.aria-label]="i18n.t().toggleDarkMode">
+          @if (isDarkMode()) {
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 text-white">
+              <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+            </svg>
+          } @else {
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 text-white">
+              <circle cx="12" cy="12" r="4"/>
+              <path d="M12 2v2"/>
+              <path d="M12 20v2"/>
+              <path d="m4.93 4.93 1.41 1.41"/>
+              <path d="m17.66 17.66 1.41 1.41"/>
+              <path d="M2 12h2"/>
+              <path d="M20 12h2"/>
+              <path d="m6.34 17.66-1.41 1.41"/>
+              <path d="m19.07 4.93-1.41 1.41"/>
+            </svg>
+          }
+        </button>
     </header>
 
     <!-- == PANNEAU GAUCHE (Desktop) == -->
     <aside class="flex flex-col gap-6 justify-self-end w-64">
       <!-- Score -->
-      <div class="bg-white rounded-2xl p-6 shadow-lg">
+      <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-lg">
         <div class="flex justify-center text-center">
           <div>
-            <span class="text-xs text-slate-500 uppercase font-semibold tracking-wider">Score</span>
+            <span class="text-xs text-slate-500 dark:text-slate-400 uppercase font-semibold tracking-wider">{{ i18n.t().score }}</span>
             <p class="text-5xl font-bold text-amber-500">{{ score() }}</p>
           </div>
         </div>
       </div>
       <!-- Conseil Stratégique -->
-      <div class="bg-cyan-100/60 rounded-2xl p-4 flex items-start gap-4">
-        <div class="flex-shrink-0 bg-cyan-200/70 p-2 rounded-full">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-cyan-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+      <div class="bg-cyan-100/60 dark:bg-cyan-900/60 rounded-2xl p-4 flex items-start gap-4">
+        <div class="flex-shrink-0 bg-cyan-200/70 dark:bg-cyan-800/70 p-2 rounded-full">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-cyan-700 dark:text-cyan-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
           </svg>
         </div>
-        <div class="text-cyan-900">
-          <h3 class="font-bold text-sm">Conseil Stratégique</h3>
-          <p class="text-sm leading-snug mt-1">
-            Liez <strong>{{ minValidatedGroupSize() }}</strong> blocs de même couleur pour les "valider". Ils vous sauveront quand la grille rétrécira !
-          </p>
+        <div class="text-cyan-900 dark:text-cyan-100">
+          <h3 class="font-bold text-sm">{{ i18n.t().strategicTip }}</h3>
+          <p class="text-sm leading-snug mt-1" [innerHTML]="i18n.translateWithParams('strategicTipText', minValidatedGroupSize().toString())"></p>
         </div>
       </div>
       <!-- Boutons d'action -->
@@ -61,13 +83,13 @@
           (click)="showTutorial()" 
           class="w-full bg-slate-500 text-white font-bold py-3 px-4 transition-all duration-200 btn-3d"
           style="--shadow-color: #475569;">
-          Comment Jouer
+          {{ i18n.t().howToPlay }}
         </button>
         <button 
           (click)="restartGame()" 
           class="w-full bg-green-500 text-white font-bold py-3 px-4 transition-all duration-200 btn-3d"
           style="--shadow-color: #15803d;">
-          Nouvelle Partie
+          {{ i18n.t().newGame }}
         </button>
       </div>
     </aside>
@@ -80,8 +102,8 @@
     <!-- == PANNEAU DROIT (Desktop) == -->
     <aside class="flex flex-col gap-6 justify-self-start w-64">
       <!-- Tuile Actuelle -->
-      <div class="bg-white rounded-2xl p-6 shadow-lg flex flex-col items-center gap-4">
-        <span class="text-xs text-slate-500 uppercase font-semibold tracking-wider">Tuile Actuelle</span>
+      <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-lg flex flex-col items-center gap-4">
+        <span class="text-xs text-slate-500 dark:text-slate-400 uppercase font-semibold tracking-wider">{{ i18n.t().currentTile }}</span>
         <div 
           class="flex-grow flex items-center justify-center w-full min-h-[120px] cursor-pointer touch-none"
           [class.opacity-50]="isDragging()"
@@ -104,13 +126,13 @@
           (click)="rotateTile()" 
           class="w-full bg-cyan-400 text-white font-bold py-3 px-4 transition-all duration-200 btn-3d"
           style="--shadow-color: #0891b2;">
-          Rotation (R)
+          {{ i18n.t().rotate }}
         </button>
         <button 
           (click)="swapTiles()" 
           class="w-full bg-purple-400 text-white font-bold py-3 px-4 transition-all duration-200 btn-3d"
           style="--shadow-color: #9333ea;"
-          aria-label="Échanger les tuiles">
+          [attr.aria-label]="i18n.t().swapTilesButton">
           <div class="flex items-center justify-center gap-2">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4">
               <path d="M8 3 4 7l4 4"/>
@@ -118,13 +140,13 @@
               <path d="m16 21 4-4-4-4"/>
               <path d="M20 17H4"/>
             </svg>
-            Échanger
+            {{ i18n.t().swap }}
           </div>
         </button>
       </div>
       <!-- Prochaine Tuile -->
-      <div class="bg-white rounded-2xl p-4 shadow-lg flex flex-col items-center gap-2">
-        <span class="text-[10px] text-slate-500 uppercase font-semibold tracking-wider">Prochaine Tuile</span>
+      <div class="bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-lg flex flex-col items-center gap-2">
+        <span class="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-semibold tracking-wider">{{ i18n.t().nextTile }}</span>
         <div class="flex-grow flex items-center justify-center min-h-[80px]">
             @if (nextTile(); as tile) { <app-tile-preview [tile]="tile"></app-tile-preview> }
         </div>
@@ -140,14 +162,15 @@
     <!-- Header (Mobile) -->
     <header class="w-full flex flex-col items-center gap-2 z-10 p-1">
       <div class="flex items-center justify-center gap-3">
-        <h1 class="text-2xl font-bold text-slate-800 tracking-tight">Tileburst</h1>
+        <h1 class="text-2xl font-bold text-slate-800 dark:text-slate-100 tracking-tight">Tileburst</h1>
+        <app-language-selector></app-language-selector>
         <button 
           (click)="toggleSound()" 
           class="w-9 h-9 transition-all duration-200 btn-3d flex items-center justify-center rounded-full"
           [class.bg-slate-600]="!isSoundEnabled()"
           [class.bg-slate-400]="isSoundEnabled()"
           [style.--shadow-color]="isSoundEnabled() ? '#64748b' : '#475569'"
-          aria-label="Activer/Désactiver le son">
+          [attr.aria-label]="i18n.t().toggleSound">
           @if (isSoundEnabled()) {
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-white">
               <path d="M11 5L6 9H2v6h4l5 4V5z"/>
@@ -161,6 +184,29 @@
             </svg>
           }
         </button>
+        <button 
+          (click)="toggleTheme()" 
+          class="w-9 h-9 transition-all duration-200 btn-3d flex items-center justify-center rounded-full bg-slate-500 dark:bg-slate-600"
+          [style.--shadow-color]="'#475569'"
+          [attr.aria-label]="i18n.t().toggleDarkMode">
+          @if (isDarkMode()) {
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-white">
+              <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+            </svg>
+          } @else {
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-white">
+              <circle cx="12" cy="12" r="4"/>
+              <path d="M12 2v2"/>
+              <path d="M12 20v2"/>
+              <path d="m4.93 4.93 1.41 1.41"/>
+              <path d="m17.66 17.66 1.41 1.41"/>
+              <path d="M2 12h2"/>
+              <path d="M20 12h2"/>
+              <path d="m6.34 17.66-1.41 1.41"/>
+              <path d="m19.07 4.93-1.41 1.41"/>
+            </svg>
+          }
+        </button>
       </div>
       
       <div class="w-full grid grid-cols-[auto_1fr_auto] items-center gap-2">
@@ -168,15 +214,15 @@
           (click)="showRestartConfirm()" 
           class="w-11 h-11 bg-green-500 text-white transition-all duration-200 btn-3d flex items-center justify-center"
           style="--shadow-color: #15803d;"
-          aria-label="Nouvelle Partie">
+          [attr.aria-label]="i18n.t().newGameButton">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6">
             <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
             <path d="M3 3v5h5"/>
           </svg>
         </button>
 
-        <div class="bg-white rounded-2xl p-2 shadow-lg text-center">
-          <span class="text-xs text-slate-500 uppercase font-semibold tracking-wider">Score</span>
+        <div class="bg-white dark:bg-slate-800 rounded-2xl p-2 shadow-lg text-center">
+          <span class="text-xs text-slate-500 dark:text-slate-400 uppercase font-semibold tracking-wider">{{ i18n.t().score }}</span>
           <p class="text-3xl font-bold text-amber-500 leading-none">{{ score() }}</p>
         </div>
 
@@ -184,7 +230,7 @@
           (click)="showTutorial()" 
           class="w-11 h-11 bg-slate-500 text-white transition-all duration-200 btn-3d flex items-center justify-center"
           style="--shadow-color: #475569;"
-          aria-label="Comment Jouer">
+          [attr.aria-label]="i18n.t().howToPlayButton">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6">
             <circle cx="12" cy="12" r="10"/>
             <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
@@ -195,17 +241,15 @@
     </header>
 
     <!-- Conseil Stratégique (Mobile) -->
-    <div class="w-full bg-cyan-100/60 rounded-2xl p-3 flex items-start gap-3 mt-1">
-      <div class="flex-shrink-0 bg-cyan-200/70 p-2 rounded-full">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-cyan-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+    <div class="w-full bg-cyan-100/60 dark:bg-cyan-900/60 rounded-2xl p-3 flex items-start gap-3 mt-1">
+      <div class="flex-shrink-0 bg-cyan-200/70 dark:bg-cyan-800/70 p-2 rounded-full">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-cyan-700 dark:text-cyan-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
           <path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
         </svg>
       </div>
-      <div class="text-cyan-900 flex-1">
-        <h3 class="font-bold text-xs">Conseil Stratégique</h3>
-        <p class="text-xs leading-snug mt-0.5">
-          Liez <strong>{{ minValidatedGroupSize() }}</strong> blocs de même couleur pour les "valider". Ils vous sauveront quand la grille rétrécira !
-        </p>
+      <div class="text-cyan-900 dark:text-cyan-100 flex-1">
+        <h3 class="font-bold text-xs">{{ i18n.t().strategicTip }}</h3>
+        <p class="text-xs leading-snug mt-0.5" [innerHTML]="i18n.translateWithParams('strategicTipText', minValidatedGroupSize().toString())"></p>
       </div>
     </div>
 
@@ -218,10 +262,10 @@
 
     <!-- Footer Controls (Mobile) -->
     <footer class="w-full flex flex-col items-center gap-2 z-10 relative">
-      <div class="w-full bg-slate-200/80 backdrop-blur-sm p-2 rounded-2xl shadow-lg grid grid-cols-[1fr_auto_auto_1.75fr] items-center gap-2 h-[85px]">
+      <div class="w-full bg-slate-200/80 dark:bg-slate-700/80 backdrop-blur-sm p-2 rounded-2xl shadow-lg grid grid-cols-[1fr_auto_auto_1.75fr] items-center gap-2 h-[85px]">
         
-        <div class="flex flex-col items-center justify-center h-full bg-white/50 rounded-lg p-1">
-          <span class="text-[10px] text-slate-600 uppercase font-semibold">Prochaine</span>
+        <div class="flex flex-col items-center justify-center h-full bg-white/50 dark:bg-slate-800/50 rounded-lg p-1">
+          <span class="text-[10px] text-slate-600 dark:text-slate-300 uppercase font-semibold">{{ i18n.t().nextTile }}</span>
           <div class="flex-grow flex items-center justify-center">
             @if (nextTile(); as tile) { <app-tile-preview [tile]="tile"></app-tile-preview> }
           </div>
@@ -231,7 +275,7 @@
             (click)="swapTiles()" 
             class="h-full aspect-square bg-purple-400 text-white transition-all duration-200 btn-3d flex items-center justify-center"
             style="--shadow-color: #9333ea;"
-            aria-label="Échanger les tuiles">
+            [attr.aria-label]="i18n.t().swapTilesButton">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-7 h-7">
               <path d="M8 3 4 7l4 4"/>
               <path d="M4 7h16"/>
@@ -244,7 +288,7 @@
             (click)="rotateTile()" 
             class="h-full aspect-square bg-cyan-400 text-white transition-all duration-200 btn-3d flex items-center justify-center"
             style="--shadow-color: #0891b2;"
-            aria-label="Rotation">
+            [attr.aria-label]="i18n.t().rotateButton">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-7 h-7">
               <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/>
               <path d="M21 3v5h-5"/>
@@ -252,7 +296,7 @@
         </button>
 
         <div 
-          class="h-full w-full flex items-center justify-center bg-white/50 rounded-lg cursor-grab active:cursor-grabbing touch-none select-none"
+          class="h-full w-full flex items-center justify-center bg-white/50 dark:bg-slate-800/50 rounded-lg cursor-grab active:cursor-grabbing touch-none select-none"
           [class.opacity-50]="isDragging()"
           draggable="true"
           (dragstart)="onDragStart($event)"
@@ -261,7 +305,7 @@
           (touchmove)="onTileTouchMove($event)"
           (touchend)="onTileTouchEnd($event)"
           (touchcancel)="onTileTouchCancel()">
-          @if (currentTile(); as tile) { <app-tile-preview [tile]="tile"></app-tile-preview> } @else { <div class="text-slate-500 text-sm">Chargement...</div> }
+          @if (currentTile(); as tile) { <app-tile-preview [tile]="tile"></app-tile-preview> } @else { <div class="text-slate-500 dark:text-slate-400 text-sm">{{ i18n.t().loading }}</div> }
         </div>
 
       </div>
@@ -274,21 +318,21 @@
   <!-- ===================== -->
   @if (isRestartConfirmVisible()) {
     <div class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
-      <div class="bg-white rounded-2xl p-6 sm:p-8 shadow-2xl text-center flex flex-col gap-4 items-center">
-        <h2 class="text-2xl sm:text-3xl font-bold text-slate-800">Recommencer ?</h2>
-        <p class="text-slate-600 text-base">Êtes-vous sûr de vouloir commencer une nouvelle partie ? Votre score actuel sera perdu.</p>
+      <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 sm:p-8 shadow-2xl text-center flex flex-col gap-4 items-center">
+        <h2 class="text-2xl sm:text-3xl font-bold text-slate-800 dark:text-slate-100">{{ i18n.t().restartConfirm }}</h2>
+        <p class="text-slate-600 dark:text-slate-300 text-base">{{ i18n.t().restartConfirmText }}</p>
         <div class="flex gap-4 mt-4 w-full">
             <button 
               (click)="hideRestartConfirm()" 
               class="w-full bg-slate-500 text-white font-bold py-3 px-6 transition-all duration-200 btn-3d"
               style="--shadow-color: #475569;">
-              Non
+              {{ i18n.t().no }}
             </button>
             <button 
               (click)="confirmAndRestart()" 
               class="w-full bg-green-500 text-white font-bold py-3 px-6 transition-all duration-200 btn-3d"
               style="--shadow-color: #15803d;">
-              Oui
+              {{ i18n.t().yes }}
             </button>
         </div>
       </div>
@@ -297,9 +341,9 @@
 
   @if (isGameOver()) {
     <div class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
-      <div class="bg-white rounded-2xl p-6 sm:p-8 shadow-2xl text-center flex flex-col gap-4 items-center max-w-md w-full">
-        <h2 class="text-4xl sm:text-5xl font-extrabold text-red-500">Fin de Partie</h2>
-        <p class="text-slate-600 text-base sm:text-lg">Votre score final est :</p>
+      <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 sm:p-8 shadow-2xl text-center flex flex-col gap-4 items-center max-w-md w-full">
+        <h2 class="text-4xl sm:text-5xl font-extrabold text-red-500">{{ i18n.t().gameOver }}</h2>
+        <p class="text-slate-600 dark:text-slate-300 text-base sm:text-lg">{{ i18n.t().finalScore }}</p>
         <p class="text-5xl sm:text-6xl font-bold text-amber-500">{{ score() }}</p>
         <div class="flex flex-col sm:flex-row gap-3 w-full mt-2">
           <button 
@@ -313,13 +357,13 @@
               <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
               <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
             </svg>
-            Partager
+            {{ i18n.t().share }}
           </button>
           <button 
             (click)="restartGame()" 
             class="flex-1 bg-green-500 text-white font-bold py-3 px-6 sm:px-8 text-base sm:text-lg transition-all duration-200 btn-3d"
             style="--shadow-color: #15803d;">
-            Rejouer
+            {{ i18n.t().playAgain }}
           </button>
         </div>
       </div>

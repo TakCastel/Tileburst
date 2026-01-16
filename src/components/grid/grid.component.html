@@ -1,7 +1,7 @@
 <div class="relative">
   <app-grid-indicator></app-grid-indicator>
   <div 
-    class="grid gap-2 p-2 bg-slate-100 rounded-2xl shadow-inner aspect-square max-w-full touch-none"
+    class="grid gap-2 p-2 bg-slate-100 dark:bg-slate-800 rounded-2xl shadow-inner aspect-square max-w-full touch-none"
     [class.pointer-events-none]="isShrinking()"
     [style]="gridStyles()"
     (mouseleave)="onGridMouseLeave()"
@@ -29,8 +29,8 @@
     }
   </div>
   @if (isShrinking()) {
-    <div class="absolute inset-0 bg-white/50 backdrop-blur-sm flex items-center justify-center rounded-lg z-10">
-       <p class="text-xl font-bold text-red-600 bg-white/80 px-4 py-2 rounded-lg shadow-lg animate-pulse">La grille rétrécit !</p>
+    <div class="absolute inset-0 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm flex items-center justify-center rounded-lg z-10">
+       <p class="text-xl font-bold text-red-600 dark:text-red-400 bg-white/80 dark:bg-slate-800/80 px-4 py-2 rounded-lg shadow-lg animate-pulse">{{ i18n.t().gridShrinking }}</p>
     </div>
   }
 </div>

@@ -43,8 +43,17 @@
   box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
 }
 
+.dark .cell-empty {
+  background-color: #1e293b; /* slate-800 */
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.3);
+}
+
 .cell-empty.cell-in-shrink-path {
   background-color: #e2e8f0; /* slate-200 */
+}
+
+.dark .cell-empty.cell-in-shrink-path {
+  background-color: #334155; /* slate-700 */
 }
 
 .btn-3d {

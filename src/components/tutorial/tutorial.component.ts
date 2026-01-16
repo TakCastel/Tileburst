@@ -1,6 +1,7 @@
-import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TutorialService } from '../../services/tutorial.service';
+import { I18nService } from '../../services/i18n.service';
 
 @Component({
   selector: 'app-tutorial',
@@ -11,11 +12,12 @@ import { TutorialService } from '../../services/tutorial.service';
 })
 export class TutorialComponent {
   protected tutorialService = inject(TutorialService);
+  protected i18n = inject(I18nService);
 
   isTutorialActive = this.tutorialService.isTutorialActive;
   currentStep = this.tutorialService.currentStep;
   activeStepIndex = this.tutorialService.activeStepIndex;
-  totalSteps = this.tutorialService.allSteps.length;
+  totalSteps = computed(() => this.tutorialService.allSteps().length);
   isFirstStep = this.tutorialService.isFirstStep;
   isLastStep = this.tutorialService.isLastStep;
 

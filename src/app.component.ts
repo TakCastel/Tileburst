@@ -6,12 +6,15 @@ import { TilePreviewComponent } from './components/tile-preview/tile-preview.com
 import { TutorialComponent } from './components/tutorial/tutorial.component';
 import { TutorialService } from './services/tutorial.service';
 import { SoundService } from './services/sound.service';
+import { ThemeService } from './services/theme.service';
+import { I18nService } from './services/i18n.service';
+import { LanguageSelectorComponent } from './components/language-selector/language-selector.component';
 
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
   standalone: true,
-  imports: [CommonModule, GridComponent, TilePreviewComponent, TutorialComponent],
+  imports: [CommonModule, GridComponent, TilePreviewComponent, TutorialComponent, LanguageSelectorComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
     '(window:keydown.r)': 'rotateTile()',
@@ -22,6 +25,8 @@ export class AppComponent {
   protected gameService = inject(GameService);
   protected tutorialService = inject(TutorialService);
   protected soundService = inject(SoundService);
+  protected themeService = inject(ThemeService);
+  protected i18n = inject(I18nService);
 
   score = this.gameService.score;
   gridSize = this.gameService.gridSize;
@@ -30,6 +35,7 @@ export class AppComponent {
   isGameOver = this.gameService.isGameOver;
   minValidatedGroupSize = this.gameService.minValidatedGroupSize;
   isSoundEnabled = this.soundService.isSoundEnabled;
+  isDarkMode = this.themeService.isDarkMode;
 
   isDragging = signal(false);
   isHintTooltipVisible = signal(false);
@@ -73,6 +79,10 @@ export class AppComponent {
 
   toggleSound(): void {
     this.soundService.toggleSound();
+  }
+
+  toggleTheme(): void {
+    this.themeService.toggleTheme();
   }
 
   onDragStart(event: DragEvent): void {
@@ -142,14 +152,15 @@ export class AppComponent {
   async shareScore(): Promise<void> {
     const score = this.score();
     const gameUrl = 'https://tileburst.netlify.app/';
-    const shareText = `J'ai fait ${score.toLocaleString('fr-FR')} points sur Tileburst ! Tu penses que tu peux me battre ? 🎮`;
+    const locale = this.i18n.getLanguage() === 'fr' ? 'fr-FR' : this.i18n.getLanguage() === 'en' ? 'en-US' : 'en-US';
+    const shareText = this.i18n.translateWithParams('shareScoreText', score.toLocaleString(locale));
     const shareTextWithUrl = `${shareText}\n\n${gameUrl}`;
     
     try {
       // Utiliser l'API Web Share si disponible (mobile)
       if (navigator.share) {
         const shareData: ShareData = {
-          title: `J'ai fait ${score.toLocaleString('fr-FR')} points sur Tileburst !`,
+          title: this.i18n.translateWithParams('shareScoreTitle', score.toLocaleString(locale)),
           text: shareText,
           url: gameUrl,
         };
@@ -181,7 +192,7 @@ export class AppComponent {
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(text).then(() => {
         // Afficher un message de confirmation (optionnel)
-        alert('Score copié dans le presse-papiers ! Vous pouvez maintenant le partager.');
+        alert(this.i18n.translate('shareScoreCopied'));
       }).catch((err) => {
         console.error('Erreur lors de la copie:', err);
         // Fallback ultime : afficher le texte
@@ -203,10 +214,10 @@ export class AppComponent {
     textarea.select();
     try {
       document.execCommand('copy');
-      alert('Score copié dans le presse-papiers ! Vous pouvez maintenant le partager.');
+      alert(this.i18n.translate('shareScoreCopied'));
     } catch (err) {
       // Si tout échoue, afficher le texte
-      prompt('Copiez ce texte pour partager votre score :', text);
+      prompt(this.i18n.translate('shareScoreCopyError'), text);
     }
     document.body.removeChild(textarea);
   }

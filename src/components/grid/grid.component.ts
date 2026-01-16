@@ -1,8 +1,10 @@
-import { Component, ChangeDetectionStrategy, inject, signal, computed, effect } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, signal, computed, effect, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { GameService } from '../../services/game.service';
 import { Tile, Cell } from '../../models/game.model';
 import { GridIndicatorComponent } from '../grid-indicator/grid-indicator.component';
+import { ThemeService } from '../../services/theme.service';
+import { I18nService } from '../../services/i18n.service';
 
 @Component({
   selector: 'app-grid',
@@ -13,6 +15,9 @@ import { GridIndicatorComponent } from '../grid-indicator/grid-indicator.compone
 })
 export class GridComponent {
   protected gameService = inject(GameService);
+  protected i18n = inject(I18nService);
+  private themeService = inject(ThemeService);
+  private cdr = inject(ChangeDetectorRef);
   
   grid = this.gameService.grid;
   gridSize = this.gameService.gridSize;
@@ -21,6 +26,7 @@ export class GridComponent {
   isShrinking = this.gameService.isShrinking;
   isShrinkImminent = this.gameService.isShrinkImminent;
   changeDirectionIndex = this.gameService.changeDirectionIndex;
+  isDarkMode = this.themeService.isDarkMode; // Dépendance au thème pour forcer la mise à jour
 
   private previewCells = signal<Set<string>>(new Set());
   private clearingPreviewCells = signal<Set<string>>(new Set());
@@ -43,6 +49,12 @@ export class GridComponent {
   }));
 
   constructor() {
+    // Forcer la détection de changement quand le thème change
+    effect(() => {
+      this.isDarkMode();
+      this.cdr.markForCheck();
+    });
+
     effect(() => {
         const tile = this.currentTile();
         const hoverCoords = this.lastHoveredCell();
@@ -142,6 +154,8 @@ export class GridComponent {
         classes += ' validated';
       }
     } else {
+      // Utiliser des classes Tailwind directement pour une réactivité immédiate au thème
+      classes += ' bg-slate-100 dark:bg-slate-800';
       classes += ' cell-empty';
       // Highlight the shrink/expand path for empty cells
       const size = this.gridSize();
@@ -153,8 +167,11 @@ export class GridComponent {
         case 3: isInPath = row === 0 || col === size - 1; break;     // TR
       }
       if (isInPath) {
+        classes += ' bg-slate-200 dark:bg-slate-700';
         classes += ' cell-in-shrink-path';
       }
+      // Forcer la mise à jour en lisant le signal du thème
+      this.isDarkMode();
     }
 
     return classes;

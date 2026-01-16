@@ -22,8 +22,26 @@
   <meta name="twitter:title" content="Tileburst - Jeu de puzzle stratégique">
   <meta name="twitter:description" content="Placez des tuiles sur une grille, formez des lignes et des groupes validés pour marquer des points. Défiez vos amis !">
   <meta name="twitter:image" content="https://tileburst.netlify.app/screenshot.png">
+  <script>
+    // Appliquer le thème immédiatement pour éviter le flash de contenu non stylé
+    (function() {
+      try {
+        const saved = localStorage.getItem('tileburst_theme');
+        if (saved === 'dark') {
+          document.documentElement.classList.add('dark');
+        } else if (saved === null) {
+          // Utiliser la préférence système si aucune préférence sauvegardée
+          if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.classList.add('dark');
+          }
+        }
+      } catch (e) {
+        // Ignorer les erreurs
+      }
+    })();
+  </script>
 </head>
-<body class="bg-slate-50 text-slate-800">
+<body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100">
   <app-root></app-root>
 </body>
 </html>
