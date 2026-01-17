@@ -11,7 +11,7 @@ import { I18nService } from './services/i18n.service';
 import { LanguageSelectorComponent } from './components/language-selector/language-selector.component';
 import { OptionsMenuComponent } from './components/options-menu/options-menu.component';
 import { LandingPageComponent } from './components/landing-page/landing-page.component';
-import { LucideAngularModule, Volume2, VolumeX, Sun, Moon } from 'lucide-angular';
+import { LucideAngularModule, Volume2, VolumeX, Sun, Moon, Sparkles, ShieldCheck } from 'lucide-angular';
 
 @Component({
   selector: 'app-root',
@@ -68,9 +68,13 @@ export class AppComponent implements OnInit {
   readonly VolumeXIcon = VolumeX;
   readonly SunIcon = Sun;
   readonly MoonIcon = Moon;
+  readonly SparklesIcon = Sparkles;
+  readonly ShieldCheckIcon = ShieldCheck;
 
   score = this.gameService.score;
   bestScore = this.gameService.bestScore;
+  previewLinePoints = this.gameService.previewLinePoints;
+  shrinkPoints = this.gameService.shrinkPoints;
   gridSize = this.gameService.gridSize;
   currentTile = this.gameService.currentTile;
   nextTile = this.gameService.nextTile;

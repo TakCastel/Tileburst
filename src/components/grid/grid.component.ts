@@ -71,6 +71,7 @@ export class GridComponent {
             this.previewCells.set(new Set());
             this.previewStartPosition.set(null);
             this.clearingPreviewCells.set(new Set());
+            this.gameService.setPreviewLinePoints(0);
             return;
         }
         
@@ -94,8 +95,11 @@ export class GridComponent {
         if (canPlace) {
             const cellsToClear = this.gameService.previewLineClears(this.grid(), tile, startRow, startCol);
             this.clearingPreviewCells.set(cellsToClear);
+            const points = this.gameService.getLineClearPointsForPlacement(tile, startRow, startCol);
+            this.gameService.setPreviewLinePoints(points);
         } else {
             this.clearingPreviewCells.set(new Set());
+            this.gameService.setPreviewLinePoints(0);
         }
     });
   }

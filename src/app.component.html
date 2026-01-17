@@ -42,6 +42,17 @@
         <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-lg text-center text-slate-800 dark:text-slate-100">
         <span class="text-xs text-slate-500 dark:text-slate-400 uppercase font-semibold tracking-wider">{{ i18n.t().score }}</span>
         <p class="text-5xl font-bold text-amber-500">{{ score().toLocaleString('fr-FR').replace(',', ' ') }}</p>
+        <div class="mt-1 flex items-center justify-center gap-2 text-[10px] text-slate-500 dark:text-slate-400 opacity-70">
+          <div class="flex items-center gap-1">
+            <lucide-angular [img]="SparklesIcon" class="w-3.5 h-3.5"></lucide-angular>
+            <span>{{ previewLinePoints().toLocaleString('fr-FR').replace(',', ' ') }}</span>
+          </div>
+          <div class="w-px h-3 bg-slate-200 dark:bg-slate-700"></div>
+          <div class="flex items-center gap-1">
+            <lucide-angular [img]="ShieldCheckIcon" class="w-3.5 h-3.5"></lucide-angular>
+            <span>{{ shrinkPoints().toLocaleString('fr-FR').replace(',', ' ') }}</span>
+          </div>
+        </div>
         @if (bestScore() > 0) {
           <div class="mt-2 pt-2 border-t border-slate-100 dark:border-slate-700">
             <span class="text-[10px] text-slate-400 dark:text-slate-500 uppercase font-semibold tracking-wider">{{ i18n.t().bestScore }}</span>
@@ -168,6 +179,17 @@
         <div class="bg-amber-50 dark:bg-amber-900/20 rounded-2xl p-2 shadow-sm border border-amber-100 dark:border-amber-800/30 text-center flex flex-col items-center">
           <span class="text-[10px] text-amber-700 dark:text-amber-400 uppercase font-extrabold tracking-tight leading-none mb-1">{{ i18n.t().score }}</span>
           <p class="text-2xl font-black text-amber-500 leading-none">{{ score().toLocaleString('fr-FR').replace(',', ' ') }}</p>
+          <div class="mt-1 flex items-center justify-center gap-1.5 text-[9px] text-amber-700/80 dark:text-amber-300/80 opacity-70">
+            <div class="flex items-center gap-1">
+              <lucide-angular [img]="SparklesIcon" class="w-3 h-3"></lucide-angular>
+              <span>{{ previewLinePoints().toLocaleString('fr-FR').replace(',', ' ') }}</span>
+            </div>
+            <div class="w-px h-2.5 bg-amber-200/80 dark:bg-amber-800/60"></div>
+            <div class="flex items-center gap-1">
+              <lucide-angular [img]="ShieldCheckIcon" class="w-3 h-3"></lucide-angular>
+              <span>{{ shrinkPoints().toLocaleString('fr-FR').replace(',', ' ') }}</span>
+            </div>
+          </div>
         </div>
         <div class="bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-2 shadow-sm border border-slate-200 dark:border-slate-700 text-center flex flex-col items-center">
           <span class="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-extrabold tracking-tight leading-none mb-1">{{ i18n.t().bestScore }}</span>

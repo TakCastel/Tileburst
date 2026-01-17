@@ -65,6 +65,7 @@ export class GameService {
   private tutorialService = inject(TutorialService);
   private soundService = inject(SoundService);
   private _gameState: WritableSignal<GameState> = signal(this.getInitialState());
+  private _previewLinePoints: WritableSignal<number> = signal(0);
   
   // Public signals from state
   public readonly state = this._gameState.asReadonly();
@@ -79,6 +80,14 @@ export class GameService {
   public readonly isShrinking = computed(() => this.state().isShrinking);
   public readonly changeDirectionIndex = computed(() => this.state().changeDirectionIndex);
   public readonly isShrinkImminent = computed(() => this.state().isShrinkImminent);
+  public readonly previewLinePoints = this._previewLinePoints.asReadonly();
+  public readonly shrinkPoints = computed(() => {
+    const validatedCount = this.grid().reduce(
+      (count, row) => count + row.filter(cell => cell.validated).length,
+      0
+    );
+    return validatedCount * 15 * this.scoreMultiplier();
+  });
   public readonly minValidatedGroupSize = computed(() => {
     const size = this.gridSize();
     // Progression: 6, 8, 10, 12 selon la taille de la grille
@@ -690,6 +699,33 @@ export class GameService {
 
     const clearInfo = this._findCompletedLines(tempGrid);
     return clearInfo.cellsToClear;
+  }
+
+  public getLineClearPointsForPlacement(tile: Tile, startRow: number, startCol: number): number {
+    if (!this.canPlaceTile(tile, startRow, startCol)) {
+      return 0;
+    }
+    const tempGrid = this.grid().map(row => row.map(cell => ({ ...cell })));
+    const gridSize = this.gridSize();
+
+    for (let r = 0; r < tile.height; r++) {
+      for (let c = 0; c < tile.width; c++) {
+        if (tile.shape[r][c] === 1) {
+          const gridRow = startRow + r;
+          const gridCol = startCol + c;
+          if (gridRow >= 0 && gridRow < gridSize && gridCol >= 0 && gridCol < gridSize) {
+            tempGrid[gridRow][gridCol] = { ...tempGrid[gridRow][gridCol], color: tile.color, tileId: tile.id };
+          }
+        }
+      }
+    }
+
+    const clearInfo = this._findCompletedLines(tempGrid);
+    return clearInfo.points;
+  }
+
+  public setPreviewLinePoints(points: number): void {
+    this._previewLinePoints.set(points);
   }
 
   private _updateValidatedGroups(grid: Cell[][]): { grid: Cell[][]; validatedGroupCount: number } {
