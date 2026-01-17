@@ -6,6 +6,8 @@ import { GameService } from '../../services/game.service';
 import { SoundService } from '../../services/sound.service';
 import { ThemeService } from '../../services/theme.service';
 import { LucideAngularModule, Settings } from 'lucide-angular';
+import { marked } from 'marked';
+import { RULES_MARKDOWN_BY_LANGUAGE } from '../../content/rules-markdown';
 
 @Component({
   selector: 'app-options-menu',
@@ -23,11 +25,14 @@ export class OptionsMenuComponent {
   protected gameService = inject(GameService);
   protected soundService = inject(SoundService);
   protected themeService = inject(ThemeService);
-
   isOpen = signal(false);
   isClosing = signal(false);
   isLanguageDropdownOpen = signal(false);
   isResetBestScoreConfirmVisible = signal(false);
+  isRulesOpen = signal(false);
+  isRulesLoading = signal(false);
+  rulesLoadError = signal<string | null>(null);
+  rulesHtml = signal('');
   readonly SettingsIcon = Settings;
   colorPalette = this.optionsService.colorPalette;
   bestScore = this.gameService.bestScore;
@@ -38,6 +43,18 @@ export class OptionsMenuComponent {
     { value: 'normal', label: 'Normal' },
     { value: 'highContrast', label: 'Hyper contraste' },
   ];
+
+  constructor() {
+    effect(() => {
+      const isOpen = this.isRulesOpen();
+      const language = this.i18n.getLanguage();
+      if (!isOpen) {
+        return;
+      }
+      const markdown = RULES_MARKDOWN_BY_LANGUAGE[language] ?? RULES_MARKDOWN_BY_LANGUAGE.fr;
+      this.rulesHtml.set(String(marked.parse(markdown)));
+    });
+  }
 
   toggleMenu(): void {
     if (this.isOpen()) {
@@ -88,6 +105,19 @@ export class OptionsMenuComponent {
   confirmResetBestScore(): void {
     this.gameService.resetBestScore();
     this.isResetBestScoreConfirmVisible.set(false);
+  }
+
+  openRules(): void {
+    this.isRulesOpen.set(true);
+    this.isRulesLoading.set(false);
+    this.rulesLoadError.set(null);
+    const language = this.i18n.getLanguage();
+    const markdown = RULES_MARKDOWN_BY_LANGUAGE[language] ?? RULES_MARKDOWN_BY_LANGUAGE.fr;
+    this.rulesHtml.set(String(marked.parse(markdown)));
+  }
+
+  closeRules(): void {
+    this.isRulesOpen.set(false);
   }
 
   onDocumentClick(event: MouseEvent): void {

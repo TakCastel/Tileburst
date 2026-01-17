@@ -314,3 +314,44 @@ body {
   font-weight: 400;
   letter-spacing: 0.02em;
 }
+
+/* Markdown content (regles) */
+.markdown-content h1,
+.markdown-content h2,
+.markdown-content h3 {
+  font-weight: 700;
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+}
+.markdown-content h1 {
+  font-size: 1.25rem;
+}
+.markdown-content h2 {
+  font-size: 1.1rem;
+}
+.markdown-content h3 {
+  font-size: 1rem;
+}
+.markdown-content p {
+  margin: 0.5rem 0;
+}
+.markdown-content ul {
+  margin: 0.5rem 0 0.75rem 1.25rem;
+  list-style: disc;
+}
+.markdown-content ol {
+  margin: 0.5rem 0 0.75rem 1.25rem;
+  list-style: decimal;
+}
+.markdown-content li {
+  margin: 0.25rem 0;
+}
+.markdown-content code {
+  padding: 0.1rem 0.25rem;
+  background: rgba(148, 163, 184, 0.2);
+  border-radius: 0.25rem;
+  font-size: 0.95em;
+}
+.dark .markdown-content code {
+  background: rgba(30, 41, 59, 0.6);
+}

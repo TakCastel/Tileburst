@@ -22,7 +22,9 @@
               "src/styles.css"
             ],
             "assets": [
-              "src/assets"
+              "src/assets",
+              "src/manifest.json",
+              "src/service-worker.js"
             ],
             "baseHref": "/"
           },
