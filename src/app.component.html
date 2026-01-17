@@ -142,7 +142,10 @@
       <!-- Prochaine Tuile -->
       <div class="bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-lg flex flex-col items-center gap-2 text-slate-800 dark:text-slate-100">
         <span class="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-semibold tracking-wider">{{ i18n.t().nextTile }}</span>
-        <div class="flex-grow flex items-center justify-center min-h-[80px]">
+        <div
+          class="flex-grow flex items-center justify-center min-h-[80px] cursor-pointer"
+          (click)="swapTiles()"
+          [attr.aria-label]="i18n.t().swapTilesButton">
             @if (nextTile(); as tile) { <app-tile-preview [tile]="tile"></app-tile-preview> }
         </div>
       </div>
@@ -229,8 +232,8 @@
           </div>
 
           <!-- Rotate button -->
-          <div class="flex gap-1.5 h-full">
-            <button (click)="rotateTile()" class="w-12 h-full bg-cyan-500 text-white rounded-xl btn-3d flex items-center justify-center shadow-lg shadow-cyan-400/20" style="--shadow-color: #0891b2;">
+          <div class="flex gap-1.5 h-full items-center">
+            <button (click)="rotateTile()" class="w-12 h-12 bg-cyan-500 text-white rounded-xl btn-3d flex items-center justify-center shadow-lg shadow-cyan-400/20" style="--shadow-color: #0891b2;">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5">
                 <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/>
               </svg>
@@ -241,7 +244,10 @@
         <!-- Ligne 2: Prochaine tuile Preview + Bouton Échanger -->
         <div class="flex items-center gap-2 h-[56px]">
           <!-- Next Tile Preview -->
-          <div class="flex-grow h-full relative flex items-center justify-center bg-white/50 dark:bg-slate-800/50 rounded-xl border border-slate-200/30 dark:border-slate-700/30">
+          <div
+            class="flex-grow h-full relative flex items-center justify-center bg-white/50 dark:bg-slate-800/50 rounded-xl border border-slate-200/30 dark:border-slate-700/30 cursor-pointer"
+            (click)="swapTiles()"
+            [attr.aria-label]="i18n.t().swapTilesButton">
             <span class="absolute top-1 left-3 text-[7px] text-slate-500 uppercase font-bold tracking-tighter">{{ i18n.t().nextTile }}</span>
             <div class="scale-50 flex items-center justify-center pt-1">
               @if (nextTile(); as tile) { <app-tile-preview [tile]="tile"></app-tile-preview> }
@@ -249,13 +255,14 @@
           </div>
 
         <!-- Swap Button -->
-        <button (click)="swapTiles()" class="flex-shrink-0 px-4 h-full bg-purple-500 text-white rounded-xl btn-3d flex items-center justify-center gap-2 shadow-lg shadow-purple-500/20" style="--shadow-color: #9333ea;">
+        <button
+          (click)="swapTiles()"
+          class="flex-shrink-0 w-12 h-12 bg-purple-500 text-white rounded-xl btn-3d flex items-center justify-center shadow-lg shadow-purple-500/20"
+          style="--shadow-color: #9333ea;"
+          [attr.aria-label]="i18n.t().swapTilesButton">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5">
             <path d="M8 3 4 7l4 4"/><path d="M4 7h16"/><path d="m16 21 4-4-4-4"/><path d="M20 17H4"/>
           </svg>
-          <span class="text-xs font-bold uppercase tracking-wide">
-            {{ i18n.t().swap }} <span class="hidden lg:inline">(F)</span>
-          </span>
         </button>
         </div>
 
