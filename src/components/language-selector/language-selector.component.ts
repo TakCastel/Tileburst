@@ -11,11 +11,10 @@ import { LucideAngularModule, Languages } from 'lucide-angular';
     <div class="relative">
       <button
         (click)="toggleDropdown()"
-        class="w-8 h-8 lg:w-10 lg:h-10 transition-all duration-200 btn-3d flex items-center justify-center rounded-full bg-slate-500 dark:bg-slate-600"
-        [style.--shadow-color]="'#475569'"
+        class="w-8 h-8 lg:w-10 lg:h-10 transition-all duration-200 btn-3d tb-header-icon flex items-center justify-center rounded-full"
         aria-label="Select language"
         [attr.aria-expanded]="isOpen()">
-        <lucide-angular [img]="LanguagesIcon" class="w-3.5 h-3.5 lg:w-5 lg:h-5 text-white"></lucide-angular>
+        <lucide-angular [img]="LanguagesIcon" class="w-3.5 h-3.5 lg:w-5 lg:h-5"></lucide-angular>
       </button>
       
       @if (isOpen()) {

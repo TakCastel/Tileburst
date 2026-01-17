@@ -21,6 +21,9 @@
             "styles": [
               "src/styles.css"
             ],
+            "assets": [
+              "src/assets"
+            ],
             "baseHref": "/"
           },
           "configurations": {

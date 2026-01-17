@@ -27,6 +27,7 @@ export class OptionsMenuComponent {
   isOpen = signal(false);
   isClosing = signal(false);
   isLanguageDropdownOpen = signal(false);
+  isResetBestScoreConfirmVisible = signal(false);
   readonly SettingsIcon = Settings;
   colorPalette = this.optionsService.colorPalette;
   bestScore = this.gameService.bestScore;
@@ -77,9 +78,16 @@ export class OptionsMenuComponent {
   }
 
   resetBestScore(): void {
-    if (confirm(this.i18n.translate('resetBestScoreConfirm') || 'Êtes-vous sûr de vouloir réinitialiser le meilleur score ?')) {
-      this.gameService.resetBestScore();
-    }
+    this.isResetBestScoreConfirmVisible.set(true);
+  }
+
+  hideResetBestScoreConfirm(): void {
+    this.isResetBestScoreConfirmVisible.set(false);
+  }
+
+  confirmResetBestScore(): void {
+    this.gameService.resetBestScore();
+    this.isResetBestScoreConfirmVisible.set(false);
   }
 
   onDocumentClick(event: MouseEvent): void {

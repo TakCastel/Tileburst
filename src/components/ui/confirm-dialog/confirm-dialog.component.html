@@ -1,0 +1,26 @@
+@if (open) {
+  <div class="fixed inset-0 bg-black/70 flex items-center justify-center z-[60] p-6 backdrop-blur-sm" (click)="onBackdropClick()">
+    <div class="tb-card-strong p-8 text-center flex flex-col gap-6 items-center max-w-sm w-full animate-fade-in-up" (click)="$event.stopPropagation()">
+      <h2 class="text-3xl font-tileburst text-purple-700 dark:text-purple-400 drop-shadow-sm">{{ title }}</h2>
+      <p class="text-slate-600 dark:text-slate-300 font-medium leading-relaxed">{{ message }}</p>
+
+      <div class="flex gap-4 w-full">
+        <app-button
+          (pressed)="onCancel()"
+          variant="slate"
+          [block]="true"
+          customClass="h-14"
+          [label]="cancelLabel">
+        </app-button>
+        <app-button
+          (pressed)="onConfirm()"
+          [variant]="confirmVariant"
+          [block]="true"
+          customClass="h-14"
+          [label]="confirmLabel">
+        </app-button>
+      </div>
+    </div>
+  </div>
+}
+

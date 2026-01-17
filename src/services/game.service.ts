@@ -286,7 +286,11 @@ export class GameService {
 
     const randomShapeDef = availableShapes[Math.floor(Math.random() * availableShapes.length)];
     const randomColor = COLORS[Math.floor(Math.random() * COLORS.length)];
-    const shape = randomShapeDef.shape;
+    let shape = randomShapeDef.shape;
+
+    if (!this._isShapeHorizontallySymmetric(shape) && Math.random() < 0.5) {
+      shape = this._mirrorShapeHorizontally(shape);
+    }
     const height = shape.length;
     const width = shape[0].length;
 
@@ -301,6 +305,24 @@ export class GameService {
         c: Math.floor(width / 2),
       },
     };
+  }
+
+  private _isShapeHorizontallySymmetric(shape: number[][]): boolean {
+    const height = shape.length;
+    const width = shape[0].length;
+
+    for (let r = 0; r < height; r++) {
+      for (let c = 0; c < Math.floor(width / 2); c++) {
+        if (shape[r][c] !== shape[r][width - 1 - c]) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  private _mirrorShapeHorizontally(shape: number[][]): number[][] {
+    return shape.map(row => [...row].reverse());
   }
 
   private advanceToNextTile(): void {

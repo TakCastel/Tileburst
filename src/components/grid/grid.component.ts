@@ -106,15 +106,27 @@ export class GridComponent {
     return (palette[color] || this.DEFAULT_COLOR).bg;
   }
   
-  getShapeForColor(color: string | null | undefined): 'square' | 'circle' | 'triangle' | 'cross' | 'star' | null {
-    if (!color || this.shapeMode() === 'none') return null;
-    return this.optionsService.getShapeForColor(color);
+  isPreviewCell(row: number, col: number): boolean {
+    return this.previewCells().has(`${row},${col}`);
+  }
+
+  getShapeForColor(color: string | null | undefined, row?: number, col?: number): 'square' | 'circle' | 'triangle' | 'cross' | 'star' | null {
+    let finalColor = color;
+    if (!finalColor && row !== undefined && col !== undefined && this.isPreviewCell(row, col)) {
+      finalColor = this.currentTile()?.color;
+    }
+    if (!finalColor || this.shapeMode() === 'none') return null;
+    return this.optionsService.getShapeForColor(finalColor);
   }
   
-  getShapeColorClass(color: string | null | undefined): string {
-    if (!color) return '';
+  getShapeColorClass(color: string | null | undefined, row?: number, col?: number): string {
+    let finalColor = color;
+    if (!finalColor && row !== undefined && col !== undefined && this.isPreviewCell(row, col)) {
+      finalColor = this.currentTile()?.color;
+    }
+    if (!finalColor) return '';
     const palette = this.optionsService.getColorPaletteClasses(this.colorPalette());
-    const colorDef = palette[color] || this.DEFAULT_COLOR;
+    const colorDef = palette[finalColor] || this.DEFAULT_COLOR;
     // Retourner une version plus sombre de la couleur selon la palette
     const darkerMap: { [key: string]: string } = {
       // Normal
@@ -167,15 +179,16 @@ export class GridComponent {
         if (this.isPlacementValid()) {
           const tileColor = this.currentTile()?.color;
           const previewColorMap: { [key: string]: string } = {
-            blue: 'bg-cyan-400/50',
-            red: 'bg-red-400/50',
-            green: 'bg-green-400/50',
-            yellow: 'bg-amber-400/50',
-            purple: 'bg-violet-400/50',
+            blue: 'bg-cyan-400',
+            red: 'bg-red-400',
+            green: 'bg-green-400',
+            yellow: 'bg-amber-400',
+            purple: 'bg-violet-400',
           };
-          return `${classes} ${previewColorMap[tileColor || ''] || 'bg-gray-400/50'}`;
+          // On ajoute cell-3d et une légère transparence pour montrer que c'est une prévisualisation
+          return `${classes} ${previewColorMap[tileColor || ''] || 'bg-gray-400'} cell-3d opacity-60 animate-pulse`;
         } else {
-            return `invalid-placement-preview rounded-md`;
+            return `invalid-placement-preview rounded-md opacity-40`;
         }
     }
 
@@ -292,22 +305,6 @@ export class GridComponent {
         // Réinitialiser l'état après placement
         this.lastHoveredCell.set(null);
     }
-  }
-
-  onDragOver(event: DragEvent): void {
-    event.preventDefault();
-    this._updateHoveredCellFromEvent(event);
-  }
-
-  onDragLeave(event: DragEvent): void {
-    this.onGridMouseLeave();
-  }
-
-  onDrop(event: DragEvent): void {
-    event.preventDefault();
-    if (this.isShrinking()) return;
-    this.onGridClick();
-    this.onGridMouseLeave();
   }
 
   // Gestion des événements tactiles pour mobile

@@ -22,8 +22,7 @@ import { LucideAngularModule, Volume2, VolumeX, Sun, Moon } from 'lucide-angular
   host: {
     '(window:keydown.r)': 'rotateTile()',
     '(window:keydown.space)': 'rotateTile()',
-    '(window:keydown.t)': 'onMirrorKeyPress()',
-    '(window:keydown.s)': 'onSwapKeyPress()',
+    '(window:keydown.f)': 'onSwapKeyPress()',
   },
 })
 export class AppComponent implements OnInit {
@@ -84,11 +83,20 @@ export class AppComponent implements OnInit {
   isHintTooltipVisible = signal(false);
   isRestartConfirmVisible = signal(false);
   private touchStartPosition: { x: number; y: number } | null = null;
-  private isTouchDragging = signal(false);
+  protected isTouchDragging = signal(false);
   private touchDragElement: HTMLElement | null = null;
+  private touchGhostOffset = { x: 0, y: 0 };
+  private touchGhostAnchor = { x: 0, y: 0 }; // point touché dans l'élément source
+  private ghostLiftPx = 0; // 0 au départ, >0 quand on commence réellement à déplacer
+  private rafPending = false;
+  private pendingTouchPoint: { x: number; y: number } | null = null;
 
   restartGame(): void {
-    this.gameService.startGame();
+    if (this.isGameOver()) {
+      this.gameService.startGame();
+      return;
+    }
+    this.showRestartConfirm();
   }
 
   showRestartConfirm(): void {
@@ -106,20 +114,6 @@ export class AppComponent implements OnInit {
 
   rotateTile(): void {
     this.gameService.rotateCurrentTile();
-  }
-
-  mirrorTile(): void {
-    this.gameService.mirrorCurrentTile();
-  }
-
-  onMirrorKeyPress(): void {
-    if (this.canMirrorTile()) {
-      this.mirrorTile();
-    }
-  }
-
-  canMirrorTile(): boolean {
-    return this.gameService.canMirrorTile(this.currentTile());
   }
 
   swapTiles(): void {
@@ -152,18 +146,6 @@ export class AppComponent implements OnInit {
     this.themeService.toggleTheme();
   }
 
-  onDragStart(event: DragEvent): void {
-    this.isDragging.set(true);
-    // Necessary for Firefox to initiate drag
-    event.dataTransfer?.setData('text/plain', 'tile');
-    if (event.dataTransfer) {
-      event.dataTransfer.effectAllowed = 'move';
-    }
-  }
-
-  onDragEnd(): void {
-    this.isDragging.set(false);
-  }
 
   // Gestion des événements tactiles pour mobile
   onTileTouchStart(event: TouchEvent): void {
@@ -173,6 +155,16 @@ export class AppComponent implements OnInit {
     this.isTouchDragging.set(true);
     this.isDragging.set(true);
     this.touchDragElement = event.currentTarget as HTMLElement;
+    const rect = this.touchDragElement.getBoundingClientRect();
+    this.ghostLiftPx = 0; // au départ, pas de lift: le ghost "part" de la tuile
+    this.touchGhostAnchor = {
+      x: touch.clientX - rect.left,
+      y: touch.clientY - rect.top,
+    };
+    this.touchGhostOffset = {
+      x: this.touchGhostAnchor.x,
+      y: this.touchGhostAnchor.y + this.ghostLiftPx,
+    };
     // Empêcher le scroll et les actions par défaut pendant le drag
     event.preventDefault();
     event.stopPropagation();
@@ -186,6 +178,16 @@ export class AppComponent implements OnInit {
     
     // Trouver l'élément sous le doigt (la grille) et mettre à jour la position
     const touch = event.touches[0];
+    // Dès qu'on commence vraiment à bouger, on "lève" légèrement la tuile pour qu'elle reste visible
+    const movedX = Math.abs(touch.clientX - this.touchStartPosition.x);
+    const movedY = Math.abs(touch.clientY - this.touchStartPosition.y);
+    if (this.ghostLiftPx === 0 && (movedX > 6 || movedY > 6)) {
+      this.ghostLiftPx = 24;
+      this.touchGhostOffset = {
+        x: this.touchGhostAnchor.x,
+        y: this.touchGhostAnchor.y + this.ghostLiftPx,
+      };
+    }
     const elementBelow = document.elementFromPoint(touch.clientX, touch.clientY);
     
     // Si on est sur la grille, créer un événement personnalisé pour mettre à jour la position
@@ -256,6 +258,9 @@ export class AppComponent implements OnInit {
     this.isDragging.set(false);
     this.touchStartPosition = null;
     this.touchDragElement = null;
+    this.pendingTouchPoint = null;
+    this.ghostLiftPx = 0;
+    this.touchGhostAnchor = { x: 0, y: 0 };
     event.preventDefault();
     event.stopPropagation();
   }
@@ -265,6 +270,9 @@ export class AppComponent implements OnInit {
     this.isDragging.set(false);
     this.touchStartPosition = null;
     this.touchDragElement = null;
+    this.pendingTouchPoint = null;
+    this.ghostLiftPx = 0;
+    this.touchGhostAnchor = { x: 0, y: 0 };
   }
 
   async shareScore(): Promise<void> {

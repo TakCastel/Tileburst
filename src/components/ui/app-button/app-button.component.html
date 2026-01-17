@@ -1,0 +1,25 @@
+<button
+  [type]="type"
+  [disabled]="disabled"
+  [attr.aria-label]="ariaLabel || null"
+  [attr.aria-expanded]="ariaExpanded === null ? null : ariaExpanded"
+  [attr.aria-pressed]="ariaPressed === null ? null : ariaPressed"
+  [class]="buttonClass"
+  (click)="onClick($event)">
+  <span class="relative w-full h-full flex items-center justify-center">
+    <span [class]="contentClass">
+      <ng-content></ng-content>
+      @if (label) {
+        <span class="font-bold uppercase tracking-wider">{{ label }}</span>
+      }
+      @if (keyHint && keyHintPlacement === 'inline') {
+        <span [class]="keyHintClass">{{ keyHint }}</span>
+      }
+    </span>
+
+    @if (keyHint && keyHintPlacement === 'corner') {
+      <span class="absolute -top-1 -right-1" [class]="keyHintClass">{{ keyHint }}</span>
+    }
+  </span>
+</button>
+
