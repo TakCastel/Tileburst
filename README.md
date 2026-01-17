@@ -2,13 +2,13 @@
 <img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
 </div>
 
-# Tileburst - Jeu de puzzle stratégique
+# Pavat - Jeu de puzzle stratégique
 
-Tileburst est un jeu de puzzle stratégique où vous placez des tuiles sur une grille, formez des lignes et des groupes validés pour marquer des points.
+Pavat est un jeu de puzzle stratégique où vous placez des tuiles sur une grille, formez des lignes et des groupes validés pour marquer des points.
 
 ## 🌐 Application Web (PWA)
 
-Tileburst fonctionne comme une **Progressive Web App (PWA)** :
+Pavat fonctionne comme une **Progressive Web App (PWA)** :
 - ✅ Installable sur mobile et desktop
 - ✅ Mode hors ligne
 - ✅ Expérience native-like
@@ -16,7 +16,7 @@ Tileburst fonctionne comme une **Progressive Web App (PWA)** :
 
 ## 📱 Applications Mobiles Natives
 
-Tileburst peut également être compilé en applications natives iOS et Android via **Capacitor**.
+Pavat peut également être compilé en applications natives iOS et Android via **Capacitor**.
 
 Consultez [MOBILE_SETUP.md](MOBILE_SETUP.md) pour les instructions détaillées.
 
@@ -52,6 +52,22 @@ Consultez [MOBILE_SETUP.md](MOBILE_SETUP.md) pour les instructions détaillées.
 - `npm run cap:sync` - Synchroniser avec les projets natifs
 - `npm run cap:open:ios` - Ouvrir le projet iOS dans Xcode
 - `npm run cap:open:android` - Ouvrir le projet Android dans Android Studio
+
+## 🔥 Déploiement Firebase Hosting
+
+Prérequis:
+- Compte Firebase + projet créé
+- Firebase CLI installée: `npm install -g firebase-tools`
+
+Déploiement:
+1. Se connecter: `firebase login`
+2. Associer le projet Firebase au repo: `firebase use --add`
+3. Construire: `npm run build`
+4. Déployer: `firebase deploy`
+
+Notes:
+- Le site est servi depuis `dist` (config dans `firebase.json`).
+- La règle `rewrites` assure le routage SPA vers `index.html`.
 
 ## 🎨 Icônes PWA
 

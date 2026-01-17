@@ -2,7 +2,7 @@ import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'com.tileburst.app',
-  appName: 'Tileburst',
+  appName: 'Pavat',
   webDir: 'dist',
   server: {
     androidScheme: 'https',

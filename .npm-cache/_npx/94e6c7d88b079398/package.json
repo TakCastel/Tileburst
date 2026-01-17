@@ -1,0 +1,10 @@
+{
+  "dependencies": {
+    "png-to-ico": "^3.0.1"
+  },
+  "_npx": {
+    "packages": [
+      "png-to-ico"
+    ]
+  }
+}

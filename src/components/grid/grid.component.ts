@@ -27,6 +27,7 @@ export class GridComponent {
   grid = this.gameService.grid;
   gridSize = this.gameService.gridSize;
   currentTile = this.gameService.currentTile;
+  nextTile = this.gameService.nextTile;
   lastPlacedTileId = this.gameService.lastPlacedTileId;
   isShrinking = this.gameService.isShrinking;
   isShrinkImminent = this.gameService.isShrinkImminent;
@@ -35,9 +36,11 @@ export class GridComponent {
 
   private previewCells = signal<Set<string>>(new Set());
   private clearingPreviewCells = signal<Set<string>>(new Set());
+  private hintColors = signal<Map<string, string>>(new Map());
   private isPlacementValid = signal(false);
   private lastHoveredCell = signal<{row: number, col: number} | null>(null);
   private previewStartPosition = signal<{row: number, col: number} | null>(null);
+  protected pulseDelay = signal('0ms');
   private lastTouchTime = 0;
 
   private readonly DEFAULT_COLOR = { bg: 'bg-gray-400' };
@@ -50,6 +53,10 @@ export class GridComponent {
   }));
 
   constructor() {
+    const now = typeof performance !== 'undefined' ? performance.now() : Date.now();
+    const durationMs = 1000;
+    this.pulseDelay.set(`-${Math.round(now % durationMs)}ms`);
+
     // Forcer la détection de changement quand le thème change
     effect(() => {
       this.isDarkMode();
@@ -102,6 +109,41 @@ export class GridComponent {
             this.gameService.setPreviewLinePoints(0);
         }
     });
+
+    effect(() => {
+      const tile = this.currentTile();
+      const grid = this.grid();
+      const isShrinking = this.isShrinking();
+
+      if (isShrinking || !grid || !tile) {
+        this.hintColors.set(new Map());
+        return;
+      }
+
+      const hintMap = new Map<string, string>();
+
+      const applyHintForTile = (hintTile: Tile | null): void => {
+        if (!hintTile) return;
+        const bestPlacement = this.gameService.findBestLineClearPlacement(hintTile);
+        if (!bestPlacement) return;
+
+        for (let r = 0; r < bestPlacement.height; r++) {
+          for (let c = 0; c < bestPlacement.width; c++) {
+            if (bestPlacement.shape[r][c] === 1) {
+              const key = `${bestPlacement.startRow + r},${bestPlacement.startCol + c}`;
+              if (!hintMap.has(key)) {
+                hintMap.set(key, hintTile.color);
+              }
+            }
+          }
+        }
+      };
+
+      applyHintForTile(tile);
+      applyHintForTile(this.nextTile());
+      this.hintColors.set(hintMap);
+    });
+
   }
   
   private getBackgroundColorClass(color: string | null | undefined): string {
@@ -112,6 +154,23 @@ export class GridComponent {
   
   isPreviewCell(row: number, col: number): boolean {
     return this.previewCells().has(`${row},${col}`);
+  }
+
+  private getPulseColorClass(color: string | null | undefined): string {
+    const colorMap: { [key: string]: string } = {
+      blue: 'pulse-color-blue',
+      red: 'pulse-color-red',
+      green: 'pulse-color-green',
+      yellow: 'pulse-color-yellow',
+      purple: 'pulse-color-purple',
+    };
+    return color ? (colorMap[color] || '') : '';
+  }
+
+  private getHintClass(key: string): string {
+    const color = this.hintColors().get(key);
+    if (!color) return '';
+    return `pulse-hint ${this.getPulseColorClass(color)}`.trim();
   }
 
   getShapeForColor(color: string | null | undefined, row?: number, col?: number): 'square' | 'circle' | 'triangle' | 'cross' | 'star' | null {
@@ -189,8 +248,9 @@ export class GridComponent {
             yellow: 'bg-amber-400',
             purple: 'bg-violet-400',
           };
-          // On ajoute cell-3d et une légère transparence pour montrer que c'est une prévisualisation
-          return `${classes} ${previewColorMap[tileColor || ''] || 'bg-gray-400'} cell-3d opacity-60 animate-pulse`;
+          const hasLineClear = this.clearingPreviewCells().size > 0;
+          const pulseClass = hasLineClear ? `pulse-preview ${this.getPulseColorClass(tileColor)}` : '';
+          return `${classes} ${previewColorMap[tileColor || ''] || 'bg-gray-400'} cell-3d opacity-60 ${pulseClass} ${this.getHintClass(key)}`;
         } else {
             return `invalid-placement-preview rounded-md opacity-40`;
         }
@@ -222,6 +282,10 @@ export class GridComponent {
       if (isInPath) {
         classes += ' bg-slate-200 dark:bg-slate-700';
         classes += ' cell-in-shrink-path';
+      }
+      const hintClass = this.getHintClass(key);
+      if (hintClass) {
+        classes += ` ${hintClass}`;
       }
       // Forcer la mise à jour en lisant le signal du thème
       this.isDarkMode();

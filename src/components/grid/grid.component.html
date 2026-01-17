@@ -3,6 +3,7 @@
   <div 
     class="grid gap-0.5 lg:gap-2 p-0.5 lg:p-2 bg-slate-100 dark:bg-slate-800 rounded-xl lg:rounded-2xl shadow-inner aspect-square w-full max-w-full max-h-full touch-none"
     [style]="gridStyles()"
+    [style.--pulse-delay]="pulseDelay()"
     [class.pointer-events-none]="isShrinking()"
     (mouseleave)="onGridMouseLeave()"
     (mousemove)="onGridMouseMove($event)"
@@ -16,7 +17,7 @@
     @for (row of grid(); track $index; let r = $index) {
       @for (cell of row; track $index; let c = $index) {
         <div 
-          class="w-full h-full relative overflow-hidden"
+          class="w-full h-full relative overflow-hidden cell-base"
           [class]="getCellClass(r, c)">
           @if (getShapeForColor(grid()[r][c].color, r, c); as shape) {
             <div class="absolute inset-0 flex items-center justify-center pointer-events-none"

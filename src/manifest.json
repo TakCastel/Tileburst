@@ -1,6 +1,6 @@
 {
-  "name": "Tileburst",
-  "short_name": "Tileburst",
+  "name": "Pavat",
+  "short_name": "Pavat",
   "description": "Placez des tuiles sur une grille, formez des lignes et des groupes validés pour marquer des points. Défiez vos amis !",
   "start_url": "/",
   "display": "standalone",

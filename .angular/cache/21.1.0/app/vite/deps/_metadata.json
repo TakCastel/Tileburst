@@ -1,47 +1,62 @@
 {
-  "hash": "ca8f9acb",
-  "configHash": "9a0c1664",
-  "lockfileHash": "bec87ba8",
-  "browserHash": "739f744b",
+  "hash": "00f619ad",
+  "configHash": "f6efeee2",
+  "lockfileHash": "5000f258",
+  "browserHash": "14e5ca25",
   "optimized": {
     "@angular/common": {
       "src": "../../../../../../node_modules/@angular/common/fesm2022/common.mjs",
       "file": "@angular_common.js",
-      "fileHash": "7113d319",
+      "fileHash": "122cc559",
       "needsInterop": false
     },
     "@angular/compiler": {
       "src": "../../../../../../node_modules/@angular/compiler/fesm2022/compiler.mjs",
       "file": "@angular_compiler.js",
-      "fileHash": "c07e060d",
+      "fileHash": "2149b12f",
       "needsInterop": false
     },
     "@angular/core": {
       "src": "../../../../../../node_modules/@angular/core/fesm2022/core.mjs",
       "file": "@angular_core.js",
-      "fileHash": "fe640d28",
+      "fileHash": "dfdc2d16",
       "needsInterop": false
     },
     "@angular/platform-browser": {
       "src": "../../../../../../node_modules/@angular/platform-browser/fesm2022/platform-browser.mjs",
       "file": "@angular_platform-browser.js",
-      "fileHash": "b80d5c6d",
+      "fileHash": "fd28bc5e",
       "needsInterop": false
     },
     "lucide-angular": {
       "src": "../../../../../../node_modules/lucide-angular/fesm2020/lucide-angular.mjs",
       "file": "lucide-angular.js",
-      "fileHash": "929c32fa",
+      "fileHash": "731ae46b",
       "needsInterop": false
     },
     "marked": {
       "src": "../../../../../../node_modules/marked/lib/marked.esm.js",
       "file": "marked.js",
-      "fileHash": "cd35c5f7",
+      "fileHash": "400a3130",
+      "needsInterop": false
+    },
+    "firebase/app": {
+      "src": "../../../../../../node_modules/firebase/app/dist/esm/index.esm.js",
+      "file": "firebase_app.js",
+      "fileHash": "23879a16",
+      "needsInterop": false
+    },
+    "firebase/analytics": {
+      "src": "../../../../../../node_modules/firebase/analytics/dist/esm/index.esm.js",
+      "file": "firebase_analytics.js",
+      "fileHash": "7a2264d6",
       "needsInterop": false
     }
   },
   "chunks": {
+    "chunk-3BEJA4PN": {
+      "file": "chunk-3BEJA4PN.js"
+    },
     "chunk-UTJO7DJT": {
       "file": "chunk-UTJO7DJT.js"
     },

@@ -1,10 +1,10 @@
-# Guide de configuration mobile pour Tileburst
+# Guide de configuration mobile pour Pavat
 
-Ce guide vous explique comment transformer Tileburst en application mobile pour iOS et Android tout en conservant le site web.
+Ce guide vous explique comment transformer Pavat en application mobile pour iOS et Android tout en conservant le site web.
 
 ## 🎯 Vue d'ensemble
 
-Tileburst est maintenant configuré comme une **Progressive Web App (PWA)** qui peut être installée sur mobile, et peut également être compilée en applications natives iOS et Android via **Capacitor**.
+Pavat est maintenant configuré comme une **Progressive Web App (PWA)** qui peut être installée sur mobile, et peut également être compilée en applications natives iOS et Android via **Capacitor**.
 
 ## 📱 Fonctionnalités PWA
 

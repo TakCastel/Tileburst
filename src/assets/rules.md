@@ -1,4 +1,4 @@
-# Regles detaillees de Tileburst
+# Regles detaillees de Pavat
 
 Ce document decrit toutes les regles et mecanismes observes dans le jeu.
 

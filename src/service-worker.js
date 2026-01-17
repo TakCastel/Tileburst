@@ -1,5 +1,5 @@
-// Service Worker pour Tileburst
-const CACHE_NAME = 'tileburst-v1';
+// Service Worker pour Pavat
+const CACHE_NAME = 'pavat-v1';
 const urlsToCache = [
   '/',
   '/index.html',

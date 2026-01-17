@@ -724,6 +724,50 @@ export class GameService {
     return clearInfo.points;
   }
 
+  private rotateTileOnce(tile: Tile): Tile {
+    const shape = tile.shape;
+    const height = tile.height;
+    const width = tile.width;
+    const newShape: number[][] = Array.from({ length: width }, () => Array(height).fill(0));
+    for (let r = 0; r < height; r++) {
+      for (let c = 0; c < width; c++) {
+        newShape[c][height - 1 - r] = shape[r][c];
+      }
+    }
+    return {
+      ...tile,
+      shape: newShape,
+      width: height,
+      height: width,
+    };
+  }
+
+  public findBestLineClearPlacement(tile: Tile | null): { startRow: number; startCol: number; points: number; shape: number[][]; width: number; height: number } | null {
+    if (!tile) return null;
+    const gridSize = this.gridSize();
+    let best: { startRow: number; startCol: number; points: number; shape: number[][]; width: number; height: number } | null = null;
+    let tempTile: Tile = {
+      ...tile,
+      shape: tile.shape.map(row => row.slice()),
+    };
+
+    for (let rotation = 0; rotation < 4; rotation++) {
+      for (let r = 0; r < gridSize; r++) {
+        for (let c = 0; c < gridSize; c++) {
+          if (!this.canPlaceTile(tempTile, r, c)) continue;
+          const points = this.getLineClearPointsForPlacement(tempTile, r, c);
+          if (points <= 0) continue;
+          if (!best || points > best.points) {
+            best = { startRow: r, startCol: c, points, shape: tempTile.shape, width: tempTile.width, height: tempTile.height };
+          }
+        }
+      }
+      tempTile = this.rotateTileOnce(tempTile);
+    }
+
+    return best;
+  }
+
   public setPreviewLinePoints(points: number): void {
     this._previewLinePoints.set(points);
   }

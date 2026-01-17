@@ -1,5 +1,5 @@
 export const RULES_MARKDOWN_BY_LANGUAGE: Record<string, string> = {
-  fr: `# Regles detaillees de Tileburst
+  fr: `# Regles detaillees de Pavat
 
 Ce document decrit toutes les regles et mecanismes observes dans le jeu.
 
@@ -102,7 +102,7 @@ Ce document decrit toutes les regles et mecanismes observes dans le jeu.
 - La tuile suivante est toujours connue, ce qui permet de planifier.
 - Le jeu conserve le meilleur score localement.
 `,
-  en: `# Detailed Tileburst Rules
+  en: `# Detailed Pavat Rules
 
 This document describes all rules and main mechanics of the game.
 
@@ -205,7 +205,7 @@ This document describes all rules and main mechanics of the game.
 - The next tile is always known, so you can plan ahead.
 - The game stores the best score locally.
 `,
-  es: `# Reglas detalladas de Tileburst
+  es: `# Reglas detalladas de Pavat
 
 Este documento describe todas las reglas y mecanismos del juego.
 
@@ -308,7 +308,7 @@ Este documento describe todas las reglas y mecanismos del juego.
 - La siguiente ficha siempre es conocida, lo que permite planificar.
 - El juego guarda el mejor puntaje localmente.
 `,
-  de: `# Ausfuehrliche Tileburst-Regeln
+  de: `# Ausfuehrliche Pavat-Regeln
 
 Dieses Dokument beschreibt alle Regeln und Mechaniken des Spiels.
 
@@ -411,7 +411,7 @@ Dieses Dokument beschreibt alle Regeln und Mechaniken des Spiels.
 - Das naechste Teil ist immer bekannt, so kann man planen.
 - Das Spiel speichert den besten Punktestand lokal.
 `,
-  it: `# Regole dettagliate di Tileburst
+  it: `# Regole dettagliate di Pavat
 
 Questo documento descrive tutte le regole e i meccanismi del gioco.
 
@@ -514,7 +514,7 @@ Questo documento descrive tutte le regole e i meccanismi del gioco.
 - La tessera successiva e sempre nota, quindi puoi pianificare.
 - Il gioco salva il miglior punteggio localmente.
 `,
-  pt: `# Regras detalhadas do Tileburst
+  pt: `# Regras detalhadas do Pavat
 
 Este documento descreve todas as regras e mecanicas do jogo.
 
@@ -617,7 +617,7 @@ Este documento descreve todas as regras e mecanicas do jogo.
 - A proxima peca e sempre conhecida, permitindo planejar.
 - O jogo salva o melhor resultado localmente.
 `,
-  ru: `# Podrobnye pravila Tileburst
+  ru: `# Podrobnye pravila Pavat
 
 V etom dokumente opisany vse pravila i mehaniki igry.
 
@@ -720,7 +720,7 @@ V etom dokumente opisany vse pravila i mehaniki igry.
 - Sleduyushchaya plitka vsegda izvestna, mozhno planirovat.
 - Igra sohranyaet luchshiy rezultat lokalno.
 `,
-  ja: `# Tileburstの詳細ルール
+  ja: `# Pavatの詳細ルール
 
 このドキュメントはゲームのすべてのルールと仕組みを説明します。
 
@@ -822,7 +822,7 @@ V etom dokumente opisany vse pravila i mehaniki igry.
 - 次のタイルが見えるため、計画的に進められます。
 - ベストスコアはローカルに保存されます。
 `,
-  zh: `# Tileburst 详细规则
+  zh: `# Pavat 详细规则
 
 本文档说明游戏的全部规则与机制。
 
@@ -924,7 +924,7 @@ V etom dokumente opisany vse pravila i mehaniki igry.
 - 下一块可见，便于规划。
 - 最佳分数会保存在本地。
 `,
-  ko: `# Tileburst 상세 규칙
+  ko: `# Pavat 상세 규칙
 
 이 문서는 게임의 모든 규칙과 메커니즘을 설명합니다.
 
@@ -1026,7 +1026,7 @@ V etom dokumente opisany vse pravila i mehaniki igry.
 - 다음 타일이 보여 계획을 세울 수 있습니다.
 - 최고 점수는 로컬에 저장됩니다.
 `,
-  nl: `# Gedetailleerde Tileburst-regels
+  nl: `# Gedetailleerde Pavat-regels
 
 Dit document beschrijft alle regels en spelmechanieken.
 
@@ -1129,7 +1129,7 @@ Dit document beschrijft alle regels en spelmechanieken.
 - De volgende tegel is altijd bekend, dus je kunt plannen.
 - Het spel slaat de beste score lokaal op.
 `,
-  pl: `# Szczegolowe zasady Tileburst
+  pl: `# Szczegolowe zasady Pavat
 
 Ten dokument opisuje wszystkie zasady i mechaniki gry.
 
@@ -1232,7 +1232,7 @@ Ten dokument opisuje wszystkie zasady i mechaniki gry.
 - Nastepna plytka jest zawsze znana, co pozwala planowac.
 - Gra zapisuje najlepszy wynik lokalnie.
 `,
-  tr: `# Tileburst Ayrintili Kurallar
+  tr: `# Pavat Ayrintili Kurallar
 
 Bu belge oyunun tum kurallarini ve mekaniklerini aciklar.
 
@@ -1335,7 +1335,7 @@ Bu belge oyunun tum kurallarini ve mekaniklerini aciklar.
 - Sonraki karo her zaman gorunur, plan yapabilirsiniz.
 - Oyun en iyi skoru yerel olarak saklar.
 `,
-  ar: `# قواعد Tileburst التفصيلية
+  ar: `# قواعد Pavat التفصيلية
 
 هذا المستند يشرح جميع قواعد اللعبة والاليات.
 
