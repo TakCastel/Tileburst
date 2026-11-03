@@ -18,7 +18,7 @@ export class SoundService {
 
   private loadSoundPreference(): boolean {
     try {
-      const saved = localStorage.getItem('tileburst_sound_enabled');
+      const saved = localStorage.getItem('pavat_sound_enabled');
       return saved !== null ? saved === 'true' : true; // Activé par défaut
     } catch {
       return true;
@@ -27,7 +27,7 @@ export class SoundService {
 
   private saveSoundPreference(enabled: boolean): void {
     try {
-      localStorage.setItem('tileburst_sound_enabled', enabled.toString());
+      localStorage.setItem('pavat_sound_enabled', enabled.toString());
     } catch {
       // Ignorer les erreurs de localStorage
     }

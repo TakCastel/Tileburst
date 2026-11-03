@@ -1,9 +1,10 @@
 // Service Worker pour Pavat
-const CACHE_NAME = 'pavat-v1';
+const CACHE_NAME = 'pavat-v2';
 const urlsToCache = [
   '/',
   '/index.html',
-  '/assets/screenshot.png',
+  '/screenshot.png',
+  '/manifest.json',
   '/assets/icons/icon-192x192.png',
   '/assets/icons/icon-512x512.png'
 ];

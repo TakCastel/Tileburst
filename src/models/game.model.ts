@@ -4,6 +4,7 @@ export interface Cell {
   clearing?: boolean;
   shrinking?: boolean;
   validated?: boolean;
+  blocked?: boolean;
 }
 
 export interface Tile {
@@ -26,4 +27,6 @@ export interface GameState {
   isShrinking?: boolean;
   changeDirectionIndex: number; // 0: BR, 1: BL, 2: TL, 3: TR
   isShrinkImminent?: boolean;
+  undoCharges: number;
+  undoProgressPoints: number;
 }

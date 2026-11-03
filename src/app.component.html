@@ -1,273 +1,171 @@
 @if (showLandingPage()) {
   <app-landing-page></app-landing-page>
 } @else {
-<main class="w-full font-sans antialiased min-h-screen">
+<main class="w-full antialiased min-h-screen">
 
-  <!-- ======================= -->
-  <!-- == DESKTOP LAYOUT  == -->
-  <!-- ======================= -->
-  <div class="hidden lg:grid min-h-screen w-full max-w-screen-xl mx-auto grid-cols-[1fr_auto_1fr] gap-8 items-start p-8">
-    
-    <!-- == HEADER (Desktop) == -->
-    <header class="w-full text-center mb-6 col-span-3 flex items-center justify-center gap-4">
-        <h1 class="text-3xl sm:text-4xl lg:text-5xl font-tileburst text-slate-800 dark:text-slate-100 tracking-tight">Pavat</h1>
-        <app-language-selector></app-language-selector>
-        <button 
-          (click)="toggleSound()" 
-          class="w-10 h-10 transition-all duration-200 btn-3d tb-header-icon flex items-center justify-center rounded-full"
-          [class.tb-header-icon-off]="!isSoundEnabled()"
-          [attr.aria-label]="i18n.t().toggleSound">
-          @if (isSoundEnabled()) {
-            <lucide-angular [img]="Volume2Icon" class="w-5 h-5"></lucide-angular>
-          } @else {
-            <lucide-angular [img]="VolumeXIcon" class="w-5 h-5"></lucide-angular>
-          }
-        </button>
-        <button 
-          (click)="toggleTheme()" 
-          class="w-10 h-10 transition-all duration-200 btn-3d tb-header-icon flex items-center justify-center rounded-full"
-          [attr.aria-label]="i18n.t().toggleDarkMode">
-          @if (isDarkMode()) {
-            <lucide-angular [img]="MoonIcon" class="w-5 h-5"></lucide-angular>
-          } @else {
-            <lucide-angular [img]="SunIcon" class="w-5 h-5"></lucide-angular>
-          }
-        </button>
-        <app-options-menu></app-options-menu>
-    </header>
+  <!-- Gabarit calqué sur les maquettes (positions en pixels de maquette, voir .tb-layout dans styles.css) -->
+  <div class="tb-layout">
 
-    <!-- == PANNEAU GAUCHE (Desktop) == -->
-    <aside class="flex flex-col gap-6 justify-self-end w-64">
-      <!-- Score -->
-        <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-lg text-center text-slate-800 dark:text-slate-100">
-        <span class="text-xs text-slate-500 dark:text-slate-400 uppercase font-semibold tracking-wider">{{ i18n.t().score }}</span>
-        <p class="text-5xl font-bold text-amber-500">{{ score().toLocaleString('fr-FR').replace(',', ' ') }}</p>
-        <div class="mt-1 flex items-center justify-center gap-2 text-[10px] text-slate-500 dark:text-slate-400 opacity-70">
-          <div class="flex items-center gap-1">
-            <lucide-angular [img]="SparklesIcon" class="w-3.5 h-3.5"></lucide-angular>
-            <span>{{ previewLinePoints().toLocaleString('fr-FR').replace(',', ' ') }}</span>
-          </div>
-          <div class="w-px h-3 bg-slate-200 dark:bg-slate-700"></div>
-          <div class="flex items-center gap-1">
-            <lucide-angular [img]="ShieldCheckIcon" class="w-3.5 h-3.5"></lucide-angular>
-            <span>{{ shrinkPoints().toLocaleString('fr-FR').replace(',', ' ') }}</span>
-          </div>
-        </div>
-        @if (bestScore() > 0) {
-          <div class="mt-2 pt-2 border-t border-slate-100 dark:border-slate-700">
-            <span class="text-[10px] text-slate-400 dark:text-slate-500 uppercase font-semibold tracking-wider">{{ i18n.t().bestScore }}</span>
-            <p class="text-lg font-semibold text-slate-600 dark:text-slate-400">{{ bestScore().toLocaleString('fr-FR').replace(',', ' ') }}</p>
-          </div>
+    <!-- == Nuage corail + logo == -->
+    <svg class="tb-abs tb-blob" viewBox="0 0 610 232" preserveAspectRatio="none" aria-hidden="true">
+      <g fill="#f8664f">
+        <circle cx="110" cy="170" r="62"/>
+        <circle cx="190" cy="105" r="95"/>
+        <circle cx="305" cy="104" r="100"/>
+        <circle cx="420" cy="105" r="95"/>
+        <circle cx="500" cy="170" r="62"/>
+        <rect x="70" y="150" width="470" height="82" rx="41"/>
+      </g>
+      <g fill="#fb8463" opacity="0.85">
+        <circle cx="205" cy="62" r="34"/>
+        <circle cx="300" cy="30" r="30"/>
+        <circle cx="395" cy="60" r="26"/>
+      </g>
+    </svg>
+    <img class="tb-abs tb-logo" src="/assets/brand/logo.webp" alt="Pavat" draggable="false">
+
+    <!-- == Boutons d'icône == -->
+    <button
+      (click)="toggleTheme()"
+      class="tb-abs tb-btn tb-btn-plum tb-theme-btn"
+      [attr.aria-label]="i18n.t().toggleDarkMode">
+      @if (isDarkMode()) {
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="5" fill="currentColor"/><g stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 1.5v2M12 20.5v2M1.5 12h2M20.5 12h2M4.6 4.6l1.4 1.4M18 18l1.4 1.4M4.6 19.4 6 18M18 6l1.4-1.4"/></g></svg>
+      } @else {
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M20.5 14.1A8.6 8.6 0 0 1 9.9 3.5a.6.6 0 0 0-.8-.7A9.6 9.6 0 1 0 21.2 14.9a.6.6 0 0 0-.7-.8Z"/></svg>
+      }
+    </button>
+    <button
+      (click)="toggleSound()"
+      class="tb-abs tb-btn tb-btn-cream tb-sound-btn"
+      [attr.aria-label]="i18n.t().toggleSound"
+      [attr.aria-pressed]="isSoundEnabled()">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path fill="currentColor" d="M11.2 4.3a.9.9 0 0 0-1.5-.6L6.3 7H3.4A1.4 1.4 0 0 0 2 8.4v7.2A1.4 1.4 0 0 0 3.4 17h2.9l3.4 3.3a.9.9 0 0 0 1.5-.6Z"/>
+        @if (isSoundEnabled()) {
+          <g fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M15.2 9a4.4 4.4 0 0 1 0 6"/><path d="M18.4 6a8.6 8.6 0 0 1 0 12"/></g>
+        } @else {
+          <g fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="m15.5 9.5 5 5M20.5 9.5l-5 5"/></g>
         }
-      </div>
-      <!-- Conseil Stratégique -->
-      <div class="bg-cyan-50/80 dark:bg-cyan-900/40 rounded-2xl p-4 flex items-start gap-4 border border-cyan-100 dark:border-cyan-800/50 text-slate-800 dark:text-slate-100">
-        <div class="flex-shrink-0 bg-cyan-200/50 dark:bg-cyan-800/50 p-2 rounded-full">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-cyan-700 dark:text-cyan-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-          </svg>
-        </div>
-        <div>
-          <h3 class="font-bold text-sm">{{ i18n.t().strategicTip }}</h3>
-          <p class="text-xs leading-snug mt-1 opacity-80" [innerHTML]="i18n.translateWithParams('strategicTipText', minValidatedGroupSize().toString())"></p>
-        </div>
-      </div>
-      <!-- Boutons d'action -->
-      <div class="flex flex-col gap-3">
-        <button 
-          (click)="showTutorial()" 
-          class="w-full bg-slate-500 text-white font-bold py-3 px-4 transition-all duration-200 btn-3d"
-          style="--shadow-color: #475569;">
-          {{ i18n.t().howToPlay }}
-        </button>
-        <button 
-          (click)="restartGame()" 
-          class="w-full bg-green-500 text-white font-bold py-3 px-4 transition-all duration-200 btn-3d"
-          style="--shadow-color: #15803d;">
-          {{ i18n.t().newGame }}
-        </button>
-      </div>
-    </aside>
-
-    <!-- == CENTRE (GRILLE) (Desktop) == -->
-    <div class="w-[500px] max-w-full">
-        <app-grid></app-grid>
+      </svg>
+    </button>
+    <div class="tb-abs tb-gear">
+      <app-options-menu (newGameRequested)="showRestartConfirm()"></app-options-menu>
     </div>
 
-    <!-- == PANNEAU DROIT (Desktop) == -->
-    <aside class="flex flex-col gap-6 justify-self-start w-64">
-      <!-- Tuile Actuelle -->
-      <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-lg flex flex-col items-center gap-4 text-slate-800 dark:text-slate-100">
-        <span class="text-xs text-slate-500 dark:text-slate-400 uppercase font-semibold tracking-wider">{{ i18n.t().currentTile }}</span>
-        <div 
-          class="flex-grow flex items-center justify-center w-full min-h-[120px] cursor-pointer touch-none"
-          [class.opacity-50]="isDragging()"
-          (click)="rotateTile()"
-          (touchstart)="onTileTouchStart($event)"
-          (touchmove)="onTileTouchMove($event)"
-          (touchend)="onTileTouchEnd($event)"
-          (touchcancel)="onTileTouchCancel()">
+    <!-- == Carte de score == -->
+    <section class="tb-abs tb-card tb-scorecard" aria-live="polite">
+      <div class="tb-sc tb-sc-score">
+        <span class="tb-sc-label">{{ i18n.t().score }}</span>
+        <span class="tb-sc-value">{{ fmt(score()) }}</span>
+      </div>
+      <div class="tb-sc-sep" aria-hidden="true"></div>
+      <div class="tb-sc tb-sc-goal">
+        <span class="tb-sc-label">{{ i18n.t().objective }}</span>
+        <span class="tb-sc-value">{{ fmt(bestScore()) }} pts</span>
+      </div>
+      <div class="tb-progress" role="progressbar"
+           [attr.aria-valuenow]="score()" aria-valuemin="0" [attr.aria-valuemax]="bestScore()">
+        <div class="tb-progress-fill" [style.width]="'calc(' + (scoreProgress() * 100) + '% - 6px)'"></div>
+        <span class="tb-progress-text">{{ fmt(score()) }} / {{ fmt(bestScore()) }}</span>
+      </div>
+      <!-- == Jauge: progression vers la prochaine annulation == -->
+      <div
+        class="tb-progress tb-undo-meter"
+        role="progressbar"
+        [attr.aria-valuenow]="undoProgressPoints()"
+        aria-valuemin="0"
+        [attr.aria-valuemax]="undoPointsPerCharge"
+        [attr.aria-label]="i18n.translateWithParams('undoProgress', undoProgressPoints().toString(), undoPointsPerCharge.toString())"
+        [attr.title]="i18n.translateWithParams('undoProgress', undoProgressPoints().toString(), undoPointsPerCharge.toString())">
+        <div class="tb-progress-fill" [class.tb-progress-fill-empty]="undoProgress() === 0"
+          [style.width]="'calc(' + (undoProgress() * 100) + '% - 8 * var(--u))'"></div>
+        <span class="tb-progress-text">
+          <lucide-angular [img]="Undo2Icon"></lucide-angular>
+          {{ undoProgressPoints() }} / {{ undoPointsPerCharge }}
+        </span>
+      </div>
+    </section>
+
+    <!-- == Plateau == -->
+    <div class="tb-abs tb-board-box">
+      <app-grid></app-grid>
+    </div>
+
+    <!-- == Pièce actuelle: glisser vers la grille == -->
+    <div
+      class="tb-abs tb-card tb-piece tb-piece-cur cursor-grab active:cursor-grabbing touch-none select-none"
+      [class.opacity-60]="isDragging()"
+      (mousedown)="onTileMouseDown($event)"
+      (touchstart)="onTileTouchStart($event)"
+      (touchmove)="onTileTouchMove($event)"
+      (touchend)="onTileTouchEnd($event)"
+      (touchcancel)="onTileTouchCancel()">
+      <span class="tb-piece-label">{{ i18n.t().currentPiece }}</span>
+      <div class="tb-piece-slot">
+        <div>
           @if (currentTile(); as tile) {
-              <app-tile-preview [tile]="tile"></app-tile-preview>
+            <app-tile-preview [tile]="tile" [cellRatio]="curCellRatio()"></app-tile-preview>
           }
         </div>
       </div>
-      <!-- Boutons d'action -->
-      <div class="flex flex-col gap-3">
-        <div class="flex gap-3">
-          <button 
-            (click)="rotateTile()" 
-            class="flex-1 bg-cyan-400 text-white font-bold py-3 px-4 transition-all duration-200 btn-3d whitespace-nowrap text-sm"
-            style="--shadow-color: #0891b2;"
-            [attr.aria-label]="i18n.t().rotateButton">
-            <span>{{ i18n.t().rotate }} (R)</span>
-          </button>
-        </div>
-        <button 
-          (click)="swapTiles()" 
-          class="w-full bg-purple-400 text-white font-bold py-3 px-4 transition-all duration-200 btn-3d"
-          style="--shadow-color: #9333ea;"
-          [attr.aria-label]="i18n.t().swapTilesButton">
-          <div class="flex items-center justify-center gap-2">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4">
-              <path d="M8 3 4 7l4 4"/>
-              <path d="M4 7h16"/>
-              <path d="m16 21 4-4-4-4"/>
-              <path d="M20 17H4"/>
-            </svg>
-            <span class="font-bold">{{ i18n.t().swap }} (F)</span>
-          </div>
-        </button>
-      </div>
-      <!-- Prochaine Tuile -->
-      <div class="bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-lg flex flex-col items-center gap-2 text-slate-800 dark:text-slate-100">
-        <span class="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-semibold tracking-wider">{{ i18n.t().nextTile }}</span>
-        <div
-          class="flex-grow flex items-center justify-center min-h-[80px] cursor-pointer"
-          (click)="swapTiles()"
-          [attr.aria-label]="i18n.t().swapTilesButton">
-            @if (nextTile(); as tile) { <app-tile-preview [tile]="tile"></app-tile-preview> }
-        </div>
-      </div>
-    </aside>
-  </div>
-
-
-  <!-- ===================== -->
-  <!-- == MOBILE LAYOUT   == -->
-  <!-- ===================== -->
-  <div class="flex lg:hidden w-full h-[100svh] flex-col mx-auto px-2 sm:max-w-[600px] md:max-w-[700px] pt-[env(safe-area-inset-top,0.5rem)] pb-[env(safe-area-inset-bottom,0.5rem)]">
-    
-    <!-- Header (Mobile) -->
-    <header class="w-full flex flex-col gap-3 z-10 pt-1 shrink-0 text-slate-800 dark:text-slate-100">
-      <div class="flex items-center justify-between">
-        <h1 class="text-2xl font-tileburst tracking-tighter opacity-95">Pavat</h1>
-        <div class="flex items-center gap-2">
-          <div class="flex items-center gap-1 bg-slate-100/50 dark:bg-slate-900/60 p-1 rounded-full border border-slate-200/50 dark:border-slate-700/60">
-            <app-language-selector></app-language-selector>
-            <button (click)="toggleSound()" class="w-8 h-8 transition-all duration-200 btn-3d tb-header-icon flex items-center justify-center rounded-full shadow-sm" [class.tb-header-icon-off]="!isSoundEnabled()">
-              <lucide-angular [img]="isSoundEnabled() ? Volume2Icon : VolumeXIcon" class="w-4 h-4"></lucide-angular>
-            </button>
-            <app-options-menu></app-options-menu>
-          </div>
-          <button (click)="showRestartConfirm()" class="w-9 h-9 tb-header-icon rounded-full btn-3d flex items-center justify-center shadow-sm">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5">
-              <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/>
-            </svg>
-          </button>
-        </div>
-      </div>
-      
-      <div class="w-full grid grid-cols-2 items-center gap-2">
-        <div class="bg-amber-50 dark:bg-amber-900/20 rounded-2xl p-2 shadow-sm border border-amber-100 dark:border-amber-800/30 text-center flex flex-col items-center">
-          <span class="text-[10px] text-amber-700 dark:text-amber-400 uppercase font-extrabold tracking-tight leading-none mb-1">{{ i18n.t().score }}</span>
-          <p class="text-2xl font-black text-amber-500 leading-none">{{ score().toLocaleString('fr-FR').replace(',', ' ') }}</p>
-          <div class="mt-1 flex items-center justify-center gap-1.5 text-[9px] text-amber-700/80 dark:text-amber-300/80 opacity-70">
-            <div class="flex items-center gap-1">
-              <lucide-angular [img]="SparklesIcon" class="w-3 h-3"></lucide-angular>
-              <span>{{ previewLinePoints().toLocaleString('fr-FR').replace(',', ' ') }}</span>
-            </div>
-            <div class="w-px h-2.5 bg-amber-200/80 dark:bg-amber-800/60"></div>
-            <div class="flex items-center gap-1">
-              <lucide-angular [img]="ShieldCheckIcon" class="w-3 h-3"></lucide-angular>
-              <span>{{ shrinkPoints().toLocaleString('fr-FR').replace(',', ' ') }}</span>
-            </div>
-          </div>
-        </div>
-        <div class="bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-2 shadow-sm border border-slate-200 dark:border-slate-700 text-center flex flex-col items-center">
-          <span class="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-extrabold tracking-tight leading-none mb-1">{{ i18n.t().bestScore }}</span>
-          <p class="text-2xl font-black text-slate-600 dark:text-slate-300 leading-none">{{ bestScore().toLocaleString('fr-FR').replace(',', ' ') }}</p>
-        </div>
-      </div>
-    </header>
-
-    <!-- Grid Area (Middle) -->
-    <div class="w-full flex-grow relative flex items-center justify-center overflow-hidden py-2 min-h-0">
-      <div class="w-full max-w-full max-h-full aspect-square flex items-center justify-center px-2">
-        <app-grid></app-grid>
-      </div>
+      @if (colorPalette() === 'daltonien' && currentTile() && getColorblindIconSvg(currentTile()?.color); as iconSvg) {
+        <div class="tb-piece-cb" [innerHTML]="iconSvg"></div>
+      }
     </div>
 
-    <!-- Gameplay Controls (Bottom) -->
-    <footer class="w-full pb-2 pt-1 shrink-0 px-1">
-      <div class="flex flex-col gap-2 bg-slate-100/80 dark:bg-slate-800/80 backdrop-blur-sm p-2 rounded-2xl shadow-lg border border-slate-200/50 dark:border-slate-700/50">
-        
-        <!-- Ligne 1: Tuile actuelle à placer + Boutons Rotation/Miroir -->
-        <div class="flex items-center gap-2 h-[64px]">
-          <!-- Current Tile -->
-          <div 
-            class="flex-grow h-full flex items-center justify-center bg-white dark:bg-slate-800 rounded-xl cursor-grab active:cursor-grabbing touch-none select-none overflow-hidden shadow-sm border border-slate-200/50 dark:border-slate-700/50"
-            [class.opacity-50]="isDragging()"
-            (touchstart)="onTileTouchStart($event)"
-            (touchmove)="onTileTouchMove($event)"
-            (touchend)="onTileTouchEnd($event)"
-            (touchcancel)="onTileTouchCancel()">
-            @if (currentTile(); as tile) { 
-              <div class="scale-90 flex items-center justify-center">
-                <app-tile-preview [tile]="tile"></app-tile-preview>
-              </div>
-            } @else { 
-              <div class="text-slate-400 text-[10px]">{{ i18n.t().loading }}</div> 
-            }
-          </div>
-
-          <!-- Rotate button -->
-          <div class="flex gap-1.5 h-full items-center">
-            <button (click)="rotateTile()" class="w-12 h-12 bg-cyan-500 text-white rounded-xl btn-3d flex items-center justify-center shadow-lg shadow-cyan-400/20" style="--shadow-color: #0891b2;">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5">
-                <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/>
-              </svg>
-            </button>
-          </div>
+    <!-- == Suivante: toucher pour échanger == -->
+    <div
+      class="tb-abs tb-card tb-piece tb-piece-next cursor-pointer"
+      role="button"
+      tabindex="0"
+      (click)="swapTiles()"
+      (keydown.enter)="swapTiles()"
+      [attr.aria-label]="i18n.t().swapTilesButton">
+      <span class="tb-piece-label">{{ i18n.t().nextShort }}</span>
+      <div class="tb-piece-slot">
+        <div>
+          @if (nextTile(); as tile) {
+            <app-tile-preview [tile]="tile" [cellRatio]="nextCellRatio()"></app-tile-preview>
+          }
         </div>
-
-        <!-- Ligne 2: Prochaine tuile Preview + Bouton Échanger -->
-        <div class="flex items-center gap-2 h-[56px]">
-          <!-- Next Tile Preview -->
-          <div
-            class="flex-grow h-full relative flex items-center justify-center bg-white/50 dark:bg-slate-800/50 rounded-xl border border-slate-200/30 dark:border-slate-700/30 cursor-pointer"
-            (click)="swapTiles()"
-            [attr.aria-label]="i18n.t().swapTilesButton">
-            <span class="absolute top-1 left-3 text-[7px] text-slate-500 uppercase font-bold tracking-tighter">{{ i18n.t().nextTile }}</span>
-            <div class="scale-50 flex items-center justify-center pt-1">
-              @if (nextTile(); as tile) { <app-tile-preview [tile]="tile"></app-tile-preview> }
-            </div>
-          </div>
-
-        <!-- Swap Button -->
-        <button
-          (click)="swapTiles()"
-          class="flex-shrink-0 w-12 h-12 bg-purple-500 text-white rounded-xl btn-3d flex items-center justify-center shadow-lg shadow-purple-500/20"
-          style="--shadow-color: #9333ea;"
-          [attr.aria-label]="i18n.t().swapTilesButton">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5">
-            <path d="M8 3 4 7l4 4"/><path d="M4 7h16"/><path d="m16 21 4-4-4-4"/><path d="M20 17H4"/>
-          </svg>
-        </button>
-        </div>
-
       </div>
-    </footer>
+      @if (colorPalette() === 'daltonien' && nextTile() && getColorblindIconSvg(nextTile()?.color); as iconSvg) {
+        <div class="tb-piece-cb" [innerHTML]="iconSvg"></div>
+      }
+    </div>
+
+    <!-- == Actions == -->
+    <button
+      (click)="rotateTile()"
+      class="tb-abs tb-btn tb-btn-teal tb-rotate"
+      [attr.aria-label]="i18n.t().rotateButton"
+      [attr.title]="i18n.t().rotate">
+      <lucide-angular [img]="RotateIcon"></lucide-angular>
+      <span class="tb-btn-text">{{ i18n.t().rotate }}</span>
+      <kbd class="tb-kbd">R</kbd>
+    </button>
+    <button
+      (click)="swapTiles()"
+      class="tb-abs tb-btn tb-btn-coral tb-swap"
+      [attr.aria-label]="i18n.t().swapTilesButton"
+      [attr.title]="i18n.t().swap">
+      <lucide-angular [img]="SwapIcon"></lucide-angular>
+      <span class="tb-btn-text">{{ i18n.t().swap }}</span>
+      <kbd class="tb-kbd">F</kbd>
+    </button>
+    <button
+      (click)="undoMove()"
+      [disabled]="!canUndo()"
+      class="tb-abs tb-btn tb-btn-cream tb-undo"
+      [attr.aria-label]="i18n.t().undoButton"
+      [attr.title]="i18n.translateWithParams('undoProgress', undoProgressPoints().toString(), undoPointsPerCharge.toString())"
+      [class.tb-undo-gain]="undoGainPulse()">
+      <lucide-angular [img]="Undo2Icon"></lucide-angular>
+      <span class="tb-btn-text">{{ i18n.t().undo }}</span>
+      <kbd class="tb-kbd tb-kbd-cream">Z</kbd>
+      <span class="tb-pill" [class.tb-pill-empty]="undoCharges() === 0">{{ undoCharges() }}</span>
+    </button>
   </div>
 
 
@@ -275,40 +173,31 @@
   <!-- == SHARED MODALS   == -->
   <!-- ===================== -->
   @if (isRestartConfirmVisible()) {
-    <div class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-[60] p-3">
-      <div class="bg-white dark:bg-slate-800 rounded-xl lg:rounded-2xl p-4 lg:p-6 sm:p-8 shadow-2xl text-center flex flex-col gap-3 lg:gap-4 items-center max-w-sm w-full">
-        <h2 class="text-lg lg:text-2xl sm:text-3xl font-bold text-slate-800 dark:text-slate-100">{{ i18n.t().restartConfirm }}</h2>
-        <p class="text-slate-600 dark:text-slate-300 text-sm lg:text-base">{{ i18n.t().restartConfirmText }}</p>
-        <div class="flex gap-3 lg:gap-4 mt-2 lg:mt-4 w-full">
-            <button 
-              (click)="hideRestartConfirm()" 
-              class="w-full bg-slate-500 text-white font-bold py-2 lg:py-3 px-4 lg:px-6 text-sm lg:text-base transition-all duration-200 btn-3d"
-              style="--shadow-color: #475569;">
-              {{ i18n.t().no }}
-            </button>
-            <button 
-              (click)="confirmAndRestart()" 
-              class="w-full bg-green-500 text-white font-bold py-2 lg:py-3 px-4 lg:px-6 text-sm lg:text-base transition-all duration-200 btn-3d"
-              style="--shadow-color: #15803d;">
-              {{ i18n.t().yes }}
-            </button>
+    <div class="fixed inset-0 tb-backdrop flex items-center justify-center z-[60] p-4">
+      <div class="tb-card p-6 sm:p-8 text-center flex flex-col gap-4 items-center max-w-sm w-full">
+        <h2 class="text-2xl sm:text-3xl font-bold">{{ i18n.t().restartConfirm }}</h2>
+        <p class="text-base opacity-80">{{ i18n.t().restartConfirmText }}</p>
+        <div class="flex gap-4 mt-2 w-full">
+          <button (click)="hideRestartConfirm()" class="tb-btn tb-btn-cream flex-1 h-14 text-lg">
+            {{ i18n.t().no }}
+          </button>
+          <button (click)="confirmAndRestart()" class="tb-btn tb-btn-teal flex-1 h-14 text-lg">
+            {{ i18n.t().yes }}
+          </button>
         </div>
       </div>
     </div>
   }
 
   @if (isGameOver()) {
-    <div class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-3">
-      <div class="bg-white dark:bg-slate-800 rounded-xl lg:rounded-2xl p-4 lg:p-6 sm:p-8 shadow-2xl text-center flex flex-col gap-3 lg:gap-4 items-center max-w-sm w-full">
-        <h2 class="text-2xl lg:text-4xl sm:text-5xl font-extrabold text-red-500">{{ i18n.t().gameOver }}</h2>
-        <p class="text-slate-600 dark:text-slate-300 text-sm lg:text-base sm:text-lg">{{ i18n.t().finalScore }}</p>
-        <p class="text-3xl lg:text-5xl sm:text-6xl font-bold text-amber-500">{{ score().toLocaleString('fr-FR').replace(',', ' ') }}</p>
-        <div class="flex flex-col sm:flex-row gap-2 lg:gap-3 w-full mt-1 lg:mt-2">
-          <button 
-            (click)="shareScore()" 
-            class="flex-1 bg-blue-500 text-white font-bold py-2 lg:py-3 px-4 lg:px-6 sm:px-8 text-sm lg:text-base sm:text-lg transition-all duration-200 btn-3d flex items-center justify-center gap-2"
-            style="--shadow-color: #2563eb;">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 lg:w-5 lg:h-5">
+    <div class="fixed inset-0 tb-backdrop flex items-center justify-center z-50 p-4">
+      <div class="tb-card p-6 sm:p-8 text-center flex flex-col gap-3 items-center max-w-sm w-full">
+        <h2 class="text-4xl sm:text-5xl font-bold" style="color: var(--tb-coral)">{{ i18n.t().gameOver }}</h2>
+        <p class="text-lg opacity-80">{{ i18n.t().finalScore }}</p>
+        <p class="text-5xl sm:text-6xl font-bold">{{ fmt(score()) }}</p>
+        <div class="flex flex-col sm:flex-row gap-4 w-full mt-3">
+          <button (click)="shareScore()" class="tb-btn tb-btn-coral flex-1 h-14 text-lg">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5">
               <circle cx="18" cy="5" r="3"/>
               <circle cx="6" cy="12" r="3"/>
               <circle cx="18" cy="19" r="3"/>
@@ -317,15 +206,24 @@
             </svg>
             {{ i18n.t().share }}
           </button>
-          <button 
-            (click)="restartGame()" 
-            class="flex-1 bg-green-500 text-white font-bold py-2 lg:py-3 px-4 lg:px-6 sm:px-8 text-sm lg:text-base sm:text-lg transition-all duration-200 btn-3d"
-            style="--shadow-color: #15803d;">
+          <button (click)="restartGame()" class="tb-btn tb-btn-teal flex-1 h-14 text-lg">
             {{ i18n.t().playAgain }}
           </button>
         </div>
       </div>
     </div>
+  }
+
+  <!-- Ghost: tuile qui suit le pointeur pendant un drag (souris ou tactile) -->
+  @if (ghostPosition(); as pos) {
+    @if (currentTile(); as tile) {
+      <div
+        class="tb-drag-ghost fixed left-0 top-0"
+        [class.tb-ghost-snapped]="ghostSnap()"
+        [style.transform]="ghostTransform()">
+        <app-tile-preview [tile]="tile" [cellPx]="ghostCell().cell" [gapPx]="ghostCell().gap"></app-tile-preview>
+      </div>
+    }
   }
 
   <app-tutorial></app-tutorial>

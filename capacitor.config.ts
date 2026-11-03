@@ -1,7 +1,7 @@
 import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.tileburst.app',
+  appId: 'com.pavat.app',
   appName: 'Pavat',
   webDir: 'dist',
   server: {

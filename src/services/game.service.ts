@@ -2,7 +2,6 @@ import { Injectable, signal, computed, WritableSignal, inject } from '@angular/c
 import { GameState, Cell, Tile } from '../models/game.model';
 import { TutorialService } from './tutorial.service';
 import { SoundService } from './sound.service';
-
 const COLORS = ['blue', 'red', 'green', 'yellow', 'purple'];
 const TILE_SHAPES = [
   // 1x1
@@ -55,8 +54,25 @@ const STARTING_GRID_SIZE = 6;
 const ANIMATION_DURATION = 300;
 const SHRINK_WARNING_DURATION = 1500;
 const PRE_SHRINK_DELAY = 1000;
-const STORAGE_KEY_GAME_STATE = 'tileburst_game_state';
-const STORAGE_KEY_BEST_SCORE = 'tileburst_best_score';
+const STORAGE_KEY_GAME_STATE = 'pavat_game_state';
+const STORAGE_KEY_BEST_SCORE = 'pavat_best_score';
+const MAX_UNDO_CHARGES = 3;
+/** Points de groupes validés à cumuler pour gagner une annulation */
+const UNDO_POINTS_PER_CHARGE = 300;
+const STARTING_UNDO_CHARGES = 1;
+/** Points rapportés par une case validée (×multiplicateur de taille de grille) */
+const VALIDATED_CELL_POINTS = 15;
+
+interface UndoSnapshot {
+  grid: Cell[][];
+  gridSize: number;
+  score: number;
+  currentTile: Tile | null;
+  nextTile: Tile | null;
+  changeDirectionIndex: number;
+  undoCharges: number;
+  undoProgressPoints: number;
+}
 
 @Injectable({
   providedIn: 'root',
@@ -80,6 +96,16 @@ export class GameService {
   public readonly isShrinking = computed(() => this.state().isShrinking);
   public readonly changeDirectionIndex = computed(() => this.state().changeDirectionIndex);
   public readonly isShrinkImminent = computed(() => this.state().isShrinkImminent);
+  public readonly undoCharges = computed(() => this.state().undoCharges ?? 0);
+  public readonly undoProgressPoints = computed(() => this.state().undoProgressPoints ?? 0);
+  public readonly canUndo = computed(() =>
+    (this.state().undoCharges ?? 0) > 0 &&
+    this._undoStack.length > 0 &&
+    !this._isPlacementAnimating() &&
+    !this.state().isShrinking &&
+    !this.state().isShrinkImminent &&
+    !this.state().isGameOver
+  );
   public readonly previewLinePoints = this._previewLinePoints.asReadonly();
   public readonly shrinkPoints = computed(() => {
     const validatedCount = this.grid().reduce(
@@ -103,11 +129,15 @@ export class GameService {
   private tileIdCounter = 0;
   private shrinkTimeout: any = null;
   private isFirstGame = true;
+  private _undoStack: UndoSnapshot[] = [];
+  private _isPlacementAnimating = signal(false);
   private _bestScore: WritableSignal<number> = signal(this.loadBestScore());
 
   public readonly bestScore = this._bestScore.asReadonly();
 
   constructor() {
+    // Accès de debug/test (harness E2E)
+    (window as any).__pavatGame = this;
     // Essayer de restaurer l'état sauvegardé
     const savedState = this.loadGameState();
     if (savedState && !savedState.isGameOver) {
@@ -115,14 +145,16 @@ export class GameService {
     } else {
       this.startGame();
     }
-    // Démarrer le tutoriel seulement au premier chargement de l'app
     if (this.isFirstGame) {
       this.tutorialService.startTutorial();
       this.isFirstGame = false;
     }
   }
   
-  private getInitialState(gridSize = STARTING_GRID_SIZE, score = 0): GameState {
+  private getInitialState(
+    gridSize = STARTING_GRID_SIZE,
+    score = 0
+  ): GameState {
     return {
       grid: this.createEmptyGrid(gridSize),
       gridSize,
@@ -134,7 +166,102 @@ export class GameService {
       isShrinking: false,
       changeDirectionIndex: 0,
       isShrinkImminent: false,
+      undoCharges: STARTING_UNDO_CHARGES,
+      undoProgressPoints: 0,
     };
+  }
+
+  private cloneGridForSnapshot(grid: Cell[][]): Cell[][] {
+    return grid.map(row =>
+      row.map(cell => ({
+        color: cell.color,
+        tileId: cell.tileId,
+        validated: cell.validated,
+        blocked: cell.blocked,
+      }))
+    );
+  }
+
+  private cloneTile(tile: Tile | null): Tile | null {
+    if (!tile) return null;
+    return {
+      ...tile,
+      shape: tile.shape.map(row => [...row]),
+      barycenter: { ...tile.barycenter },
+    };
+  }
+
+  private pushUndoSnapshot(): void {
+    const state = this.state();
+    this._undoStack.push({
+      grid: this.cloneGridForSnapshot(state.grid),
+      gridSize: state.gridSize,
+      score: state.score,
+      currentTile: this.cloneTile(state.currentTile),
+      nextTile: this.cloneTile(state.nextTile),
+      changeDirectionIndex: state.changeDirectionIndex,
+      undoCharges: state.undoCharges ?? 0,
+      undoProgressPoints: state.undoProgressPoints ?? 0,
+    });
+    if (this._undoStack.length > 30) {
+      this._undoStack.shift();
+    }
+  }
+
+  /**
+   * Chaque case nouvellement validée (groupe de couleur) rapporte des points d'annulation.
+   * Tous les UNDO_POINTS_PER_CHARGE points cumulés: +1 annulation (3 max).
+   */
+  private grantUndoChargesForValidated(newlyValidatedCells: number): void {
+    if (newlyValidatedCells <= 0) return;
+    let charges = this.state().undoCharges ?? 0;
+    let progress = (this.state().undoProgressPoints ?? 0)
+      + newlyValidatedCells * VALIDATED_CELL_POINTS * this.scoreMultiplier();
+    let gained = 0;
+    while (progress >= UNDO_POINTS_PER_CHARGE && charges < MAX_UNDO_CHARGES) {
+      progress -= UNDO_POINTS_PER_CHARGE;
+      charges++;
+      gained++;
+    }
+    // Plein: la jauge reste au maximum en attendant qu'une annulation soit utilisée
+    if (charges >= MAX_UNDO_CHARGES) progress = Math.min(progress, UNDO_POINTS_PER_CHARGE);
+    this._gameState.update(s => ({ ...s, undoProgressPoints: progress, undoCharges: charges }));
+    if (gained > 0) this._undoGained.update(n => n + 1);
+  }
+
+  /** Incrémenté à chaque annulation gagnée (pour animer le bouton). */
+  private _undoGained = signal(0);
+  public readonly undoGained = this._undoGained.asReadonly();
+  /** Progression (0 → 1) vers la prochaine annulation. */
+  public readonly undoProgress = computed(() =>
+    Math.min(1, (this.state().undoProgressPoints ?? 0) / UNDO_POINTS_PER_CHARGE)
+  );
+  public readonly undoPointsPerCharge = UNDO_POINTS_PER_CHARGE;
+
+  public undo(): void {
+    if (!this.canUndo()) return;
+    clearTimeout(this.shrinkTimeout);
+    const snapshot = this._undoStack.pop()!;
+    // Une annulation gagnée par le coup annulé est reprise (sinon on pourrait en farmer)
+    const chargesAfter = Math.max(0, Math.min((this.state().undoCharges ?? 0) - 1, snapshot.undoCharges));
+    this._isPlacementAnimating.set(false);
+    this._gameState.update(s => ({
+      ...s,
+      grid: snapshot.grid,
+      gridSize: snapshot.gridSize,
+      score: snapshot.score,
+      currentTile: snapshot.currentTile,
+      nextTile: snapshot.nextTile,
+      changeDirectionIndex: snapshot.changeDirectionIndex,
+      undoCharges: chargesAfter,
+      undoProgressPoints: snapshot.undoProgressPoints,
+      lastPlacedTileId: null,
+      isShrinking: false,
+      isShrinkImminent: false,
+    }));
+    this._previewLinePoints.set(0);
+    this.saveGameState();
+    this.soundService.playSwapSound();
   }
 
   private saveGameState(): void {
@@ -146,7 +273,7 @@ export class GameService {
           color: cell.color,
           tileId: cell.tileId,
           validated: cell.validated,
-          // Ne pas sauvegarder clearing et shrinking
+          blocked: cell.blocked,
         }))),
         gridSize: state.gridSize,
         score: state.score,
@@ -154,6 +281,8 @@ export class GameService {
         nextTile: state.nextTile,
         isGameOver: state.isGameOver,
         changeDirectionIndex: state.changeDirectionIndex,
+        undoCharges: state.undoCharges,
+        undoProgressPoints: state.undoProgressPoints,
       };
       localStorage.setItem(STORAGE_KEY_GAME_STATE, JSON.stringify(stateToSave));
     } catch (error) {
@@ -186,6 +315,8 @@ export class GameService {
         isShrinking: false,
         changeDirectionIndex: savedState.changeDirectionIndex || 0,
         isShrinkImminent: false,
+        undoCharges: savedState.undoCharges ?? STARTING_UNDO_CHARGES,
+        undoProgressPoints: savedState.undoProgressPoints ?? 0,
       };
 
       // Restaurer le compteur de tileId
@@ -205,6 +336,7 @@ export class GameService {
       });
 
       this._gameState.set(restoredState);
+      this._undoStack = [];
       
       // Mettre à jour le meilleur score si nécessaire
       this.updateBestScore(restoredState.score);
@@ -254,37 +386,36 @@ export class GameService {
 
   public startGame(): void {
     clearTimeout(this.shrinkTimeout);
-    // Effacer l'état sauvegardé
+    this._undoStack = [];
+    this._isPlacementAnimating.set(false);
     try {
       localStorage.removeItem(STORAGE_KEY_GAME_STATE);
     } catch (error) {
       console.error('Erreur lors de la suppression de l\'état sauvegardé:', error);
     }
-    
-    const initialState = this.getInitialState();
+
+    const initialState = this.getInitialState(STARTING_GRID_SIZE, 0);
     initialState.currentTile = this._generateRandomTile();
     initialState.nextTile = this._generateRandomTile();
     this._gameState.set(initialState);
     this.saveGameState();
 
-    // Vérifier si au moins une des deux tuiles peut être placée
     if (!this.canPlaceAtLeastOneTile(initialState.currentTile, initialState.nextTile)) {
-        this._gameState.update(state => ({...state, isGameOver: true}));
-        this.updateBestScore(initialState.score);
-        this.saveGameState();
+      this._gameState.update(state => ({ ...state, isGameOver: true }));
+      this.updateBestScore(initialState.score);
+      this.saveGameState();
     }
-    // Ne pas démarrer le tutoriel lors d'un rejeu
   }
 
   private createEmptyGrid(size: number): Cell[][] {
     return Array.from({ length: size }, () =>
-      Array.from({ length: size }, () => ({ color: null, tileId: null }))
+      Array.from({ length: size }, () => ({ color: null, tileId: null, blocked: false }))
     );
   }
-  
+
   private _generateRandomTile(): Tile {
     let availableShapes = [...TILE_SHAPES];
-    const size = this.gridSize();
+    const size = this.state().gridSize;
 
     if (size >= 8) {
       availableShapes.push(...PENTOMINO_SHAPES);
@@ -483,6 +614,7 @@ export class GameService {
             gridCol >= gridSize ||
             gridRow < 0 ||
             gridCol < 0 ||
+            grid[gridRow][gridCol].blocked ||
             grid[gridRow][gridCol].color !== null
           ) {
             return false;
@@ -547,29 +679,32 @@ export class GameService {
     let linesCleared = 0;
 
     for (let r = 0; r < gridSize; r++) {
-        const firstColor = grid[r][0].color;
+        const playableCells: { c: number; cell: Cell }[] = [];
+        for (let c = 0; c < gridSize; c++) {
+          if (!grid[r][c].blocked) playableCells.push({ c, cell: grid[r][c] });
+        }
+        if (playableCells.length === 0) continue;
+        const firstColor = playableCells[0].cell.color;
         if (firstColor === null) continue;
-        if (grid[r].every(cell => cell.color === firstColor)) {
+        if (playableCells.every(({ cell }) => cell.color === firstColor)) {
             linesCleared++;
-            for (let c = 0; c < gridSize; c++) {
+            for (const { c } of playableCells) {
                 cellsToClear.add(`${r},${c}`);
             }
         }
     }
 
     for (let c = 0; c < gridSize; c++) {
-        const firstColor = grid[0][c].color;
-        if (firstColor === null) continue;
-        let isFullLine = true;
-        for (let r = 1; r < gridSize; r++) {
-            if (grid[r][c].color !== firstColor) {
-                isFullLine = false;
-                break;
-            }
+        const playableCells: { r: number; cell: Cell }[] = [];
+        for (let r = 0; r < gridSize; r++) {
+          if (!grid[r][c].blocked) playableCells.push({ r, cell: grid[r][c] });
         }
-        if (isFullLine) {
+        if (playableCells.length === 0) continue;
+        const firstColor = playableCells[0].cell.color;
+        if (firstColor === null) continue;
+        if (playableCells.every(({ cell }) => cell.color === firstColor)) {
             linesCleared++;
-            for (let r = 0; r < gridSize; r++) {
+            for (const { r } of playableCells) {
                 cellsToClear.add(`${r},${c}`);
             }
         }
@@ -578,9 +713,50 @@ export class GameService {
     const points = linesCleared * gridSize * 25 * this.scoreMultiplier();
     return { cellsToClear, points, linesCleared };
   }
+
+  /**
+   * Après un shrink (ou toute "mise à jour" de grille), il peut arriver que la grille
+   * contienne déjà une ligne/colonne complète (même couleur).
+   * Si on laisse cet état, le prochain placement déclenche un clear/expand "gratuit"
+   * et l'aide de placement devient incohérente (souvent (0,0)).
+   *
+   * On résout donc immédiatement : clear des lignes/colonnes complètes + points + expand.
+   */
+  private resolveCompletedLinesAndExpandIfNeeded(): void {
+    const grid = this.grid();
+    const clearInfo = this._findCompletedLines(grid);
+    if (clearInfo.linesCleared <= 0) return;
+
+    const gridAfterLineClear = grid.map((row, r) =>
+      row.map((cell, c) =>
+        clearInfo.cellsToClear.has(`${r},${c}`)
+          ? { color: null, tileId: null }
+          : { color: cell.color, tileId: cell.tileId }
+      )
+    );
+
+    const currentState = this.state();
+    const newScore = currentState.score + clearInfo.points;
+    const { grid: validatedGrid } = this._updateValidatedGroups(gridAfterLineClear);
+
+    this._gameState.update((s) => ({
+      ...s,
+      grid: validatedGrid,
+      score: newScore,
+    }));
+    this.updateBestScore(newScore);
+    this.saveGameState();
+
+    this.soundService.playClearSound(clearInfo.linesCleared);
+    this.changeGridSize(1);
+  }
   
   public placeTile(tile: Tile, startRow: number, startCol: number): void {
       if (!this.canPlaceTile(tile, startRow, startCol)) return;
+      if (this._isPlacementAnimating() || this.state().isShrinking) return;
+
+      this.pushUndoSnapshot();
+      this._isPlacementAnimating.set(true);
 
       let gridWithTile = this.grid().map(row => row.map(cell => ({ ...cell })));
       for (let r = 0; r < tile.height; r++) {
@@ -642,8 +818,10 @@ export class GameService {
           
           this._gameState.update(state => ({ ...state, grid: finalGridWithValidated, lastPlacedTileId: null }));
           this.saveGameState();
+          this.grantUndoChargesForValidated(newValidatedCount - oldValidatedCount);
           this.changeGridSize(1);
           this.advanceToNextTile();
+          this._isPlacementAnimating.set(false);
         }, ANIMATION_DURATION);
 
       } else {
@@ -662,6 +840,8 @@ export class GameService {
           lastPlacedTileId: tile.id,
         }));
         this.saveGameState();
+        this.grantUndoChargesForValidated(newValidatedCount - oldValidatedCount);
+        this.saveGameState();
         
         // Son de placement simple
         this.soundService.playPlaceSound();
@@ -677,6 +857,7 @@ export class GameService {
           this._gameState.update(s => ({...s, lastPlacedTileId: null}));
           this.saveGameState();
           this.advanceToNextTile();
+          this._isPlacementAnimating.set(false);
         }, ANIMATION_DURATION);
       }
   }
@@ -790,7 +971,7 @@ export class GameService {
     for (let r = 0; r < gridSize; r++) {
         for (let c = 0; c < gridSize; c++) {
             const key = `${r},${c}`;
-            if (visited.has(key) || newGrid[r][c].color === null) {
+            if (visited.has(key) || newGrid[r][c].color === null || newGrid[r][c].blocked) {
                 continue;
             }
 
@@ -808,7 +989,8 @@ export class GameService {
                     const nKey = `${nr},${nc}`;
                     if (
                         nr >= 0 && nr < gridSize && nc >= 0 && nc < gridSize && 
-                        !visited.has(nKey) && newGrid[nr][nc].color === colorToFind
+                        !visited.has(nKey) && !newGrid[nr][nc].blocked &&
+                        newGrid[nr][nc].color === colorToFind
                     ) {
                         visited.add(nKey);
                         queue.push({r: nr, c: nc});
@@ -845,10 +1027,10 @@ export class GameService {
         for (let r = 0; r < oldSize; r++) {
             for (let c = 0; c < oldSize; c++) {
                 switch (dir) {
-                    case 0: newGrid[r][c] = oldState.grid[r][c]; break; // Expand BR -> Copy to TL
-                    case 1: newGrid[r][c + 1] = oldState.grid[r][c]; break; // Expand BL -> Copy to TR
-                    case 2: newGrid[r + 1][c + 1] = oldState.grid[r][c]; break; // Expand TL -> Copy to BR
-                    case 3: newGrid[r + 1][c] = oldState.grid[r][c]; break; // Expand TR -> Copy to BL
+                    case 0: newGrid[r][c] = { ...oldState.grid[r][c] }; break;
+                    case 1: newGrid[r][c + 1] = { ...oldState.grid[r][c] }; break;
+                    case 2: newGrid[r + 1][c + 1] = { ...oldState.grid[r][c] }; break;
+                    case 3: newGrid[r + 1][c] = { ...oldState.grid[r][c] }; break;
                 }
             }
         }
@@ -963,6 +1145,10 @@ export class GameService {
         
         // Son de réduction de grille
         this.soundService.playShrinkSound();
+
+        // Si le shrink a créé une ligne/colonne déjà complète, on la résout tout de suite
+        // (sinon ça "pollue" le prochain coup et les aides de placement).
+        this.resolveCompletedLinesAndExpandIfNeeded();
 
         // Vérifier si au moins une des deux tuiles peut être placée après le shrink
         if (!this.canPlaceAtLeastOneTile(this.currentTile(), this.nextTile())) {

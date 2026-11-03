@@ -11,14 +11,15 @@
   <link rel="icon" href="/assets/icons/icon-96x96.png" sizes="96x96" type="image/png">
   <link rel="icon" href="/assets/icons/icon-192x192.png" sizes="192x192" type="image/png">
   
-  <!-- Google Fonts - Bungee -->
+  <!-- Google Fonts - Fredoka -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Bungee&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&display=swap" rel="stylesheet">
   
   <!-- PWA Manifest -->
   <link rel="manifest" href="/manifest.json">
-  <meta name="theme-color" content="#64748b">
+  <meta name="theme-color" content="#3fc3ea">
+  <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Pavat">
@@ -30,24 +31,24 @@
   
   <!-- Open Graph / Facebook -->
   <meta property="og:type" content="website">
-  <meta property="og:url" content="https://tileburst.netlify.app/">
+  <meta property="og:url" content="https://pavat-game.web.app/">
   <meta property="og:title" content="Pavat - Jeu de puzzle stratégique">
   <meta property="og:description" content="Placez des tuiles sur une grille, formez des lignes et des groupes validés pour marquer des points. Défiez vos amis !">
-  <meta property="og:image" content="https://tileburst.netlify.app/screenshot.png">
+  <meta property="og:image" content="https://pavat-game.web.app/screenshot.png">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   
   <!-- Twitter -->
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:url" content="https://tileburst.netlify.app/">
+  <meta name="twitter:url" content="https://pavat-game.web.app/">
   <meta name="twitter:title" content="Pavat - Jeu de puzzle stratégique">
   <meta name="twitter:description" content="Placez des tuiles sur une grille, formez des lignes et des groupes validés pour marquer des points. Défiez vos amis !">
-  <meta name="twitter:image" content="https://tileburst.netlify.app/screenshot.png">
+  <meta name="twitter:image" content="https://pavat-game.web.app/screenshot.png">
   <script>
     // Appliquer le thème immédiatement pour éviter le flash de contenu non stylé
     (function() {
       try {
-        const saved = localStorage.getItem('tileburst_theme');
+        const saved = localStorage.getItem('pavat_theme');
         if (saved === 'dark') {
           document.documentElement.classList.add('dark');
         } else if (saved === null) {
@@ -62,7 +63,7 @@
     })();
   </script>
 </head>
-<body class="text-slate-800 dark:text-slate-100">
+<body>
   <app-root></app-root>
 </body>
 </html>

@@ -7,7 +7,7 @@ export interface TutorialStep {
   content: string;
 }
 
-const TUTORIAL_SEEN_KEY = 'tileburst_tutorial_seen';
+const TUTORIAL_SEEN_KEY = 'pavat_tutorial_seen';
 
 @Injectable({
   providedIn: 'root',

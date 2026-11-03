@@ -1,18 +1,16 @@
-import { Component, ChangeDetectionStrategy, inject, signal, effect } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, signal, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { OptionsService, ColorPalette } from '../../services/options.service';
 import { I18nService, Language } from '../../services/i18n.service';
 import { GameService } from '../../services/game.service';
 import { SoundService } from '../../services/sound.service';
 import { ThemeService } from '../../services/theme.service';
-import { LucideAngularModule, Settings } from 'lucide-angular';
-import { marked } from 'marked';
-import { RULES_MARKDOWN_BY_LANGUAGE } from '../../content/rules-markdown';
+import { TutorialService } from '../../services/tutorial.service';
 
 @Component({
   selector: 'app-options-menu',
   standalone: true,
-  imports: [CommonModule, LucideAngularModule],
+  imports: [CommonModule],
   templateUrl: './options-menu.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
@@ -25,36 +23,20 @@ export class OptionsMenuComponent {
   protected gameService = inject(GameService);
   protected soundService = inject(SoundService);
   protected themeService = inject(ThemeService);
+  protected tutorialService = inject(TutorialService);
   isOpen = signal(false);
   isClosing = signal(false);
   isLanguageDropdownOpen = signal(false);
   isResetBestScoreConfirmVisible = signal(false);
-  isRulesOpen = signal(false);
-  isRulesLoading = signal(false);
-  rulesLoadError = signal<string | null>(null);
-  rulesHtml = signal('');
-  readonly SettingsIcon = Settings;
   colorPalette = this.optionsService.colorPalette;
   bestScore = this.gameService.bestScore;
   isSoundEnabled = this.soundService.isSoundEnabled;
   isDarkMode = this.themeService.isDarkMode;
 
   colorPalettes: { value: ColorPalette; label: string }[] = [
-    { value: 'normal', label: 'Normal' },
-    { value: 'highContrast', label: 'Hyper contraste' },
+    { value: 'couleurs', label: 'Couleurs' },
+    { value: 'daltonien', label: 'Daltonien' },
   ];
-
-  constructor() {
-    effect(() => {
-      const isOpen = this.isRulesOpen();
-      const language = this.i18n.getLanguage();
-      if (!isOpen) {
-        return;
-      }
-      const markdown = RULES_MARKDOWN_BY_LANGUAGE[language] ?? RULES_MARKDOWN_BY_LANGUAGE.fr;
-      this.rulesHtml.set(String(marked.parse(markdown)));
-    });
-  }
 
   toggleMenu(): void {
     if (this.isOpen()) {
@@ -107,17 +89,18 @@ export class OptionsMenuComponent {
     this.isResetBestScoreConfirmVisible.set(false);
   }
 
-  openRules(): void {
-    this.isRulesOpen.set(true);
-    this.isRulesLoading.set(false);
-    this.rulesLoadError.set(null);
-    const language = this.i18n.getLanguage();
-    const markdown = RULES_MARKDOWN_BY_LANGUAGE[language] ?? RULES_MARKDOWN_BY_LANGUAGE.fr;
-    this.rulesHtml.set(String(marked.parse(markdown)));
+  /** Demande au parent d'ouvrir la confirmation « Nouvelle partie ». */
+  newGameRequested = output<void>();
+
+  requestNewGame(): void {
+    this.closeMenu();
+    this.newGameRequested.emit();
   }
 
-  closeRules(): void {
-    this.isRulesOpen.set(false);
+  openRules(): void {
+    // Fermer le menu et lancer le tutoriel
+    this.closeMenu();
+    this.tutorialService.startTutorial(true);
   }
 
   onDocumentClick(event: MouseEvent): void {

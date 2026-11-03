@@ -1,12 +1,13 @@
 import { Component, ChangeDetectionStrategy, inject, signal, computed, effect, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { GameService } from '../../services/game.service';
 import { Tile, Cell } from '../../models/game.model';
 import { GridIndicatorComponent } from '../grid-indicator/grid-indicator.component';
 import { ThemeService } from '../../services/theme.service';
 import { I18nService } from '../../services/i18n.service';
 import { OptionsService } from '../../services/options.service';
-
+import { ColorblindIconService } from '../../services/colorblind-icon.service';
 @Component({
   selector: 'app-grid',
   templateUrl: './grid.component.html',
@@ -22,8 +23,10 @@ export class GridComponent {
   protected i18n = inject(I18nService);
   private themeService = inject(ThemeService);
   private optionsService = inject(OptionsService);
+  private colorblindIconService = inject(ColorblindIconService);
+  private sanitizer = inject(DomSanitizer);
   private cdr = inject(ChangeDetectorRef);
-  
+
   grid = this.gameService.grid;
   gridSize = this.gameService.gridSize;
   currentTile = this.gameService.currentTile;
@@ -43,13 +46,18 @@ export class GridComponent {
   protected pulseDelay = signal('0ms');
   private lastTouchTime = 0;
 
+  private suppressNextClick = false;
+
   private readonly DEFAULT_COLOR = { bg: 'bg-gray-400' };
   
   colorPalette = this.optionsService.colorPalette;
   shapeMode = this.optionsService.shapeMode;
 
+  visibleGrid = this.grid;
+  displaySize = this.gridSize;
+
   gridStyles = computed(() => ({
-    'grid-template-columns': `repeat(${this.gridSize()}, minmax(0, 1fr))`,
+    'grid-template-columns': `repeat(${this.displaySize()}, minmax(0, 1fr))`,
   }));
 
   constructor() {
@@ -139,13 +147,13 @@ export class GridComponent {
         }
       };
 
+      // Ne prendre en compte que la tuile actuelle pour les hints, pas la suivante
       applyHintForTile(tile);
-      applyHintForTile(this.nextTile());
       this.hintColors.set(hintMap);
     });
 
   }
-  
+
   private getBackgroundColorClass(color: string | null | undefined): string {
     if (!color) return 'bg-slate-100';
     const palette = this.optionsService.getColorPaletteClasses(this.colorPalette());
@@ -153,7 +161,40 @@ export class GridComponent {
   }
   
   isPreviewCell(row: number, col: number): boolean {
-    return this.previewCells().has(`${row},${col}`);
+    const world = this.toWorldCoords(row, col);
+    return this.previewCells().has(`${world.row},${world.col}`);
+  }
+
+  toWorldCoords(localRow: number, localCol: number): { row: number; col: number } {
+    return { row: localRow, col: localCol };
+  }
+
+  private getWorldCellFromClient(
+    clientX: number,
+    clientY: number,
+    surface: HTMLElement
+  ): { row: number; col: number; cell: Cell } | null {
+    const rect = surface.getBoundingClientRect();
+    const x = clientX - rect.left;
+    const y = clientY - rect.top;
+
+    const style = window.getComputedStyle(surface);
+    const padT = parseFloat(style.paddingTop) || 0;
+    const padL = parseFloat(style.paddingLeft) || 0;
+    const padB = parseFloat(style.paddingBottom) || 0;
+    const padR = parseFloat(style.paddingRight) || 0;
+    const innerX = x - padL;
+    const innerY = y - padT;
+    const size = this.displaySize();
+    const gridW = rect.width - padL - padR;
+    const gridH = rect.height - padT - padB;
+    if (gridW <= 0 || gridH <= 0) return null;
+    const localCol = Math.max(0, Math.min(size - 1, Math.floor((innerX / gridW) * size)));
+    const localRow = Math.max(0, Math.min(size - 1, Math.floor((innerY / gridH) * size)));
+    const world = this.toWorldCoords(localRow, localCol);
+    const cell = this.grid()[world.row]?.[world.col];
+    if (!cell) return null;
+    return { row: world.row, col: world.col, cell };
   }
 
   private getPulseColorClass(color: string | null | undefined): string {
@@ -192,40 +233,73 @@ export class GridComponent {
     const colorDef = palette[finalColor] || this.DEFAULT_COLOR;
     // Retourner une version plus sombre de la couleur selon la palette
     const darkerMap: { [key: string]: string } = {
-      // Normal
+      // Couleurs
       'bg-cyan-400': 'bg-cyan-600',
-      'bg-red-400': 'bg-red-600',
-      'bg-green-400': 'bg-green-600',
+      'bg-red-500': 'bg-red-700',
+      'bg-green-500': 'bg-green-700',
       'bg-amber-400': 'bg-amber-600',
-      'bg-violet-400': 'bg-violet-600',
-      // High contrast
-      'bg-blue-600': 'bg-blue-800',
-      'bg-red-600': 'bg-red-800',
-      'bg-green-600': 'bg-green-800',
-      'bg-yellow-500': 'bg-yellow-700',
-      'bg-purple-600': 'bg-purple-800',
+      'bg-violet-500': 'bg-violet-700',
     };
     return darkerMap[colorDef.bg] || 'bg-slate-600';
   }
+
+  getColorblindShape(color: string | null | undefined, row?: number, col?: number): 'square' | 'circle' | 'hexagon' | 'triangle' | 'star' | null {
+    // En mode daltonien, afficher les icônes sur toutes les cellules colorées
+    if (this.colorPalette() !== 'daltonien') return null;
+
+    // Si c'est une cellule de preview, utiliser la couleur de la tuile actuelle
+    // Sinon, utiliser la couleur de la cellule
+    let finalColor = color;
+    const isPreview = row !== undefined && col !== undefined && this.isPreviewCell(row, col);
+    if (isPreview) {
+      finalColor = this.currentTile()?.color;
+    }
+    
+    // Toujours afficher les icônes si la cellule a une couleur (ou si c'est une preview)
+    if (!finalColor) return null;
+    
+    return this.optionsService.getColorblindShape(finalColor);
+  }
+
+  getColorblindIconSvg(color: string | null | undefined, row?: number, col?: number, filled: boolean = false): SafeHtml | null {
+    const shape = this.getColorblindShape(color, row, col);
+    if (!shape) return null;
+    
+    // Pour les previews, toujours utiliser la version non remplie
+    const isPreview = row !== undefined && col !== undefined && this.isPreviewCell(row, col);
+    if (isPreview) {
+      filled = false;
+    }
+    
+    const svgString = this.colorblindIconService.getShapeSvg(shape, filled, 24);
+    return this.sanitizer.bypassSecurityTrustHtml(svgString);
+  }
   
   getCellClass(row: number, col: number): string {
-    const cell = this.grid()[row][col];
-    const key = `${row},${col}`;
+    const worldCoords = this.toWorldCoords(row, col);
+    const cell = this.grid()[worldCoords.row][worldCoords.col];
+    const key = `${worldCoords.row},${worldCoords.col}`;
     
     let classes = 'rounded-md';
 
     if (this.isShrinkImminent()) {
         const newSize = this.gridSize() - 1;
         let willBeRemoved = false;
+        const wr = worldCoords.row;
+        const wc = worldCoords.col;
         switch (this.changeDirectionIndex()) {
-            case 0: willBeRemoved = row >= newSize || col >= newSize; break;
-            case 1: willBeRemoved = row >= newSize || col < 1; break;
-            case 2: willBeRemoved = row < 1 || col < 1; break;
-            case 3: willBeRemoved = row < 1 || col >= newSize; break;
+            case 0: willBeRemoved = wr >= newSize || wc >= newSize; break;
+            case 1: willBeRemoved = wr >= newSize || wc < 1; break;
+            case 2: willBeRemoved = wr < 1 || wc < 1; break;
+            case 3: willBeRemoved = wr < 1 || wc >= newSize; break;
         }
         if (willBeRemoved) {
              classes += ' cell-shrink-imminent';
         }
+    }
+
+    if (cell.blocked) {
+      return `${classes} cell-blocked bg-stone-700 dark:bg-stone-900 opacity-90`;
     }
 
     if (cell.shrinking) {
@@ -243,10 +317,10 @@ export class GridComponent {
           const tileColor = this.currentTile()?.color;
           const previewColorMap: { [key: string]: string } = {
             blue: 'bg-cyan-400',
-            red: 'bg-red-400',
-            green: 'bg-green-400',
+            red: 'bg-red-500',
+            green: 'bg-green-500',
             yellow: 'bg-amber-400',
-            purple: 'bg-violet-400',
+            purple: 'bg-violet-500',
           };
           const hasLineClear = this.clearingPreviewCells().size > 0;
           const pulseClass = hasLineClear ? `pulse-preview ${this.getPulseColorClass(tileColor)}` : '';
@@ -270,18 +344,22 @@ export class GridComponent {
       // Utiliser des classes Tailwind directement pour une réactivité immédiate au thème
       classes += ' bg-slate-100 dark:bg-slate-800';
       classes += ' cell-empty';
-      // Highlight the shrink/expand path for empty cells
-      const size = this.gridSize();
-      let isInPath = false;
-      switch (this.changeDirectionIndex()) {
-        case 0: isInPath = row === size - 1 || col === size - 1; break; // BR
-        case 1: isInPath = row === size - 1 || col === 0; break;     // BL
-        case 2: isInPath = row === 0 || col === 0; break;         // TL
-        case 3: isInPath = row === 0 || col === size - 1; break;     // TR
-      }
-      if (isInPath) {
-        classes += ' bg-slate-200 dark:bg-slate-700';
-        classes += ' cell-in-shrink-path';
+      // Met en évidence le chemin de rétrécissement/agrandissement
+      {
+        const size = this.gridSize();
+        const wr = worldCoords.row;
+        const wc = worldCoords.col;
+        let isInPath = false;
+        switch (this.changeDirectionIndex()) {
+          case 0: isInPath = wr === size - 1 || wc === size - 1; break;
+          case 1: isInPath = wr === size - 1 || wc === 0; break;
+          case 2: isInPath = wr === 0 || wc === 0; break;
+          case 3: isInPath = wr === 0 || wc === size - 1; break;
+        }
+        if (isInPath) {
+          classes += ' bg-slate-200 dark:bg-slate-700';
+          classes += ' cell-in-shrink-path';
+        }
       }
       const hintClass = this.getHintClass(key);
       if (hintClass) {
@@ -294,51 +372,64 @@ export class GridComponent {
     return classes;
   }
 
+  private _updateHoveredCellFromCoordinates(clientX: number, clientY: number, surface: HTMLElement): void {
+    const worldCell = this.getWorldCellFromClient(clientX, clientY, surface);
+    if (!worldCell) {
+      this.lastHoveredCell.set(null);
+      return;
+    }
+    if (
+      this.lastHoveredCell()?.row !== worldCell.row ||
+      this.lastHoveredCell()?.col !== worldCell.col
+    ) {
+      this.lastHoveredCell.set({ row: worldCell.row, col: worldCell.col });
+    }
+  }
+
   private _updateHoveredCellFromEvent(event: MouseEvent | DragEvent | TouchEvent): void {
-    const gridElement = event.currentTarget as HTMLElement;
-    const rect = gridElement.getBoundingClientRect();
-    const computedStyle = window.getComputedStyle(gridElement);
+    const surface = event.currentTarget as HTMLElement;
+    const rect = surface.getBoundingClientRect();
+    const computedStyle = window.getComputedStyle(surface);
     
-    // Récupérer le padding réellement appliqué
     const paddingTop = parseFloat(computedStyle.paddingTop) || 0;
     const paddingLeft = parseFloat(computedStyle.paddingLeft) || 0;
-    const paddingBottom = parseFloat(computedStyle.paddingBottom) || 0;
-    const paddingRight = parseFloat(computedStyle.paddingRight) || 0;
     
-    let x: number, y: number;
-    // Vérifier si c'est un TouchEvent en utilisant la propriété 'touches'
+    let clientX: number;
+    let clientY: number;
     if ('touches' in event || 'changedTouches' in event) {
       const touchEvent = event as TouchEvent;
-      // Utiliser changedTouches pour touchend, touches pour touchmove/touchstart
       const touch = (touchEvent.touches && touchEvent.touches.length > 0) ? touchEvent.touches[0] : 
                    ((touchEvent.changedTouches && touchEvent.changedTouches.length > 0) ? touchEvent.changedTouches[0] : null);
       if (!touch) return;
-      x = touch.clientX - rect.left - paddingLeft;
-      y = touch.clientY - rect.top - paddingTop;
+      clientX = touch.clientX;
+      clientY = touch.clientY;
     } else if ('clientX' in event && 'clientY' in event) {
-      // MouseEvent ou DragEvent
-      x = event.clientX - rect.left - paddingLeft;
-      y = event.clientY - rect.top - paddingTop;
+      clientX = event.clientX;
+      clientY = event.clientY;
     } else {
       return;
     }
+
+    const paddingBottom = parseFloat(computedStyle.paddingBottom) || 0;
+    const paddingRight = parseFloat(computedStyle.paddingRight) || 0;
+    const x = clientX - rect.left - paddingLeft;
+    const y = clientY - rect.top - paddingTop;
     
-    const gridSize = this.gridSize();
+    const gridSize = this.displaySize();
     if (rect.width === 0 || rect.height === 0) return;
 
-    // Soustraire le padding des dimensions pour obtenir la zone de la grille
     const gridWidth = rect.width - paddingLeft - paddingRight;
     const gridHeight = rect.height - paddingTop - paddingBottom;
 
     const cellWidth = gridWidth / gridSize;
     const cellHeight = gridHeight / gridSize;
 
-    // S'assurer que les coordonnées sont dans les limites
-    const col = Math.max(0, Math.min(gridSize - 1, Math.floor(x / cellWidth)));
-    const row = Math.max(0, Math.min(gridSize - 1, Math.floor(y / cellHeight)));
+    const localCol = Math.max(0, Math.min(gridSize - 1, Math.floor(x / cellWidth)));
+    const localRow = Math.max(0, Math.min(gridSize - 1, Math.floor(y / cellHeight)));
+    const world = this.toWorldCoords(localRow, localCol);
 
-    if (this.lastHoveredCell()?.row !== row || this.lastHoveredCell()?.col !== col) {
-      this.lastHoveredCell.set({ row, col });
+    if (this.lastHoveredCell()?.row !== world.row || this.lastHoveredCell()?.col !== world.col) {
+      this.lastHoveredCell.set({ row: world.row, col: world.col });
     }
   }
 
@@ -358,6 +449,10 @@ export class GridComponent {
 
   onGridClick(): void {
     if (this.isShrinking()) return;
+    if (this.suppressNextClick) {
+      this.suppressNextClick = false;
+      return;
+    }
     
     // Éviter les doubles déclenchements après un événement tactile
     const now = Date.now();
@@ -370,43 +465,25 @@ export class GridComponent {
     
     if (tile && this.isPlacementValid() && startPos) {
         this.gameService.placeTile(tile, startPos.row, startPos.col);
-        // Réinitialiser l'état après placement
         this.lastHoveredCell.set(null);
     }
   }
 
-  // Gestion des événements tactiles pour mobile
+  // Sur écran tactile, on ne pose pas une pièce en touchant la grille:
+  // il faut la glisser depuis la carte « Pièce actuelle » (événements tile-drag-*).
+  // On bloque quand même le geste pour éviter le clic simulé qui la poserait.
   onTouchStart(event: TouchEvent): void {
-    if (!this.currentTile() || this.isShrinking()) return;
     event.preventDefault();
-    event.stopPropagation();
     this.lastTouchTime = Date.now();
-    // Mettre à jour immédiatement pour un feedback instantané
-    this._updateHoveredCellFromEvent(event);
   }
 
   onTouchMove(event: TouchEvent): void {
-    if (!this.currentTile() || this.isShrinking()) return;
     event.preventDefault();
-    event.stopPropagation();
-    // Mettre à jour en temps réel pendant le mouvement
-    this._updateHoveredCellFromEvent(event);
   }
 
   onTouchEnd(event: TouchEvent): void {
-    if (this.isShrinking()) return;
     event.preventDefault();
-    event.stopPropagation();
     this.lastTouchTime = Date.now();
-    // Placer la tuile si valide
-    const tile = this.currentTile();
-    const startPos = this.previewStartPosition();
-    
-    if (tile && this.isPlacementValid() && startPos) {
-        this.gameService.placeTile(tile, startPos.row, startPos.col);
-    }
-    // Nettoyer l'état
-    this.onGridMouseLeave();
   }
 
   // Gestion des événements de drag depuis la tuile
@@ -421,6 +498,11 @@ export class GridComponent {
       event.detail.clientY,
       gridElement
     );
+  }
+
+  // Le pointeur a quitté la grille pendant un drag: retirer la prévisualisation
+  onTileDragLeave(): void {
+    this.onGridMouseLeave();
   }
 
   onTileDragEnd(event: CustomEvent): void {
@@ -444,37 +526,5 @@ export class GridComponent {
     }
     // Nettoyer l'état
     this.onGridMouseLeave();
-  }
-
-  private _updateHoveredCellFromCoordinates(clientX: number, clientY: number, gridElement: HTMLElement): void {
-    const rect = gridElement.getBoundingClientRect();
-    const computedStyle = window.getComputedStyle(gridElement);
-    
-    // Récupérer le padding réellement appliqué
-    const paddingTop = parseFloat(computedStyle.paddingTop) || 0;
-    const paddingLeft = parseFloat(computedStyle.paddingLeft) || 0;
-    const paddingBottom = parseFloat(computedStyle.paddingBottom) || 0;
-    const paddingRight = parseFloat(computedStyle.paddingRight) || 0;
-    
-    const x = clientX - rect.left - paddingLeft;
-    const y = clientY - rect.top - paddingTop;
-    
-    const gridSize = this.gridSize();
-    if (rect.width === 0 || rect.height === 0) return;
-
-    // Soustraire le padding des dimensions pour obtenir la zone de la grille
-    const gridWidth = rect.width - paddingLeft - paddingRight;
-    const gridHeight = rect.height - paddingTop - paddingBottom;
-
-    const cellWidth = gridWidth / gridSize;
-    const cellHeight = gridHeight / gridSize;
-
-    // S'assurer que les coordonnées sont dans les limites
-    const col = Math.max(0, Math.min(gridSize - 1, Math.floor(x / cellWidth)));
-    const row = Math.max(0, Math.min(gridSize - 1, Math.floor(y / cellHeight)));
-
-    if (this.lastHoveredCell()?.row !== row || this.lastHoveredCell()?.col !== col) {
-      this.lastHoveredCell.set({ row, col });
-    }
   }
 }

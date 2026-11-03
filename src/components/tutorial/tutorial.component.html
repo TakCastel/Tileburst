@@ -1,10 +1,10 @@
 @if (isTutorialActive() && currentStep(); as step) {
-  <div class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-2 sm:p-4" (click)="close()">
-    <div class="relative bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-md sm:max-w-lg md:max-w-2xl max-h-[95vh] sm:max-h-[90vh] flex flex-col overflow-hidden" (click)="$event.stopPropagation()">
+  <div class="fixed inset-0 tb-backdrop flex items-center justify-center z-[100] p-2 sm:p-4" (click)="close()">
+    <div class="relative tb-card tb-tut w-full max-w-md sm:max-w-lg md:max-w-2xl max-h-[95vh] sm:max-h-[90vh] flex flex-col overflow-hidden" (click)="$event.stopPropagation()">
       
         <button 
         (click)="close()" 
-        class="absolute top-3 right-3 sm:top-4 sm:right-4 w-8 h-8 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-full flex items-center justify-center transition-colors duration-200 z-10"
+        class="absolute top-3 right-3 sm:top-4 sm:right-4 tb-btn tb-btn-cream w-10 h-10 !rounded-full z-10"
         [attr.aria-label]="i18n.t().closeTutorial">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5">
             <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
@@ -16,91 +16,91 @@
         <div class="flex flex-col gap-4 sm:gap-6">
           <!-- Content -->
           <div class="text-center">
-              <h2 class="text-2xl sm:text-3xl font-bold text-cyan-600 dark:text-cyan-400 mb-2">{{ step.title }}</h2>
-              <p class="text-slate-500 dark:text-slate-400 text-sm mb-4">{{ i18n.t().tutorial.step }} {{ activeStepIndex()! + 1 }} {{ i18n.t().tutorial.of }} {{ totalSteps() }}</p>
-              <p class="text-slate-600 dark:text-slate-300 text-base sm:text-lg mb-4 sm:mb-6">{{ step.content }}</p>
+              <h2 class="text-2xl sm:text-3xl font-bold tut-title mb-2">{{ step.title }}</h2>
+              <p class="  text-sm mb-4">{{ i18n.t().tutorial.step }} {{ activeStepIndex()! + 1 }} {{ i18n.t().tutorial.of }} {{ totalSteps() }}</p>
+              <p class="  text-base sm:text-lg mb-4 sm:mb-6">{{ step.content }}</p>
           </div>
 
           <!-- Visual Aid -->
-          <div class="bg-slate-100 dark:bg-slate-700 p-2 sm:p-4 rounded-lg flex items-center justify-center min-h-[240px] sm:min-h-[300px]">
+          <div class="tut-stage p-3 sm:p-5 flex items-center justify-center min-h-[240px] sm:min-h-[300px]">
         @switch (step.id) {
           @case ('welcome') {
             <div class="flex flex-col gap-2 sm:gap-4 items-center text-center">
-              <p class="text-sm sm:text-base font-semibold text-slate-700 dark:text-slate-300">{{ i18n.t().tutorial.welcome.dragTile }}</p>
+              <p class="text-sm sm:text-base font-semibold ">{{ i18n.t().tutorial.welcome.dragTile }}</p>
               <div class="grid grid-cols-2 gap-1.5 w-12">
-                <div class="w-6 h-6 bg-green-400 cell-3d rounded-md"></div>
-                <div class="w-6 h-6 bg-green-400 cell-3d rounded-md"></div>
-                <div class="w-6 h-6 bg-green-400 cell-3d rounded-md col-span-2"></div>
+                <div class="w-6 h-6 bg-green-500 cell-3d rounded-md"></div>
+                <div class="w-6 h-6 bg-green-500 cell-3d rounded-md"></div>
+                <div class="w-6 h-6 bg-green-500 cell-3d rounded-md col-span-2"></div>
               </div>
-              <p class="text-xl sm:text-2xl font-bold text-slate-500 dark:text-slate-400">&darr;</p>
-              <p class="text-sm sm:text-base font-semibold text-slate-700 dark:text-slate-300">{{ i18n.t().tutorial.welcome.ontoGrid }}</p>
-              <div class="grid grid-cols-5 gap-1 sm:gap-1.5 p-1 sm:p-2 bg-slate-200 dark:bg-slate-600 rounded-lg w-40 h-40 sm:w-48 sm:h-48">
-                  @for (_ of [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24]; track $index) { <div class="bg-slate-300/50 cell-empty rounded-sm sm:rounded-md"></div> }
+              <p class="text-xl sm:text-2xl font-bold ">&darr;</p>
+              <p class="text-sm sm:text-base font-semibold ">{{ i18n.t().tutorial.welcome.ontoGrid }}</p>
+              <div class="grid grid-cols-5 gap-1 sm:gap-1.5 p-1 sm:p-2 tut-board w-40 h-40 sm:w-48 sm:h-48">
+                  @for (_ of [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24]; track $index) { <div class="tut-empty rounded-sm sm:rounded-md"></div> }
               </div>
             </div>
           }
           @case ('clearing') {
             <div class="flex flex-col gap-2 sm:gap-4 items-center text-center">
-              <p class="text-sm sm:text-base font-semibold text-slate-700 dark:text-slate-300">{{ i18n.t().tutorial.clearing.fillLine }}</p>
-              <div class="grid grid-cols-5 gap-1 sm:gap-1.5 p-1 sm:p-2 bg-slate-200 dark:bg-slate-600 rounded-lg w-40 h-40 sm:w-48 sm:h-48">
-                @for (_ of [0,1,2,3]; track $index) { <div class="bg-red-400 cell-3d rounded-sm sm:rounded-md"></div> }
-                <div class="bg-red-400/50 rounded-sm sm:rounded-md"></div>
-                @for (_ of [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]; track $index) { <div class="bg-slate-300/50 cell-empty rounded-sm sm:rounded-md"></div> }
+              <p class="text-sm sm:text-base font-semibold ">{{ i18n.t().tutorial.clearing.fillLine }}</p>
+              <div class="grid grid-cols-5 gap-1 sm:gap-1.5 p-1 sm:p-2 tut-board w-40 h-40 sm:w-48 sm:h-48">
+                @for (_ of [0,1,2,3]; track $index) { <div class="bg-red-500 cell-3d rounded-sm sm:rounded-md"></div> }
+                <div class="bg-red-500 opacity-50 rounded-sm sm:rounded-md"></div>
+                @for (_ of [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]; track $index) { <div class="tut-empty rounded-sm sm:rounded-md"></div> }
               </div>
-              <p class="text-xl sm:text-2xl font-bold text-slate-500 dark:text-slate-400">&darr;</p>
-              <p class="text-sm sm:text-base font-semibold text-slate-700 dark:text-slate-300">{{ i18n.t().tutorial.clearing.toClear }}</p>
-              <div class="grid grid-cols-5 gap-1 sm:gap-1.5 p-1 sm:p-2 bg-slate-200 dark:bg-slate-600 rounded-lg w-40 h-40 sm:w-48 sm:h-48">
-                @for (_ of [0,1,2,3,4]; track $index) { <div class="bg-red-400 cell-3d rounded-sm sm:rounded-md animate-place"></div> }
-                @for (_ of [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]; track $index) { <div class="bg-slate-300/50 cell-empty rounded-sm sm:rounded-md"></div> }
+              <p class="text-xl sm:text-2xl font-bold ">&darr;</p>
+              <p class="text-sm sm:text-base font-semibold ">{{ i18n.t().tutorial.clearing.toClear }}</p>
+              <div class="grid grid-cols-5 gap-1 sm:gap-1.5 p-1 sm:p-2 tut-board w-40 h-40 sm:w-48 sm:h-48">
+                @for (_ of [0,1,2,3,4]; track $index) { <div class="bg-red-500 cell-3d rounded-sm sm:rounded-md animate-place"></div> }
+                @for (_ of [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]; track $index) { <div class="tut-empty rounded-sm sm:rounded-md"></div> }
               </div>
             </div>
           }
           @case ('validated') {
             <div class="flex flex-col gap-2 sm:gap-4 items-center text-center">
-               <p class="text-sm sm:text-base font-semibold text-slate-700 dark:text-slate-300">{{ i18n.t().tutorial.validated.connectGroup }}</p>
-               <div class="grid grid-cols-6 gap-1 sm:gap-1.5 p-1 sm:p-2 bg-slate-200 dark:bg-slate-600 rounded-lg w-44 h-44 sm:w-56 sm:h-56">
+               <p class="text-sm sm:text-base font-semibold ">{{ i18n.t().tutorial.validated.connectGroup }}</p>
+               <div class="grid grid-cols-6 gap-1 sm:gap-1.5 p-1 sm:p-2 tut-board w-44 h-44 sm:w-56 sm:h-56">
                   <!-- validated blocks -->
-                  <div class="bg-purple-400 cell-3d rounded-sm sm:rounded-md validated relative"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor" class="absolute-center w-1/2 h-1/2 text-white/90"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" /></svg></div>
-                  <div class="bg-purple-400 cell-3d rounded-sm sm:rounded-md validated relative"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor" class="absolute-center w-1/2 h-1/2 text-white/90"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" /></svg></div>
-                  <div class="bg-slate-300/50 cell-empty rounded-sm sm:rounded-md"></div>
-                  <div class="bg-purple-400 cell-3d rounded-sm sm:rounded-md validated relative"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor" class="absolute-center w-1/2 h-1/2 text-white/90"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" /></svg></div>
-                  <div class="bg-purple-400 cell-3d rounded-sm sm:rounded-md validated relative"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor" class="absolute-center w-1/2 h-1/2 text-white/90"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" /></svg></div>
-                   <div class="bg-slate-300/50 cell-empty rounded-sm sm:rounded-md"></div>
+                  <div class="bg-violet-500 cell-3d rounded-sm sm:rounded-md validated relative"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor" class="absolute-center w-1/2 h-1/2 text-white/90"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" /></svg></div>
+                  <div class="bg-violet-500 cell-3d rounded-sm sm:rounded-md validated relative"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor" class="absolute-center w-1/2 h-1/2 text-white/90"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" /></svg></div>
+                  <div class="tut-empty rounded-sm sm:rounded-md"></div>
+                  <div class="bg-violet-500 cell-3d rounded-sm sm:rounded-md validated relative"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor" class="absolute-center w-1/2 h-1/2 text-white/90"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" /></svg></div>
+                  <div class="bg-violet-500 cell-3d rounded-sm sm:rounded-md validated relative"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor" class="absolute-center w-1/2 h-1/2 text-white/90"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" /></svg></div>
+                   <div class="tut-empty rounded-sm sm:rounded-md"></div>
                   <!-- row 2 -->
-                  <div class="bg-slate-300/50 cell-empty rounded-sm sm:rounded-md"></div>
-                  <div class="bg-purple-400 cell-3d rounded-sm sm:rounded-md validated relative"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor" class="absolute-center w-1/2 h-1/2 text-white/90"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" /></svg></div>
-                  <div class="bg-purple-400 cell-3d rounded-sm sm:rounded-md validated relative"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor" class="absolute-center w-1/2 h-1/2 text-white/90"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" /></svg></div>
-                  <div class="bg-purple-400 cell-3d rounded-sm sm:rounded-md validated relative"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor" class="absolute-center w-1/2 h-1/2 text-white/90"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" /></svg></div>
-                  <div class="bg-slate-300/50 cell-empty rounded-sm sm:rounded-md"></div>
-                  <div class="bg-slate-300/50 cell-empty rounded-sm sm:rounded-md"></div>
-                  @for (_ of [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23]; track $index) { <div class="bg-slate-300/50 cell-empty rounded-sm sm:rounded-md"></div> }
+                  <div class="tut-empty rounded-sm sm:rounded-md"></div>
+                  <div class="bg-violet-500 cell-3d rounded-sm sm:rounded-md validated relative"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor" class="absolute-center w-1/2 h-1/2 text-white/90"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" /></svg></div>
+                  <div class="bg-violet-500 cell-3d rounded-sm sm:rounded-md validated relative"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor" class="absolute-center w-1/2 h-1/2 text-white/90"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" /></svg></div>
+                  <div class="bg-violet-500 cell-3d rounded-sm sm:rounded-md validated relative"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor" class="absolute-center w-1/2 h-1/2 text-white/90"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" /></svg></div>
+                  <div class="tut-empty rounded-sm sm:rounded-md"></div>
+                  <div class="tut-empty rounded-sm sm:rounded-md"></div>
+                  @for (_ of [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23]; track $index) { <div class="tut-empty rounded-sm sm:rounded-md"></div> }
                </div>
             </div>
           }
           @case ('shrinking') {
              <div class="flex flex-col gap-2 sm:gap-4 items-center text-center">
-              <p class="text-sm sm:text-base font-semibold text-slate-700 dark:text-slate-300">{{ i18n.t().tutorial.shrinking.ifStuck }}</p>
-              <div class="grid grid-cols-6 gap-1 sm:gap-1.5 p-1 sm:p-2 bg-slate-200 dark:bg-slate-600 rounded-lg w-44 h-44 sm:w-56 sm:h-56">
+              <p class="text-sm sm:text-base font-semibold ">{{ i18n.t().tutorial.shrinking.ifStuck }}</p>
+              <div class="grid grid-cols-6 gap-1 sm:gap-1.5 p-1 sm:p-2 tut-board w-44 h-44 sm:w-56 sm:h-56">
                 @for (r of [0,1,2,3,4,5]; track r) {
                   @for (c of [0,1,2,3,4,5]; track c) {
-                    <div class="rounded-sm sm:rounded-md" [class]="(r === 5 || c === 5) ? 'cell-shrinking-warning' : 'bg-slate-300/50 cell-empty'"></div>
+                    <div class="rounded-sm sm:rounded-md" [class]="(r === 5 || c === 5) ? 'cell-shrinking-warning' : 'tut-empty'"></div>
                   }
                 }
               </div>
-               <p class="text-xl sm:text-2xl font-bold text-slate-500 dark:text-slate-400">&darr;</p>
-                <p class="text-sm sm:text-base font-semibold text-slate-700 dark:text-slate-300">{{ i18n.t().tutorial.shrinking.toSmaller }}</p>
-              <div class="grid grid-cols-5 gap-1 sm:gap-1.5 p-1 sm:p-2 bg-slate-200 dark:bg-slate-600 rounded-lg w-40 h-40 sm:w-48 sm:h-48">
-                 @for (_ of [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24]; track $index) { <div class="bg-slate-300/50 cell-empty rounded-sm sm:rounded-md"></div> }
+               <p class="text-xl sm:text-2xl font-bold ">&darr;</p>
+                <p class="text-sm sm:text-base font-semibold ">{{ i18n.t().tutorial.shrinking.toSmaller }}</p>
+              <div class="grid grid-cols-5 gap-1 sm:gap-1.5 p-1 sm:p-2 tut-board w-40 h-40 sm:w-48 sm:h-48">
+                 @for (_ of [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24]; track $index) { <div class="tut-empty rounded-sm sm:rounded-md"></div> }
               </div>
             </div>
           }
           @case('goal') {
             <div class="flex flex-col gap-2 sm:gap-4 items-center text-center">
-                <p class="text-base sm:text-lg font-semibold text-slate-700 dark:text-slate-300">{{ i18n.t().tutorial.goal.aimFor }}</p>
-                <div class="text-5xl sm:text-6xl font-bold text-amber-500">
+                <p class="text-base sm:text-lg font-semibold ">{{ i18n.t().tutorial.goal.aimFor }}</p>
+                <div class="text-5xl sm:text-6xl font-bold tut-gold">
                   10,000
                 </div>
-                <p class="text-sm sm:text-base text-slate-600 dark:text-slate-400">{{ i18n.t().tutorial.goal.combineStrategy }}</p>
+                <p class="text-sm sm:text-base ">{{ i18n.t().tutorial.goal.combineStrategy }}</p>
             </div>
           }
         }
@@ -109,12 +109,11 @@
       </div>
 
       <!-- Navigation (Fixed at bottom) -->
-      <div class="flex justify-between items-center p-4 sm:p-6 md:p-8 pt-2 sm:pt-4 border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-b-2xl">
+      <div class="flex justify-between items-center p-4 sm:p-6 md:p-8 pt-2 sm:pt-4 tut-nav">
         @if (!isFirstStep()) {
           <button 
             (click)="previous()"
-            class="bg-slate-300 text-slate-700 font-bold py-2 px-4 sm:px-6 text-sm sm:text-base transition-all duration-200 btn-3d"
-            style="--shadow-color: #94a3b8;"
+            class="tb-btn tb-btn-cream h-12 px-5 sm:px-7 text-base"
             >
             {{ i18n.t().previous }}
           </button>
@@ -126,15 +125,13 @@
         @if (isLastStep()) {
           <button 
             (click)="close()" 
-            class="bg-green-500 text-white font-bold py-2 px-4 sm:px-6 text-sm sm:text-base transition-all duration-200 btn-3d"
-            style="--shadow-color: #15803d;">
+            class="tb-btn tb-btn-green h-12 px-6 sm:px-8 text-base">
             {{ i18n.t().play }}
           </button>
         } @else {
           <button 
             (click)="next()"
-            class="bg-cyan-500 text-white font-bold py-2 px-4 sm:px-6 text-sm sm:text-base transition-all duration-200 btn-3d"
-            style="--shadow-color: #0891b2;">
+            class="tb-btn tb-btn-teal h-12 px-6 sm:px-8 text-base">
             {{ i18n.t().next }}
           </button>
         }

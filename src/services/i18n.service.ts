@@ -6,6 +6,9 @@ export interface Translations {
   // Common
   score: string;
   bestScore: string;
+  objective: string;
+  currentPiece: string;
+  nextShort: string;
   loading: string;
   
   // Buttons
@@ -101,6 +104,13 @@ export interface Translations {
   currentBestScore: string;
   reset: string;
   resetBestScoreConfirm: string;
+
+  startGame: string;
+
+  // Undo
+  undo: string;
+  undoButton: string;
+  undoProgress: string;
   
   // Landing Page
   landingTagline: string;
@@ -115,12 +125,17 @@ export interface Translations {
   landingDownloadIOS: string;
   landingDownloadAndroid: string;
   landingNote: string;
+  landingInstallApp: string;
+  landingInstallIOSHint: string;
 }
 
 const TRANSLATIONS: Record<Language, Translations> = {
   fr: {
     score: 'Score',
     bestScore: 'Meilleur score',
+    objective: 'Objectif',
+    currentPiece: 'Pièce actuelle',
+    nextShort: 'Suivante',
     loading: 'Chargement...',
     howToPlay: 'Comment Jouer',
     newGame: 'Nouvelle Partie',
@@ -175,7 +190,7 @@ const TRANSLATIONS: Record<Language, Translations> = {
       },
       goal: {
         title: 'Score et Fin de Partie',
-        content: 'Le jeu se termine si la grille rétrécit à sa taille minimale et que vous êtes toujours bloqué. Essayez de faire le meilleur score possible ! Bonne chance !',
+        content: 'Le jeu se termine si la grille rétrécit à sa taille minimale (4x4) et que vous êtes toujours bloqué. Essayez de faire le meilleur score possible ! Bonne chance !',
         aimFor: 'Visez le meilleur score !',
         combineStrategy: 'Combinez stratégie et un peu de chance.',
       },
@@ -202,6 +217,10 @@ const TRANSLATIONS: Record<Language, Translations> = {
     currentBestScore: 'Score actuel',
     reset: 'Réinitialiser',
     resetBestScoreConfirm: 'Êtes-vous sûr de vouloir réinitialiser le meilleur score ?',
+    startGame: 'Commencer',
+    undo: 'Annuler',
+    undoButton: 'Annuler le dernier coup',
+    undoProgress: 'Prochaine annulation : {0}/{1} pts de groupes validés',
     landingTagline: 'Jeu de puzzle stratégique',
     landingDescription: 'Placez des tuiles sur une grille, formez des lignes et des groupes validés pour marquer des points. Défiez vos amis !',
     landingFeature1Title: 'Multi-plateforme',
@@ -214,10 +233,15 @@ const TRANSLATIONS: Record<Language, Translations> = {
     landingDownloadIOS: 'Télécharger sur l\'App Store',
     landingDownloadAndroid: 'Télécharger sur Google Play',
     landingNote: 'Disponible également en mode hors ligne',
+    landingInstallApp: 'Installer l\'application',
+    landingInstallIOSHint: 'Sur iPhone ou iPad : Partager, puis « Sur l\'écran d\'accueil »',
   },
   en: {
     score: 'Score',
     bestScore: 'Best score',
+    objective: 'Goal',
+    currentPiece: 'Current piece',
+    nextShort: 'Next',
     loading: 'Loading...',
     howToPlay: 'How to Play',
     newGame: 'New Game',
@@ -272,7 +296,7 @@ const TRANSLATIONS: Record<Language, Translations> = {
       },
       goal: {
         title: 'Score and Game Over',
-        content: 'The game ends if the grid shrinks to its minimum size and you are still stuck. Try to achieve the best score possible! Good luck!',
+        content: 'The game ends if the grid shrinks to its minimum size (4x4) and you are still stuck. Try to achieve the best score possible! Good luck!',
         aimFor: 'Aim for the best score!',
         combineStrategy: 'Combine strategy and a bit of luck.',
       },
@@ -299,6 +323,10 @@ const TRANSLATIONS: Record<Language, Translations> = {
     currentBestScore: 'Current best score',
     reset: 'Reset',
     resetBestScoreConfirm: 'Are you sure you want to reset the best score?',
+    startGame: 'Start',
+    undo: 'Undo',
+    undoButton: 'Undo last move',
+    undoProgress: 'Next undo: {0}/{1} pts from validated groups',
     landingTagline: 'Strategic puzzle game',
     landingDescription: 'Place tiles on a grid, form lines and validated groups to score points. Challenge your friends!',
     landingFeature1Title: 'Multi-platform',
@@ -311,10 +339,15 @@ const TRANSLATIONS: Record<Language, Translations> = {
     landingDownloadIOS: 'Download on App Store',
     landingDownloadAndroid: 'Download on Google Play',
     landingNote: 'Also available offline',
+    landingInstallApp: 'Install the app',
+    landingInstallIOSHint: 'On iPhone or iPad: Share, then \'Add to Home Screen\'',
   },
   es: {
     score: 'Puntuación',
     bestScore: 'Mejor puntuación',
+    objective: 'Objetivo',
+    currentPiece: 'Pieza actual',
+    nextShort: 'Siguiente',
     loading: 'Cargando...',
     howToPlay: 'Cómo Jugar',
     newGame: 'Nueva Partida',
@@ -396,6 +429,10 @@ const TRANSLATIONS: Record<Language, Translations> = {
     currentBestScore: 'Mejor puntuación actual',
     reset: 'Restablecer',
     resetBestScoreConfirm: '¿Estás seguro de que quieres restablecer la mejor puntuación?',
+    startGame: 'Start',
+    undo: 'Undo',
+    undoButton: 'Undo last move',
+    undoProgress: 'Next undo: {0}/{1} pts from validated groups',
     landingTagline: 'Juego de puzzle estratégico',
     landingDescription: 'Coloca fichas en una cuadrícula, forma líneas y grupos validados para ganar puntos. ¡Desafía a tus amigos!',
     landingFeature1Title: 'Multiplataforma',
@@ -408,10 +445,15 @@ const TRANSLATIONS: Record<Language, Translations> = {
     landingDownloadIOS: 'Descargar en App Store',
     landingDownloadAndroid: 'Descargar en Google Play',
     landingNote: 'También disponible sin conexión',
+    landingInstallApp: 'Instalar la aplicación',
+    landingInstallIOSHint: 'En iPhone o iPad: Compartir, luego «Añadir a pantalla de inicio»',
   },
   de: {
     score: 'Punkte',
     bestScore: 'Bester Punktestand',
+    objective: 'Ziel',
+    currentPiece: 'Aktuelles Teil',
+    nextShort: 'Nächstes',
     loading: 'Lädt...',
     howToPlay: 'Spielanleitung',
     newGame: 'Neues Spiel',
@@ -493,6 +535,10 @@ const TRANSLATIONS: Record<Language, Translations> = {
     currentBestScore: 'Aktueller Bestwert',
     reset: 'Zurücksetzen',
     resetBestScoreConfirm: 'Sind Sie sicher, dass Sie den Bestwert zurücksetzen möchten?',
+    startGame: 'Start',
+    undo: 'Undo',
+    undoButton: 'Undo last move',
+    undoProgress: 'Next undo: {0}/{1} pts from validated groups',
     landingTagline: 'Strategisches Puzzle-Spiel',
     landingDescription: 'Platziere Kacheln auf einem Raster, bilde Linien und validierte Gruppen, um Punkte zu sammeln. Fordere deine Freunde heraus!',
     landingFeature1Title: 'Multiplattform',
@@ -505,10 +551,15 @@ const TRANSLATIONS: Record<Language, Translations> = {
     landingDownloadIOS: 'Im App Store herunterladen',
     landingDownloadAndroid: 'Bei Google Play herunterladen',
     landingNote: 'Auch offline verfügbar',
+    landingInstallApp: 'App installieren',
+    landingInstallIOSHint: 'Auf iPhone oder iPad: Teilen, dann „Zum Home-Bildschirm“',
   },
   it: {
     score: 'Punteggio',
     bestScore: 'Miglior punteggio',
+    objective: 'Obiettivo',
+    currentPiece: 'Pezzo attuale',
+    nextShort: 'Prossimo',
     loading: 'Caricamento...',
     howToPlay: 'Come Giocare',
     newGame: 'Nuova Partita',
@@ -590,6 +641,10 @@ const TRANSLATIONS: Record<Language, Translations> = {
     currentBestScore: 'Miglior punteggio attuale',
     reset: 'Reimposta',
     resetBestScoreConfirm: 'Sei sicuro di voler reimpostare il miglior punteggio?',
+    startGame: 'Start',
+    undo: 'Undo',
+    undoButton: 'Undo last move',
+    undoProgress: 'Next undo: {0}/{1} pts from validated groups',
     landingTagline: 'Gioco di puzzle strategico',
     landingDescription: 'Posiziona le tessere su una griglia, forma linee e gruppi validati per ottenere punti. Sfida i tuoi amici!',
     landingFeature1Title: 'Multi-piattaforma',
@@ -602,10 +657,15 @@ const TRANSLATIONS: Record<Language, Translations> = {
     landingDownloadIOS: 'Scarica su App Store',
     landingDownloadAndroid: 'Scarica su Google Play',
     landingNote: 'Disponibile anche offline',
+    landingInstallApp: 'Installa l\'app',
+    landingInstallIOSHint: 'Su iPhone o iPad: Condividi, poi «Aggiungi a Home»',
   },
   pt: {
     score: 'Pontuação',
     bestScore: 'Melhor pontuação',
+    objective: 'Objetivo',
+    currentPiece: 'Peça atual',
+    nextShort: 'Próxima',
     loading: 'Carregando...',
     howToPlay: 'Como Jogar',
     newGame: 'Novo Jogo',
@@ -687,6 +747,10 @@ const TRANSLATIONS: Record<Language, Translations> = {
     currentBestScore: 'Melhor pontuação atual',
     reset: 'Redefinir',
     resetBestScoreConfirm: 'Tem certeza de que deseja redefinir a melhor pontuação?',
+    startGame: 'Start',
+    undo: 'Undo',
+    undoButton: 'Undo last move',
+    undoProgress: 'Next undo: {0}/{1} pts from validated groups',
     landingTagline: 'Jogo de quebra-cabeça estratégico',
     landingDescription: 'Coloque peças em uma grade, forme linhas e grupos validados para marcar pontos. Desafie seus amigos!',
     landingFeature1Title: 'Multiplataforma',
@@ -699,10 +763,15 @@ const TRANSLATIONS: Record<Language, Translations> = {
     landingDownloadIOS: 'Baixar na App Store',
     landingDownloadAndroid: 'Baixar no Google Play',
     landingNote: 'Também disponível offline',
+    landingInstallApp: 'Instalar o aplicativo',
+    landingInstallIOSHint: 'No iPhone ou iPad: Compartilhar, depois \'Adicionar à Tela de Início\'',
   },
   ru: {
     score: 'Счёт',
     bestScore: 'Лучший счёт',
+    objective: 'Цель',
+    currentPiece: 'Текущая фигура',
+    nextShort: 'Следующая',
     loading: 'Загрузка...',
     howToPlay: 'Как Играть',
     newGame: 'Новая Игра',
@@ -784,6 +853,10 @@ const TRANSLATIONS: Record<Language, Translations> = {
     currentBestScore: 'Текущий лучший счёт',
     reset: 'Сбросить',
     resetBestScoreConfirm: 'Вы уверены, что хотите сбросить лучший счёт?',
+    startGame: 'Start',
+    undo: 'Undo',
+    undoButton: 'Undo last move',
+    undoProgress: 'Next undo: {0}/{1} pts from validated groups',
     landingTagline: 'Стратегическая головоломка',
     landingDescription: 'Размещайте плитки на сетке, формируйте линии и проверенные группы, чтобы набирать очки. Бросьте вызов своим друзьям!',
     landingFeature1Title: 'Мультиплатформенный',
@@ -796,10 +869,15 @@ const TRANSLATIONS: Record<Language, Translations> = {
     landingDownloadIOS: 'Скачать в App Store',
     landingDownloadAndroid: 'Скачать в Google Play',
     landingNote: 'Также доступно офлайн',
+    landingInstallApp: 'Установить приложение',
+    landingInstallIOSHint: 'На iPhone или iPad: Поделиться, затем «На экран „Домой“»',
   },
   ja: {
     score: 'スコア',
     bestScore: 'ベストスコア',
+    objective: '目標',
+    currentPiece: '現在のピース',
+    nextShort: '次',
     loading: '読み込み中...',
     howToPlay: '遊び方',
     newGame: '新しいゲーム',
@@ -881,6 +959,10 @@ const TRANSLATIONS: Record<Language, Translations> = {
     currentBestScore: '現在の最高スコア',
     reset: 'リセット',
     resetBestScoreConfirm: '最高スコアをリセットしてもよろしいですか？',
+    startGame: 'Start',
+    undo: 'Undo',
+    undoButton: 'Undo last move',
+    undoProgress: 'Next undo: {0}/{1} pts from validated groups',
     landingTagline: '戦略パズルゲーム',
     landingDescription: 'グリッドにタイルを配置し、ラインと検証済みグループを形成してポイントを獲得します。友達に挑戦しましょう！',
     landingFeature1Title: 'マルチプラットフォーム',
@@ -893,10 +975,15 @@ const TRANSLATIONS: Record<Language, Translations> = {
     landingDownloadIOS: 'App Storeでダウンロード',
     landingDownloadAndroid: 'Google Playでダウンロード',
     landingNote: 'オフラインでも利用可能',
+    landingInstallApp: 'アプリをインストール',
+    landingInstallIOSHint: 'iPhone/iPadでは:共有 →「ホーム画面に追加」',
   },
   zh: {
     score: '分数',
     bestScore: '最佳分数',
+    objective: '目标',
+    currentPiece: '当前方块',
+    nextShort: '下一个',
     loading: '加载中...',
     howToPlay: '如何游戏',
     newGame: '新游戏',
@@ -978,6 +1065,10 @@ const TRANSLATIONS: Record<Language, Translations> = {
     currentBestScore: '当前最佳分数',
     reset: '重置',
     resetBestScoreConfirm: '您确定要重置最佳分数吗？',
+    startGame: 'Start',
+    undo: 'Undo',
+    undoButton: 'Undo last move',
+    undoProgress: 'Next undo: {0}/{1} pts from validated groups',
     landingTagline: '策略益智游戏',
     landingDescription: '在网格上放置方块，形成线条和已验证的组来得分。挑战你的朋友！',
     landingFeature1Title: '多平台',
@@ -990,10 +1081,15 @@ const TRANSLATIONS: Record<Language, Translations> = {
     landingDownloadIOS: '在App Store下载',
     landingDownloadAndroid: '在Google Play下载',
     landingNote: '也可离线使用',
+    landingInstallApp: '安装应用',
+    landingInstallIOSHint: '在 iPhone 或 iPad 上:分享,然后“添加到主屏幕”',
   },
   ko: {
     score: '점수',
     bestScore: '최고 점수',
+    objective: '목표',
+    currentPiece: '현재 조각',
+    nextShort: '다음',
     loading: '로딩 중...',
     howToPlay: '게임 방법',
     newGame: '새 게임',
@@ -1075,6 +1171,10 @@ const TRANSLATIONS: Record<Language, Translations> = {
     currentBestScore: '현재 최고 점수',
     reset: '재설정',
     resetBestScoreConfirm: '최고 점수를 재설정하시겠습니까?',
+    startGame: 'Start',
+    undo: 'Undo',
+    undoButton: 'Undo last move',
+    undoProgress: 'Next undo: {0}/{1} pts from validated groups',
     landingTagline: '전략 퍼즐 게임',
     landingDescription: '그리드에 타일을 배치하고, 선과 검증된 그룹을 형성하여 점수를 얻으세요. 친구들에게 도전하세요!',
     landingFeature1Title: '멀티 플랫폼',
@@ -1087,10 +1187,15 @@ const TRANSLATIONS: Record<Language, Translations> = {
     landingDownloadIOS: 'App Store에서 다운로드',
     landingDownloadAndroid: 'Google Play에서 다운로드',
     landingNote: '오프라인에서도 사용 가능',
+    landingInstallApp: '앱 설치',
+    landingInstallIOSHint: 'iPhone 또는 iPad: 공유 후 \'홈 화면에 추가\'',
   },
   nl: {
     score: 'Score',
     bestScore: 'Beste score',
+    objective: 'Doel',
+    currentPiece: 'Huidig stuk',
+    nextShort: 'Volgende',
     loading: 'Laden...',
     howToPlay: 'Hoe te Spelen',
     newGame: 'Nieuw Spel',
@@ -1172,6 +1277,10 @@ const TRANSLATIONS: Record<Language, Translations> = {
     currentBestScore: 'Huidige beste score',
     reset: 'Resetten',
     resetBestScoreConfirm: 'Weet u zeker dat u de beste score wilt resetten?',
+    startGame: 'Start',
+    undo: 'Undo',
+    undoButton: 'Undo last move',
+    undoProgress: 'Next undo: {0}/{1} pts from validated groups',
     landingTagline: 'Strategisch puzzelspel',
     landingDescription: 'Plaats tegels op een rooster, vorm lijnen en gevalideerde groepen om punten te scoren. Daag je vrienden uit!',
     landingFeature1Title: 'Multiplatform',
@@ -1184,10 +1293,15 @@ const TRANSLATIONS: Record<Language, Translations> = {
     landingDownloadIOS: 'Downloaden in App Store',
     landingDownloadAndroid: 'Downloaden in Google Play',
     landingNote: 'Ook offline beschikbaar',
+    landingInstallApp: 'App installeren',
+    landingInstallIOSHint: 'Op iPhone of iPad: Delen, dan \'Zet op beginscherm\'',
   },
   pl: {
     score: 'Wynik',
     bestScore: 'Najlepszy wynik',
+    objective: 'Cel',
+    currentPiece: 'Bieżący element',
+    nextShort: 'Następny',
     loading: 'Ładowanie...',
     howToPlay: 'Jak Grać',
     newGame: 'Nowa Gra',
@@ -1269,6 +1383,10 @@ const TRANSLATIONS: Record<Language, Translations> = {
     currentBestScore: 'Aktualny najlepszy wynik',
     reset: 'Resetuj',
     resetBestScoreConfirm: 'Czy na pewno chcesz zresetować najlepszy wynik?',
+    startGame: 'Start',
+    undo: 'Undo',
+    undoButton: 'Undo last move',
+    undoProgress: 'Next undo: {0}/{1} pts from validated groups',
     landingTagline: 'Strategiczna gra logiczna',
     landingDescription: 'Umieść płytki na siatce, tworz linie i zweryfikowane grupy, aby zdobywać punkty. Rzuć wyzwanie znajomym!',
     landingFeature1Title: 'Wieloplatformowa',
@@ -1281,10 +1399,15 @@ const TRANSLATIONS: Record<Language, Translations> = {
     landingDownloadIOS: 'Pobierz z App Store',
     landingDownloadAndroid: 'Pobierz z Google Play',
     landingNote: 'Dostępna również offline',
+    landingInstallApp: 'Zainstaluj aplikację',
+    landingInstallIOSHint: 'Na iPhonie lub iPadzie: Udostępnij, potem „Do ekranu początkowego”',
   },
   tr: {
     score: 'Skor',
     bestScore: 'En iyi skor',
+    objective: 'Hedef',
+    currentPiece: 'Mevcut parça',
+    nextShort: 'Sonraki',
     loading: 'Yükleniyor...',
     howToPlay: 'Nasıl Oynanır',
     newGame: 'Yeni Oyun',
@@ -1366,6 +1489,10 @@ const TRANSLATIONS: Record<Language, Translations> = {
     currentBestScore: 'Mevcut en iyi skor',
     reset: 'Sıfırla',
     resetBestScoreConfirm: 'En iyi skoru sıfırlamak istediğinizden emin misiniz?',
+    startGame: 'Start',
+    undo: 'Undo',
+    undoButton: 'Undo last move',
+    undoProgress: 'Next undo: {0}/{1} pts from validated groups',
     landingTagline: 'Stratejik bulmaca oyunu',
     landingDescription: 'Bir ızgaraya karolar yerleştirin, çizgiler ve doğrulanmış gruplar oluşturarak puan kazanın. Arkadaşlarınıza meydan okuyun!',
     landingFeature1Title: 'Çoklu platform',
@@ -1378,10 +1505,15 @@ const TRANSLATIONS: Record<Language, Translations> = {
     landingDownloadIOS: 'App Store\'dan indir',
     landingDownloadAndroid: 'Google Play\'den indir',
     landingNote: 'Çevrimdışı da mevcut',
+    landingInstallApp: 'Uygulamayı yükle',
+    landingInstallIOSHint: 'iPhone veya iPad\'de: Paylaş, ardından \'Ana Ekrana Ekle\'',
   },
   ar: {
     score: 'النقاط',
     bestScore: 'أفضل النقاط',
+    objective: 'الهدف',
+    currentPiece: 'القطعة الحالية',
+    nextShort: 'التالي',
     loading: 'جاري التحميل...',
     howToPlay: 'كيفية اللعب',
     newGame: 'لعبة جديدة',
@@ -1463,6 +1595,10 @@ const TRANSLATIONS: Record<Language, Translations> = {
     currentBestScore: 'أفضل نتيجة حالية',
     reset: 'إعادة تعيين',
     resetBestScoreConfirm: 'هل أنت متأكد أنك تريد إعادة تعيين أفضل نتيجة؟',
+    startGame: 'Start',
+    undo: 'Undo',
+    undoButton: 'Undo last move',
+    undoProgress: 'Next undo: {0}/{1} pts from validated groups',
     landingTagline: 'لعبة ألغاز استراتيجية',
     landingDescription: 'ضع البلاط على الشبكة، وشكل الخطوط والمجموعات المصدقة لتسجيل النقاط. تحد أصدقاءك!',
     landingFeature1Title: 'متعدد المنصات',
@@ -1475,6 +1611,8 @@ const TRANSLATIONS: Record<Language, Translations> = {
     landingDownloadIOS: 'تحميل من App Store',
     landingDownloadAndroid: 'تحميل من Google Play',
     landingNote: 'متاح أيضًا في وضع عدم الاتصال',
+    landingInstallApp: 'تثبيت التطبيق',
+    landingInstallIOSHint: 'على iPhone أو iPad: مشاركة، ثم «إضافة إلى الشاشة الرئيسية»',
   },
 };
 
@@ -1495,7 +1633,7 @@ const LANGUAGE_NAMES: Record<Language, string> = {
   ar: 'العربية',
 };
 
-const STORAGE_KEY = 'tileburst_language';
+const STORAGE_KEY = 'pavat_language';
 
 @Injectable({
   providedIn: 'root',

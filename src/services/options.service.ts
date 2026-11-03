@@ -1,11 +1,11 @@
 import { Injectable, signal } from '@angular/core';
 
-export type ColorPalette = 'normal' | 'highContrast';
+export type ColorPalette = 'couleurs' | 'daltonien';
 
 export type ShapeMode = 'none' | 'enabled';
 
-const STORAGE_KEY_COLOR_PALETTE = 'tileburst_color_palette';
-const STORAGE_KEY_SHAPE_MODE = 'tileburst_shape_mode';
+const STORAGE_KEY_COLOR_PALETTE = 'pavat_color_palette';
+const STORAGE_KEY_SHAPE_MODE = 'pavat_shape_mode';
 
 @Injectable({
   providedIn: 'root',
@@ -20,18 +20,28 @@ export class OptionsService {
   private loadColorPalette(): ColorPalette {
     try {
       const saved = localStorage.getItem(STORAGE_KEY_COLOR_PALETTE);
-      if (saved && ['normal', 'highContrast'].includes(saved)) {
+      if (saved && ['couleurs', 'daltonien'].includes(saved)) {
         return saved as ColorPalette;
       }
-      // Migration : convertir 'colorblind' vers 'normal' si présent
+      // Migration : convertir 'highContrast' vers 'daltonien' si présent
+      if (saved === 'highContrast') {
+        localStorage.setItem(STORAGE_KEY_COLOR_PALETTE, 'daltonien');
+        return 'daltonien';
+      }
+      // Migration : convertir 'colorblind' vers 'couleurs' si présent
       if (saved === 'colorblind') {
-        localStorage.setItem(STORAGE_KEY_COLOR_PALETTE, 'normal');
-        return 'normal';
+        localStorage.setItem(STORAGE_KEY_COLOR_PALETTE, 'couleurs');
+        return 'couleurs';
+      }
+      // Migration : convertir 'normal' vers 'couleurs' si présent
+      if (saved === 'normal') {
+        localStorage.setItem(STORAGE_KEY_COLOR_PALETTE, 'couleurs');
+        return 'couleurs';
       }
     } catch {
       // Ignorer les erreurs
     }
-    return 'normal';
+    return 'couleurs';
   }
 
   private loadShapeMode(): ShapeMode {
@@ -46,7 +56,7 @@ export class OptionsService {
     return 'none';
   }
 
-  // Retourne la forme associée à une couleur
+  // Retourne la forme associée à une couleur (pour le mode shapeMode)
   getShapeForColor(color: string): 'square' | 'circle' | 'triangle' | 'cross' | 'star' | null {
     if (this.shapeMode() === 'none') return null;
     
@@ -56,6 +66,21 @@ export class OptionsService {
       green: 'triangle',
       blue: 'cross',
       purple: 'star',
+    };
+    
+    return shapeMap[color] || null;
+  }
+
+  // Retourne la forme associée à une couleur en mode daltonien
+  getColorblindShape(color: string | null | undefined): 'square' | 'circle' | 'hexagon' | 'triangle' | 'star' | null {
+    if (!color) return null;
+    
+    const shapeMap: { [key: string]: 'square' | 'circle' | 'hexagon' | 'triangle' | 'star' } = {
+      yellow: 'square',   // Carré pour jaune
+      red: 'circle',      // Rond pour rouge
+      green: 'triangle',  // Triangle pour vert
+      blue: 'hexagon',    // Hexagone pour bleu
+      purple: 'star',     // Étoile pour violet
     };
     
     return shapeMap[color] || null;
@@ -82,22 +107,23 @@ export class OptionsService {
   // Définir les palettes de couleurs
   getColorPaletteClasses(palette: ColorPalette): { [key: string]: { bg: string; shadow?: string } } {
     switch (palette) {
-      case 'highContrast':
+      case 'daltonien':
+        // Mode daltonien : mêmes couleurs que le mode couleurs, mais avec symboles
         return {
-          blue: { bg: 'bg-blue-600', shadow: 'rgba(37, 99, 235, 0.5)' },
-          red: { bg: 'bg-red-600', shadow: 'rgba(220, 38, 38, 0.5)' },
-          green: { bg: 'bg-green-600', shadow: 'rgba(22, 163, 74, 0.5)' },
-          yellow: { bg: 'bg-yellow-500', shadow: 'rgba(234, 179, 8, 0.5)' },
-          purple: { bg: 'bg-purple-600', shadow: 'rgba(147, 51, 234, 0.5)' },
+          blue: { bg: 'bg-cyan-400', shadow: 'rgba(8, 145, 178, 0.5)' },
+          red: { bg: 'bg-red-500', shadow: 'rgba(185, 28, 28, 0.5)' },
+          green: { bg: 'bg-green-500', shadow: 'rgba(21, 128, 61, 0.5)' },
+          yellow: { bg: 'bg-amber-400', shadow: 'rgba(217, 119, 6, 0.5)' },
+          purple: { bg: 'bg-violet-500', shadow: 'rgba(109, 40, 217, 0.5)' },
         };
-      case 'normal':
+      case 'couleurs':
       default:
         return {
           blue: { bg: 'bg-cyan-400', shadow: 'rgba(8, 145, 178, 0.5)' },
-          red: { bg: 'bg-red-400', shadow: 'rgba(220, 38, 38, 0.5)' },
-          green: { bg: 'bg-green-400', shadow: 'rgba(22, 163, 74, 0.5)' },
+          red: { bg: 'bg-red-500', shadow: 'rgba(185, 28, 28, 0.5)' },
+          green: { bg: 'bg-green-500', shadow: 'rgba(21, 128, 61, 0.5)' },
           yellow: { bg: 'bg-amber-400', shadow: 'rgba(217, 119, 6, 0.5)' },
-          purple: { bg: 'bg-violet-400', shadow: 'rgba(139, 92, 246, 0.5)' },
+          purple: { bg: 'bg-violet-500', shadow: 'rgba(109, 40, 217, 0.5)' },
         };
     }
   }

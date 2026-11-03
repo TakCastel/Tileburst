@@ -22,9 +22,10 @@
               "src/styles.css"
             ],
             "assets": [
-              "src/assets",
-              "src/manifest.json",
-              "src/service-worker.js"
+              { "glob": "**/*", "input": "src/assets", "output": "assets" },
+              { "glob": "manifest.json", "input": "src", "output": "/" },
+              { "glob": "service-worker.js", "input": "src", "output": "/" },
+              { "glob": "screenshot.png", "input": ".", "output": "/" }
             ],
             "baseHref": "/"
           },

@@ -1,12 +1,14 @@
 @if (tile(); as currentTile) {
-  <div class="flex items-center justify-center max-w-[60px] max-h-[60px] lg:max-w-[120px] lg:max-h-[120px]">
-    <div class="grid gap-0.5" [style]="gridStyles()">
+  <div
+    #container
+    [class]="cellPx() ? 'flex relative' : (fill() || maxCell() || cellRatio()) ? 'flex items-center justify-center w-full h-full relative' : 'flex items-center justify-center max-w-[60px] max-h-[60px] lg:max-w-[120px] lg:max-h-[120px] relative'">
+    <div class="grid" [style]="gridStyles()">
       @for (row of currentTile.shape; track $index) {
         @for (cell of row; track $index) {
           <div [style.width.px]="cellSize()" [style.height.px]="cellSize()" class="flex items-center justify-center">
             @if (cell === 1) {
               <div 
-                class="w-full h-full rounded-md transition-all tile-preview-piece relative overflow-hidden" 
+                class="w-full h-full rounded-[22%] transition-all tile-preview-piece relative overflow-hidden" 
                 [class]="backgroundColorClass()"
                 [style]="shadowStyle()">
                 @if (getShapeForColor(currentTile.color); as shape) {

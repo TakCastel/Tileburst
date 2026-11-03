@@ -19,7 +19,7 @@ export class ThemeService {
 
   private loadThemePreference(): boolean {
     try {
-      const saved = localStorage.getItem('tileburst_theme');
+      const saved = localStorage.getItem('pavat_theme');
       if (saved !== null) {
         return saved === 'dark';
       }
@@ -32,7 +32,7 @@ export class ThemeService {
 
   private saveThemePreference(isDark: boolean): void {
     try {
-      localStorage.setItem('tileburst_theme', isDark ? 'dark' : 'light');
+      localStorage.setItem('pavat_theme', isDark ? 'dark' : 'light');
     } catch {
       // Ignorer les erreurs de localStorage
     }
