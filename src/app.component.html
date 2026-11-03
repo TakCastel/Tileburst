@@ -25,16 +25,6 @@
 
     <!-- == Boutons d'icône == -->
     <button
-      (click)="toggleTheme()"
-      class="tb-abs tb-btn tb-btn-plum tb-theme-btn"
-      [attr.aria-label]="i18n.t().toggleDarkMode">
-      @if (isDarkMode()) {
-        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="5" fill="currentColor"/><g stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 1.5v2M12 20.5v2M1.5 12h2M20.5 12h2M4.6 4.6l1.4 1.4M18 18l1.4 1.4M4.6 19.4 6 18M18 6l1.4-1.4"/></g></svg>
-      } @else {
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M20.5 14.1A8.6 8.6 0 0 1 9.9 3.5a.6.6 0 0 0-.8-.7A9.6 9.6 0 1 0 21.2 14.9a.6.6 0 0 0-.7-.8Z"/></svg>
-      }
-    </button>
-    <button
       (click)="toggleSound()"
       class="tb-abs tb-btn tb-btn-cream tb-sound-btn"
       [attr.aria-label]="i18n.t().toggleSound"
@@ -66,17 +56,23 @@
       <!-- == Jauge: progression vers la prochaine annulation == -->
       <div
         class="tb-progress tb-undo-meter"
+        [class.tb-undo-meter-full]="undoFull()"
+        [attr.aria-disabled]="undoFull()"
         role="progressbar"
         [attr.aria-valuenow]="undoProgressPoints()"
         aria-valuemin="0"
-        [attr.aria-valuemax]="undoPointsPerCharge"
-        [attr.aria-label]="i18n.translateWithParams('undoProgress', undoProgressPoints().toString(), undoPointsPerCharge.toString())"
-        [attr.title]="i18n.translateWithParams('undoProgress', undoProgressPoints().toString(), undoPointsPerCharge.toString())">
-        <div class="tb-progress-fill" [class.tb-progress-fill-empty]="undoProgress() === 0"
-          [style.width]="'calc(' + (undoProgress() * 100) + '% - 8 * var(--u))'"></div>
+        [attr.aria-valuemax]="undoPointsPerCharge()"
+        [attr.aria-label]="i18n.translateWithParams('undoProgress', undoProgressPoints().toString(), undoPointsPerCharge().toString())"
+        [attr.title]="i18n.translateWithParams('undoProgress', undoProgressPoints().toString(), undoPointsPerCharge().toString())">
+        <div class="tb-progress-fill" [class.tb-progress-fill-empty]="!undoFull() && undoProgress() === 0"
+          [style.width]="'calc(' + (undoFull() ? 100 : undoProgress() * 100) + '% - 8 * var(--u))'"></div>
         <span class="tb-progress-text">
           <lucide-angular [img]="Undo2Icon"></lucide-angular>
-          {{ undoProgressPoints() }} / {{ undoPointsPerCharge }}
+          @if (undoFull()) {
+            {{ i18n.t().undoFull }}
+          } @else {
+            {{ undoProgressPoints() }} / {{ undoPointsPerCharge() }}
+          }
         </span>
       </div>
     </section>
@@ -98,8 +94,9 @@
       <span class="tb-piece-label">{{ i18n.t().currentPiece }}</span>
       <div class="tb-piece-slot">
         <div>
-          @if (currentTile(); as tile) {
-            <app-tile-preview [tile]="tile" [cellRatio]="curCellRatio()"></app-tile-preview>
+          <!-- Suivi par id: l'animation d'arrivée ne joue que pour une nouvelle tuile (pas en tournant) -->
+          @for (tile of currentTile() ? [currentTile()!] : []; track tile.id) {
+            <app-tile-preview class="tb-piece-arrive" [tile]="tile" [cellRatio]="curCellRatio()"></app-tile-preview>
           }
         </div>
       </div>
@@ -108,19 +105,21 @@
       }
     </div>
 
-    <!-- == Suivante: toucher pour échanger == -->
+    <!-- == Suivante: un tap échange avec la pièce courante (comme le bouton swap) == -->
     <div
-      class="tb-abs tb-card tb-piece tb-piece-next cursor-pointer"
+      class="tb-abs tb-card tb-piece tb-piece-next tb-piece-tap select-none"
       role="button"
       tabindex="0"
+      [attr.aria-label]="i18n.t().swapTilesButton"
+      [attr.title]="i18n.t().swap"
       (click)="swapTiles()"
       (keydown.enter)="swapTiles()"
-      [attr.aria-label]="i18n.t().swapTilesButton">
+      (keydown.space)="$event.preventDefault(); swapTiles()">
       <span class="tb-piece-label">{{ i18n.t().nextShort }}</span>
       <div class="tb-piece-slot">
         <div>
-          @if (nextTile(); as tile) {
-            <app-tile-preview [tile]="tile" [cellRatio]="nextCellRatio()"></app-tile-preview>
+          @for (tile of nextTile() ? [nextTile()!] : []; track tile.id) {
+            <app-tile-preview class="tb-piece-arrive tb-piece-arrive-next" [tile]="tile" [cellRatio]="nextCellRatio()"></app-tile-preview>
           }
         </div>
       </div>
@@ -129,7 +128,7 @@
       }
     </div>
 
-    <!-- == Actions == -->
+    <!-- == Actions (mobile: rotate dans la carte de la pièce, swap + undo sous la suivante) == -->
     <button
       (click)="rotateTile()"
       class="tb-abs tb-btn tb-btn-teal tb-rotate"
@@ -141,7 +140,7 @@
     </button>
     <button
       (click)="swapTiles()"
-      class="tb-abs tb-btn tb-btn-coral tb-swap"
+      class="tb-abs tb-btn tb-btn-plum tb-swap"
       [attr.aria-label]="i18n.t().swapTilesButton"
       [attr.title]="i18n.t().swap">
       <lucide-angular [img]="SwapIcon"></lucide-angular>
@@ -153,7 +152,7 @@
       [disabled]="!canUndo()"
       class="tb-abs tb-btn tb-btn-cream tb-undo"
       [attr.aria-label]="i18n.t().undoButton"
-      [attr.title]="i18n.translateWithParams('undoProgress', undoProgressPoints().toString(), undoPointsPerCharge.toString())"
+      [attr.title]="i18n.translateWithParams('undoProgress', undoProgressPoints().toString(), undoPointsPerCharge().toString())"
       [class.tb-undo-gain]="undoGainPulse()">
       <lucide-angular [img]="Undo2Icon"></lucide-angular>
       <span class="tb-btn-text">{{ i18n.t().undo }}</span>
@@ -190,7 +189,7 @@
         <p class="text-lg opacity-80">{{ i18n.t().finalScore }}</p>
         <p class="text-5xl sm:text-6xl font-bold">{{ fmt(score()) }}</p>
         <div class="flex flex-col sm:flex-row gap-4 w-full mt-3">
-          <button (click)="shareScore()" class="tb-btn tb-btn-coral flex-1 h-14 text-lg">
+          <button (click)="shareScore()" class="tb-btn tb-btn-coral w-full sm:flex-1 min-h-16 text-xl">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5">
               <circle cx="18" cy="5" r="3"/>
               <circle cx="6" cy="12" r="3"/>
@@ -200,7 +199,7 @@
             </svg>
             {{ i18n.t().share }}
           </button>
-          <button (click)="restartGame()" class="tb-btn tb-btn-teal flex-1 h-14 text-lg">
+          <button (click)="restartGame()" class="tb-btn tb-btn-teal w-full sm:flex-1 min-h-16 text-xl">
             {{ i18n.t().playAgain }}
           </button>
         </div>
@@ -213,9 +212,18 @@
     @if (currentTile(); as tile) {
       <div
         class="tb-drag-ghost fixed left-0 top-0"
-        [class.tb-ghost-snapped]="ghostSnap()"
+        [class.tb-ghost-snapped]="ghostSnap() && !ghostFree()"
+        [class.tb-ghost-over]="ghostSnap() && ghostFree()"
         [style.transform]="ghostTransform()">
-        <app-tile-preview [tile]="tile" [cellPx]="ghostCell().cell" [gapPx]="ghostCell().gap"></app-tile-preview>
+        <div
+          class="tb-ghost-inner"
+          [style.--ghost-sx]="ghostEnter().scaleX"
+          [style.--ghost-sy]="ghostEnter().scaleY"
+          [style.--ghost-lift]="ghostEnter().lift + 'px'"
+          [style.transform-origin]="ghostGrab().x + 'px ' + ghostGrab().y + 'px'">
+          <app-tile-preview [tile]="tile" [cellPx]="ghostCell().cell" [gapPx]="ghostCell().gap"
+            [cellHPx]="ghostCell().cellH" [rowGapPx]="ghostCell().rowGap"></app-tile-preview>
+        </div>
       </div>
     }
   }
@@ -223,3 +231,5 @@
   <app-tutorial></app-tutorial>
 </main>
 }
+
+<app-cookie-banner />

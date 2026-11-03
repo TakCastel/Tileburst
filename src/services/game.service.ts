@@ -2,6 +2,20 @@ import { Injectable, signal, computed, WritableSignal, inject } from '@angular/c
 import { GameState, Cell, Tile } from '../models/game.model';
 import { TutorialService } from './tutorial.service';
 import { SoundService } from './sound.service';
+
+/** Changement de taille animé: `dir` = sens utilisé (0: BR, 1: BL, 2: TL, 3: TR) */
+export interface GridResizeEvent { id: number; from: number; to: number; dir: number; }
+/** Cases sur le point d'être retirées: la grille les fait exploser */
+export interface ShrinkBurstEvent { id: number; size: number; dir: number; }
+/** Points gagnés, avec les cases qui les ont rapportés (pour afficher le "+XX" au bon endroit). */
+export interface ScoreGainEvent { id: number; points: number; size: number; cells: string[]; }
+/** Annulation d'un coup: cases vidées (la pièce reprise) et cases revenues (effacées par le coup). */
+export interface UndoEvent {
+  id: number;
+  size: number;
+  removed: { r: number; c: number; color: string }[];
+  restored: { r: number; c: number }[];
+}
 const COLORS = ['blue', 'red', 'green', 'yellow', 'purple'];
 const TILE_SHAPES = [
   // 1x1
@@ -54,11 +68,15 @@ const STARTING_GRID_SIZE = 6;
 const ANIMATION_DURATION = 300;
 const SHRINK_WARNING_DURATION = 1500;
 const PRE_SHRINK_DELAY = 1000;
+/** Durée de l'explosion des cases retirées avant le rétrécissement effectif */
+const SHRINK_BURST_DURATION = 720;
 const STORAGE_KEY_GAME_STATE = 'pavat_game_state';
 const STORAGE_KEY_BEST_SCORE = 'pavat_best_score';
 const MAX_UNDO_CHARGES = 3;
-/** Points de groupes validés à cumuler pour gagner une annulation */
+/** Points à cumuler pour la première annulation débloquée */
 const UNDO_POINTS_PER_CHARGE = 300;
+/** Chaque annulation débloquée rend la suivante plus chère (×1.5) */
+const UNDO_COST_GROWTH = 1.5;
 const STARTING_UNDO_CHARGES = 1;
 /** Points rapportés par une case validée (×multiplicateur de taille de grille) */
 const VALIDATED_CELL_POINTS = 15;
@@ -72,6 +90,7 @@ interface UndoSnapshot {
   changeDirectionIndex: number;
   undoCharges: number;
   undoProgressPoints: number;
+  undoUnlocked: number;
 }
 
 @Injectable({
@@ -128,8 +147,24 @@ export class GameService {
 
   private tileIdCounter = 0;
   private shrinkTimeout: any = null;
+  private _animSeq = 0;
+  private _gridResize = signal<GridResizeEvent | null>(null);
+  public readonly gridResize = this._gridResize.asReadonly();
+  private _shrinkBurst = signal<ShrinkBurstEvent | null>(null);
+  public readonly shrinkBurst = this._shrinkBurst.asReadonly();
+  private _undoEvent = signal<UndoEvent | null>(null);
+  public readonly undoEvent = this._undoEvent.asReadonly();
+  private _scoreGain = signal<ScoreGainEvent | null>(null);
+  public readonly scoreGain = this._scoreGain.asReadonly();
+
+  private emitScoreGain(points: number, cells: Set<string>): void {
+    if (points <= 0) return;
+    this._scoreGain.set({ id: ++this._animSeq, points, size: this.state().gridSize, cells: [...cells] });
+  }
   private isFirstGame = true;
   private _undoStack: UndoSnapshot[] = [];
+  /** Tuiles déjà tirées puis rendues par un undo: on les ressert avant d'en générer de nouvelles */
+  private _upcomingTiles: Tile[] = [];
   private _isPlacementAnimating = signal(false);
   private _bestScore: WritableSignal<number> = signal(this.loadBestScore());
 
@@ -168,6 +203,7 @@ export class GameService {
       isShrinkImminent: false,
       undoCharges: STARTING_UNDO_CHARGES,
       undoProgressPoints: 0,
+      undoUnlocked: 0,
     };
   }
 
@@ -202,30 +238,39 @@ export class GameService {
       changeDirectionIndex: state.changeDirectionIndex,
       undoCharges: state.undoCharges ?? 0,
       undoProgressPoints: state.undoProgressPoints ?? 0,
+      undoUnlocked: state.undoUnlocked ?? 0,
     });
     if (this._undoStack.length > 30) {
       this._undoStack.shift();
     }
   }
 
+  /** Coût (en points) de la prochaine annulation, selon le nombre déjà débloquées. */
+  private undoCostFor(unlocked: number): number {
+    return Math.round(UNDO_POINTS_PER_CHARGE * Math.pow(UNDO_COST_GROWTH, unlocked) / 5) * 5;
+  }
+
   /**
    * Chaque case nouvellement validée (groupe de couleur) rapporte des points d'annulation.
-   * Tous les UNDO_POINTS_PER_CHARGE points cumulés: +1 annulation (3 max).
+   * Une annulation se débloque quand la jauge atteint le coût courant (3 max),
+   * et chaque déblocage rend le suivant plus cher.
    */
   private grantUndoChargesForValidated(newlyValidatedCells: number): void {
     if (newlyValidatedCells <= 0) return;
     let charges = this.state().undoCharges ?? 0;
     let progress = (this.state().undoProgressPoints ?? 0)
       + newlyValidatedCells * VALIDATED_CELL_POINTS * this.scoreMultiplier();
+    let unlocked = this.state().undoUnlocked ?? 0;
     let gained = 0;
-    while (progress >= UNDO_POINTS_PER_CHARGE && charges < MAX_UNDO_CHARGES) {
-      progress -= UNDO_POINTS_PER_CHARGE;
+    while (charges < MAX_UNDO_CHARGES && progress >= this.undoCostFor(unlocked)) {
+      progress -= this.undoCostFor(unlocked);
+      unlocked++;
       charges++;
       gained++;
     }
     // Plein: la jauge reste au maximum en attendant qu'une annulation soit utilisée
-    if (charges >= MAX_UNDO_CHARGES) progress = Math.min(progress, UNDO_POINTS_PER_CHARGE);
-    this._gameState.update(s => ({ ...s, undoProgressPoints: progress, undoCharges: charges }));
+    if (charges >= MAX_UNDO_CHARGES) progress = Math.min(progress, this.undoCostFor(unlocked));
+    this._gameState.update(s => ({ ...s, undoProgressPoints: progress, undoCharges: charges, undoUnlocked: unlocked }));
     if (gained > 0) this._undoGained.update(n => n + 1);
   }
 
@@ -233,18 +278,38 @@ export class GameService {
   private _undoGained = signal(0);
   public readonly undoGained = this._undoGained.asReadonly();
   /** Progression (0 → 1) vers la prochaine annulation. */
+  /** Points nécessaires pour débloquer la prochaine annulation. */
+  public readonly undoPointsPerCharge = computed(() => this.undoCostFor(this.state().undoUnlocked ?? 0));
   public readonly undoProgress = computed(() =>
-    Math.min(1, (this.state().undoProgressPoints ?? 0) / UNDO_POINTS_PER_CHARGE)
+    Math.min(1, (this.state().undoProgressPoints ?? 0) / this.undoPointsPerCharge())
   );
-  public readonly undoPointsPerCharge = UNDO_POINTS_PER_CHARGE;
+  public readonly undoFull = computed(() => (this.state().undoCharges ?? 0) >= MAX_UNDO_CHARGES);
 
   public undo(): void {
     if (!this.canUndo()) return;
     clearTimeout(this.shrinkTimeout);
     const snapshot = this._undoStack.pop()!;
+    // Garder en mémoire la tuile tirée après le coup annulé pour ne pas la re-tirer au hasard
+    // (elle peut être en "suivante" ou en "courante" si le joueur a fait un swap entre-temps)
+    const keptIds = new Set([snapshot.currentTile?.id, snapshot.nextTile?.id]);
+    const drawnTiles = [this.state().nextTile, this.state().currentTile]
+      .filter((t): t is Tile => !!t && !keptIds.has(t.id) && !this._upcomingTiles.some(u => u.id === t.id));
+    this._upcomingTiles.unshift(...drawnTiles);
     // Une annulation gagnée par le coup annulé est reprise (sinon on pourrait en farmer)
     const chargesAfter = Math.max(0, Math.min((this.state().undoCharges ?? 0) - 1, snapshot.undoCharges));
     this._isPlacementAnimating.set(false);
+    // Différence entre la grille actuelle et celle restaurée, pour l'animation
+    const removed: UndoEvent['removed'] = [];
+    const restored: UndoEvent['restored'] = [];
+    const before = this.state().grid;
+    if (this.state().gridSize === snapshot.gridSize) {
+      snapshot.grid.forEach((row, r) => row.forEach((cell, c) => {
+        const cur = before[r]?.[c];
+        if (!cur) return;
+        if (cur.color && !cur.blocked && !cell.color) removed.push({ r, c, color: cur.color });
+        else if (cell.color && !cur.color) restored.push({ r, c });
+      }));
+    }
     this._gameState.update(s => ({
       ...s,
       grid: snapshot.grid,
@@ -254,12 +319,16 @@ export class GameService {
       nextTile: snapshot.nextTile,
       changeDirectionIndex: snapshot.changeDirectionIndex,
       undoCharges: chargesAfter,
-      undoProgressPoints: snapshot.undoProgressPoints,
+      // Utiliser une annulation vide la jauge
+      undoProgressPoints: 0,
+      // Si le coup annulé avait débloqué une annulation, elle est reprise: le coût redescend aussi
+      undoUnlocked: snapshot.undoUnlocked,
       lastPlacedTileId: null,
       isShrinking: false,
       isShrinkImminent: false,
     }));
     this._previewLinePoints.set(0);
+    this._undoEvent.set({ id: ++this._animSeq, size: snapshot.gridSize, removed, restored });
     this.saveGameState();
     this.soundService.playSwapSound();
   }
@@ -283,6 +352,7 @@ export class GameService {
         changeDirectionIndex: state.changeDirectionIndex,
         undoCharges: state.undoCharges,
         undoProgressPoints: state.undoProgressPoints,
+        undoUnlocked: state.undoUnlocked,
       };
       localStorage.setItem(STORAGE_KEY_GAME_STATE, JSON.stringify(stateToSave));
     } catch (error) {
@@ -317,6 +387,7 @@ export class GameService {
         isShrinkImminent: false,
         undoCharges: savedState.undoCharges ?? STARTING_UNDO_CHARGES,
         undoProgressPoints: savedState.undoProgressPoints ?? 0,
+        undoUnlocked: savedState.undoUnlocked ?? 0,
       };
 
       // Restaurer le compteur de tileId
@@ -337,6 +408,7 @@ export class GameService {
 
       this._gameState.set(restoredState);
       this._undoStack = [];
+      this._upcomingTiles = [];
       
       // Mettre à jour le meilleur score si nécessaire
       this.updateBestScore(restoredState.score);
@@ -387,6 +459,7 @@ export class GameService {
   public startGame(): void {
     clearTimeout(this.shrinkTimeout);
     this._undoStack = [];
+    this._upcomingTiles = [];
     this._isPlacementAnimating.set(false);
     try {
       localStorage.removeItem(STORAGE_KEY_GAME_STATE);
@@ -395,13 +468,15 @@ export class GameService {
     }
 
     const initialState = this.getInitialState(STARTING_GRID_SIZE, 0);
-    initialState.currentTile = this._generateRandomTile();
-    initialState.nextTile = this._generateRandomTile();
+    // Utiliser la taille de la nouvelle grille, pas celle de la partie précédente
+    initialState.currentTile = this._generateRandomTile(STARTING_GRID_SIZE);
+    initialState.nextTile = this._generateRandomTile(STARTING_GRID_SIZE);
     this._gameState.set(initialState);
     this.saveGameState();
 
     if (!this.canPlaceAtLeastOneTile(initialState.currentTile, initialState.nextTile)) {
       this._gameState.update(state => ({ ...state, isGameOver: true }));
+      this.soundService.playGameOverSound();
       this.updateBestScore(initialState.score);
       this.saveGameState();
     }
@@ -413,9 +488,8 @@ export class GameService {
     );
   }
 
-  private _generateRandomTile(): Tile {
+  private _generateRandomTile(size: number = this.state().gridSize): Tile {
     let availableShapes = [...TILE_SHAPES];
-    const size = this.state().gridSize;
 
     if (size >= 8) {
       availableShapes.push(...PENTOMINO_SHAPES);
@@ -469,7 +543,7 @@ export class GameService {
       clearTimeout(this.shrinkTimeout);
       const state = this.state();
       const current = state.nextTile;
-      const next = this._generateRandomTile();
+      const next = this._upcomingTiles.shift() ?? this._generateRandomTile();
 
       this._gameState.update(s => ({...s, currentTile: current, nextTile: next }));
       
@@ -484,6 +558,7 @@ export class GameService {
               } else {
                   const finalScore = this.state().score;
                   this._gameState.update(s => ({...s, isGameOver: true }));
+                  this.soundService.playGameOverSound();
                   this.updateBestScore(finalScore);
                   this.saveGameState();
               }
@@ -746,6 +821,7 @@ export class GameService {
     }));
     this.updateBestScore(newScore);
     this.saveGameState();
+    this.emitScoreGain(clearInfo.points, clearInfo.cellsToClear);
 
     this.soundService.playClearSound(clearInfo.linesCleared);
     this.changeGridSize(1);
@@ -792,6 +868,7 @@ export class GameService {
         }));
         this.updateBestScore(newScore);
         this.saveGameState();
+        this.emitScoreGain(clearInfo.points, clearInfo.cellsToClear);
         
         // Son de placement suivi du son de suppression
         this.soundService.playPlaceSound();
@@ -1042,6 +1119,7 @@ export class GameService {
             gridSize: newSize,
             changeDirectionIndex: (state.changeDirectionIndex + 1) % 4
         }));
+        this._gridResize.set({ id: ++this._animSeq, from: oldSize, to: newSize, dir });
         this.saveGameState();
         this.soundService.playExpandSound();
     } else { // Shrinking
@@ -1067,6 +1145,7 @@ export class GameService {
             this._gameState.update(state => ({ ...state, grid: gridWithClearing, score: newScore }));
             this.updateBestScore(newScore);
             this.saveGameState();
+            this.emitScoreGain(points, validatedCellsToClear);
 
             // Son de suppression des cellules validées
             this.soundService.playClearSound(Math.ceil(validatedCellsToClear.size / 3));
@@ -1091,6 +1170,7 @@ export class GameService {
     if (newSize < MIN_GRID_SIZE) {
         const finalScore = this.state().score;
         this._gameState.update(s => ({...s, isGameOver: true, isShrinking: false }));
+        this.soundService.playGameOverSound();
         this.updateBestScore(finalScore);
         this.saveGameState();
         return;
@@ -1121,6 +1201,10 @@ export class GameService {
     this._gameState.update(state => ({ ...state, grid: gridWithWarning }));
   
     setTimeout(() => {
+      // Les cases retirées explosent, puis la grille se resserre
+      this._shrinkBurst.set({ id: ++this._animSeq, size: oldSize, dir });
+      setTimeout(() => {
+        this._shrinkBurst.set(null);
         const newGrid = this.createEmptyGrid(newSize);
         for (let r = 0; r < newSize; r++) {
             for (let c = 0; c < newSize; c++) {
@@ -1141,10 +1225,9 @@ export class GameService {
           isShrinking: false,
           changeDirectionIndex: (state.changeDirectionIndex + 1) % 4
         }));
+        this._gridResize.set({ id: ++this._animSeq, from: oldSize, to: newSize, dir });
         this.saveGameState();
-        
-        // Son de réduction de grille
-        this.soundService.playShrinkSound();
+
 
         // Si le shrink a créé une ligne/colonne déjà complète, on la résout tout de suite
         // (sinon ça "pollue" le prochain coup et les aides de placement).
@@ -1154,9 +1237,11 @@ export class GameService {
         if (!this.canPlaceAtLeastOneTile(this.currentTile(), this.nextTile())) {
             const finalScore = this.state().score;
             this._gameState.update(s => ({...s, isGameOver: true }));
+            this.soundService.playGameOverSound();
             this.updateBestScore(finalScore);
             this.saveGameState();
         }
+      }, SHRINK_BURST_DURATION);
     }, SHRINK_WARNING_DURATION);
   }
 }

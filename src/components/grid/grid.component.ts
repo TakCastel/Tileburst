@@ -1,13 +1,16 @@
-import { Component, ChangeDetectionStrategy, inject, signal, computed, effect, ChangeDetectorRef } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, signal, computed, effect, ChangeDetectorRef, ElementRef, Injector, afterNextRender, untracked, viewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
-import { GameService } from '../../services/game.service';
+import { GameService, GridResizeEvent, ScoreGainEvent, ShrinkBurstEvent, UndoEvent } from '../../services/game.service';
 import { Tile, Cell } from '../../models/game.model';
 import { GridIndicatorComponent } from '../grid-indicator/grid-indicator.component';
-import { ThemeService } from '../../services/theme.service';
 import { I18nService } from '../../services/i18n.service';
 import { OptionsService } from '../../services/options.service';
 import { ColorblindIconService } from '../../services/colorblind-icon.service';
+import { SoundService, ShrinkPop } from '../../services/sound.service';
+/** Décalage (ms) entre deux cases qui explosent pendant la réduction */
+const SHRINK_CELL_STAGGER = 30;
+
 @Component({
   selector: 'app-grid',
   templateUrl: './grid.component.html',
@@ -21,11 +24,18 @@ import { ColorblindIconService } from '../../services/colorblind-icon.service';
 export class GridComponent {
   protected gameService = inject(GameService);
   protected i18n = inject(I18nService);
-  private themeService = inject(ThemeService);
   private optionsService = inject(OptionsService);
   private colorblindIconService = inject(ColorblindIconService);
+  private soundService = inject(SoundService);
   private sanitizer = inject(DomSanitizer);
   private cdr = inject(ChangeDetectorRef);
+  private injector = inject(Injector);
+
+  private boardRef = viewChild<ElementRef<HTMLElement>>('board');
+  private fxLayerRef = viewChild<ElementRef<HTMLElement>>('fxLayer');
+  /** Animations "cases soufflées" à annuler quand la grille change vraiment de taille */
+  private burstAnimations: Animation[] = [];
+  protected shrinkBurst = this.gameService.shrinkBurst;
 
   grid = this.gameService.grid;
   gridSize = this.gameService.gridSize;
@@ -35,7 +45,6 @@ export class GridComponent {
   isShrinking = this.gameService.isShrinking;
   isShrinkImminent = this.gameService.isShrinkImminent;
   changeDirectionIndex = this.gameService.changeDirectionIndex;
-  isDarkMode = this.themeService.isDarkMode; // Dépendance au thème pour forcer la mise à jour
 
   private previewCells = signal<Set<string>>(new Set());
   private clearingPreviewCells = signal<Set<string>>(new Set());
@@ -65,10 +74,32 @@ export class GridComponent {
     const durationMs = 1000;
     this.pulseDelay.set(`-${Math.round(now % durationMs)}ms`);
 
-    // Forcer la détection de changement quand le thème change
+
     effect(() => {
-      this.isDarkMode();
-      this.cdr.markForCheck();
+      const burst = this.gameService.shrinkBurst();
+      if (burst) untracked(() => this.playShrinkBurst(burst));
+    });
+
+    effect(() => {
+      const gain = this.gameService.scoreGain();
+      if (gain) untracked(() => this.showScorePop(gain));
+    });
+
+    effect(() => {
+      const undo = this.gameService.undoEvent();
+      if (!undo) return;
+      untracked(() => afterNextRender(() => this.playUndo(undo), { injector: this.injector }));
+    });
+
+    effect(() => {
+      const resize = this.gameService.gridResize();
+      if (!resize) return;
+      untracked(() => {
+        // Les cases soufflées sont réutilisées par le nouveau rendu: on les rend visibles
+        this.burstAnimations.forEach(a => a.cancel());
+        this.burstAnimations = [];
+        afterNextRender(() => this.playResize(resize), { injector: this.injector });
+      });
     });
 
     // Forcer la mise à jour quand les options changent
@@ -299,7 +330,7 @@ export class GridComponent {
     }
 
     if (cell.blocked) {
-      return `${classes} cell-blocked bg-stone-700 dark:bg-stone-900 opacity-90`;
+      return `${classes} cell-blocked bg-stone-700 opacity-90`;
     }
 
     if (cell.shrinking) {
@@ -315,18 +346,11 @@ export class GridComponent {
     if (this.previewCells().has(key)) {
         if (this.isPlacementValid()) {
           const tileColor = this.currentTile()?.color;
-          const previewColorMap: { [key: string]: string } = {
-            blue: 'bg-cyan-400',
-            red: 'bg-red-500',
-            green: 'bg-green-500',
-            yellow: 'bg-amber-400',
-            purple: 'bg-violet-500',
-          };
           const hasLineClear = this.clearingPreviewCells().size > 0;
           const pulseClass = hasLineClear ? `pulse-preview ${this.getPulseColorClass(tileColor)}` : '';
-          return `${classes} ${previewColorMap[tileColor || ''] || 'bg-gray-400'} cell-3d opacity-60 ${pulseClass} ${this.getHintClass(key)}`;
+          return `${classes} ${this.getBackgroundColorClass(tileColor)} cell-3d placement-preview ${pulseClass} ${this.getHintClass(key)}`;
         } else {
-            return `invalid-placement-preview rounded-md opacity-40`;
+            return `invalid-placement-preview rounded-md`;
         }
     }
 
@@ -342,7 +366,7 @@ export class GridComponent {
       }
     } else {
       // Utiliser des classes Tailwind directement pour une réactivité immédiate au thème
-      classes += ' bg-slate-100 dark:bg-slate-800';
+      classes += ' bg-slate-100';
       classes += ' cell-empty';
       // Met en évidence le chemin de rétrécissement/agrandissement
       {
@@ -357,7 +381,7 @@ export class GridComponent {
           case 3: isInPath = wr === 0 || wc === size - 1; break;
         }
         if (isInPath) {
-          classes += ' bg-slate-200 dark:bg-slate-700';
+          classes += ' bg-slate-200';
           classes += ' cell-in-shrink-path';
         }
       }
@@ -365,8 +389,6 @@ export class GridComponent {
       if (hintClass) {
         classes += ` ${hintClass}`;
       }
-      // Forcer la mise à jour en lisant le signal du thème
-      this.isDarkMode();
     }
 
     return classes;
@@ -526,5 +548,357 @@ export class GridComponent {
     }
     // Nettoyer l'état
     this.onGridMouseLeave();
+  }
+
+  // ---------- Animations de changement de taille ----------
+
+  private prefersReducedMotion(): boolean {
+    return typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  }
+
+  /** Décalage (lignes, colonnes) entre la petite et la grande grille selon le sens */
+  private resizeOffset(dir: number): { r: number; c: number } {
+    switch (dir) {
+      case 1: return { r: 0, c: 1 };
+      case 2: return { r: 1, c: 1 };
+      case 3: return { r: 1, c: 0 };
+      default: return { r: 0, c: 0 };
+    }
+  }
+
+  private isRemovedOnShrink(r: number, c: number, size: number, dir: number): boolean {
+    const n = size - 1;
+    switch (dir) {
+      case 0: return r >= n || c >= n;
+      case 1: return r >= n || c < 1;
+      case 2: return r < 1 || c < 1;
+      default: return r < 1 || c >= n;
+    }
+  }
+
+  private boardCells(board: HTMLElement): HTMLElement[] {
+    return Array.from(board.children).filter(
+      (el): el is HTMLElement => el instanceof HTMLElement && el.classList.contains('cell-base')
+    );
+  }
+
+  /** Les cases retirées explosent en éclats qui partent vers l'extérieur */
+  /** Affiche un "+XX" qui monte et s'efface au-dessus des cases qui ont rapporté les points. */
+  private showScorePop(gain: ScoreGainEvent): void {
+    const board = this.boardRef()?.nativeElement;
+    const layer = this.fxLayerRef()?.nativeElement;
+    if (!board || !layer || gain.cells.length === 0) return;
+
+    // Centre des cases concernées, en fraction de la grille (indépendant du re-rendu du DOM)
+    let sumR = 0, sumC = 0;
+    for (const key of gain.cells) {
+      const [r, c] = key.split(',').map(Number);
+      sumR += r;
+      sumC += c;
+    }
+    const fr = (sumR / gain.cells.length + 0.5) / gain.size;
+    const fc = (sumC / gain.cells.length + 0.5) / gain.size;
+
+    const boardRect = board.getBoundingClientRect();
+    const layerRect = layer.getBoundingClientRect();
+    const x = boardRect.left - layerRect.left + fc * boardRect.width;
+    const y = boardRect.top - layerRect.top + fr * boardRect.height;
+
+    const el = document.createElement('div');
+    el.className = 'tb-score-pop';
+    el.textContent = `+${gain.points}`;
+    el.style.left = `${x}px`;
+    el.style.top = `${y}px`;
+    // Taille proportionnelle à la grille, un peu plus grosse pour les gros gains
+    const base = Math.max(22, Math.min(44, boardRect.width * 0.085));
+    const boost = gain.points >= 500 ? 1.35 : gain.points >= 200 ? 1.15 : 1;
+    el.style.fontSize = `${Math.round(base * boost)}px`;
+    layer.appendChild(el);
+
+    const keyframes = this.prefersReducedMotion()
+      ? [
+          { opacity: 0, transform: 'translate(-50%, -50%)' },
+          { opacity: 1, transform: 'translate(-50%, -50%)', offset: 0.2 },
+          { opacity: 0, transform: 'translate(-50%, -50%)' },
+        ]
+      : [
+          { opacity: 0, transform: 'translate(-50%, -20%) scale(0.5)' },
+          { opacity: 1, transform: 'translate(-50%, -50%) scale(1.15)', offset: 0.18 },
+          { opacity: 1, transform: 'translate(-50%, -80%) scale(1)', offset: 0.55 },
+          { opacity: 0, transform: 'translate(-50%, -170%) scale(0.95)' },
+        ];
+    const anim = el.animate(keyframes, { duration: 1100, easing: 'ease-out', fill: 'forwards' });
+    anim.onfinish = anim.oncancel = () => el.remove();
+  }
+
+  private playShrinkBurst(burst: ShrinkBurstEvent): void {
+    const board = this.boardRef()?.nativeElement;
+    const layer = this.fxLayerRef()?.nativeElement;
+    // Sans animation, on joue quand même l'explosion (cascade simulée)
+    if (!board || !layer || this.prefersReducedMotion()) {
+      this.soundService.playShrinkSound();
+      return;
+    }
+
+    const cells = this.boardCells(board);
+    if (cells.length !== burst.size * burst.size) {
+      this.soundService.playShrinkSound();
+      return;
+    }
+
+    // Une explosion sonore par instant de l'animation (les cases au même délai sont groupées)
+    const pops = new Map<number, ShrinkPop>();
+    const grid = this.grid();
+
+    const boardRect = board.getBoundingClientRect();
+    const layerRect = layer.getBoundingClientRect();
+    const cx = boardRect.left + boardRect.width / 2;
+    const cy = boardRect.top + boardRect.height / 2;
+
+    board.animate(
+      [
+        { transform: 'translate(0, 0)' },
+        { transform: 'translate(-5px, 3px)' },
+        { transform: 'translate(5px, -3px)' },
+        { transform: 'translate(-3px, -2px)' },
+        { transform: 'translate(2px, 2px)' },
+        { transform: 'translate(0, 0)' },
+      ],
+      { duration: 360, easing: 'ease-out' }
+    );
+
+    cells.forEach((cell, i) => {
+      const r = Math.floor(i / burst.size);
+      const c = i % burst.size;
+      if (!this.isRemovedOnShrink(r, c, burst.size, burst.dir)) return;
+
+      const rect = cell.getBoundingClientRect();
+      const x = rect.left + rect.width / 2;
+      const y = rect.top + rect.height / 2;
+      let dx = x - cx;
+      let dy = y - cy;
+      const len = Math.hypot(dx, dy) || 1;
+      dx /= len;
+      dy /= len;
+      // Petit décalage pour que la vague parte du coin vers les bords
+      const delay = Math.min(r, c, burst.size - 1 - r, burst.size - 1 - c) === 0
+        ? (Math.abs(r - c) % burst.size) * SHRINK_CELL_STAGGER
+        : 0;
+      const pop = pops.get(delay) ?? { delayMs: delay, count: 0, filled: false };
+      pop.count++;
+      pop.filled ||= !!grid[r]?.[c]?.color;
+      pops.set(delay, pop);
+      const spin = (Math.random() - 0.5) * 120;
+
+      this.burstAnimations.push(
+        cell.animate(
+          [
+            { transform: 'scale(1)', opacity: 1, filter: 'brightness(1)' },
+            { transform: 'scale(1.18)', opacity: 1, filter: 'brightness(1.8)', offset: 0.25 },
+            {
+              transform: `translate(${dx * rect.width * 0.6}px, ${dy * rect.height * 0.6}px) rotate(${spin}deg) scale(0)`,
+              opacity: 0,
+              filter: 'brightness(1)',
+            },
+          ],
+          { duration: 420, delay, easing: 'cubic-bezier(.3,.7,.4,1)', fill: 'forwards' }
+        )
+      );
+
+      const color = getComputedStyle(cell).backgroundColor;
+      const pieces = 7;
+      for (let p = 0; p < pieces; p++) {
+        const shard = document.createElement('div');
+        const size = rect.width * (0.14 + Math.random() * 0.16);
+        shard.style.cssText = `position:absolute;left:${x - layerRect.left - size / 2}px;top:${y - layerRect.top - size / 2}px;width:${size}px;height:${size}px;border-radius:${Math.random() < 0.5 ? '50%' : '22%'};background:${color};box-shadow:inset 0 -2px 0 rgba(0,0,0,.2),0 1px 2px rgba(0,0,0,.3);will-change:transform,opacity;`;
+        layer.appendChild(shard);
+
+        const angle = Math.atan2(dy, dx) + (Math.random() - 0.5) * 2.2;
+        const dist = rect.width * (0.8 + Math.random() * 1.4);
+        const tx = Math.cos(angle) * dist;
+        const ty = Math.sin(angle) * dist;
+        const fall = rect.height * (0.3 + Math.random() * 0.5);
+        const rot = (Math.random() - 0.5) * 540;
+        shard
+          .animate(
+            [
+              { transform: 'translate(0, 0) rotate(0deg) scale(1)', opacity: 1 },
+              { transform: `translate(${tx * 0.7}px, ${ty * 0.7}px) rotate(${rot * 0.6}deg) scale(1)`, opacity: 1, offset: 0.55 },
+              { transform: `translate(${tx}px, ${ty + fall}px) rotate(${rot}deg) scale(0.3)`, opacity: 0 },
+            ],
+            { duration: 520 + Math.random() * 160, delay: delay + 40, easing: 'cubic-bezier(.2,.8,.3,1)', fill: 'forwards' }
+          )
+          .finished.finally(() => shard.remove());
+      }
+    });
+
+    this.soundService.playShrinkSound([...pops.values()]);
+  }
+
+  /**
+   * Transition fluide entre l'ancienne et la nouvelle taille (technique FLIP):
+   * chaque case part de sa place dans l'ancienne grille et glisse vers la nouvelle.
+   */
+  private playResize(ev: GridResizeEvent): void {
+    const board = this.boardRef()?.nativeElement;
+    if (!board || this.prefersReducedMotion()) return;
+
+    const cells = this.boardCells(board);
+    if (cells.length !== ev.to * ev.to) return;
+
+    const style = getComputedStyle(board);
+    const padL = parseFloat(style.paddingLeft) || 0;
+    const padR = parseFloat(style.paddingRight) || 0;
+    const padT = parseFloat(style.paddingTop) || 0;
+    const padB = parseFloat(style.paddingBottom) || 0;
+    const colGap = parseFloat(style.columnGap) || 0;
+    const rowGap = parseFloat(style.rowGap) || 0;
+    const boardRect = board.getBoundingClientRect();
+    const originX = boardRect.left + board.clientLeft + padL;
+    const originY = boardRect.top + board.clientTop + padT;
+    const innerW = board.clientWidth - padL - padR;
+    const innerH = board.clientHeight - padT - padB;
+    const oldW = (innerW - colGap * (ev.from - 1)) / ev.from;
+    const oldH = (innerH - rowGap * (ev.from - 1)) / ev.from;
+
+    const growing = ev.to > ev.from;
+    const off = this.resizeOffset(ev.dir);
+    // Agrandissement: ancienne case = nouvelle - décalage; rétrécissement: + décalage
+    const sign = growing ? -1 : 1;
+    const duration = growing ? 520 : 480;
+
+    cells.forEach((cell, i) => {
+      const r = Math.floor(i / ev.to);
+      const c = i % ev.to;
+      const oldR = r + sign * off.r;
+      const oldC = c + sign * off.c;
+      const rect = cell.getBoundingClientRect();
+
+      if (oldR < 0 || oldC < 0 || oldR >= ev.from || oldC >= ev.from) {
+        // Nouvelle case: elle surgit depuis le bord de la grille
+        const edgeDist = growing ? (r === 0 || r === ev.to - 1 ? c : r) : 0;
+        cell.animate(
+          [
+            { transform: 'scale(0) rotate(-25deg)', opacity: 0 },
+            { transform: 'scale(1.18) rotate(4deg)', opacity: 1, offset: 0.6 },
+            { transform: 'scale(0.95) rotate(0deg)', opacity: 1, offset: 0.82 },
+            { transform: 'scale(1) rotate(0deg)', opacity: 1 },
+          ],
+          { duration: 460, delay: 140 + edgeDist * 35, easing: 'ease-out', fill: 'backwards' }
+        );
+        return;
+      }
+
+      const fromX = originX + oldC * (oldW + colGap);
+      const fromY = originY + oldR * (oldH + rowGap);
+      const sx = oldW / rect.width;
+      const sy = oldH / rect.height;
+      cell.animate(
+        [
+          { transformOrigin: '0 0', transform: `translate(${fromX - rect.left}px, ${fromY - rect.top}px) scale(${sx}, ${sy})` },
+          { transformOrigin: '0 0', transform: 'translate(0, 0) scale(1, 1)' },
+        ],
+        { duration, easing: 'cubic-bezier(.34,1.45,.5,1)' }
+      );
+    });
+
+    board.animate(
+      growing
+        ? [{ transform: 'scale(1)' }, { transform: 'scale(1.035)', offset: 0.35 }, { transform: 'scale(1)' }]
+        : [{ transform: 'scale(1)' }, { transform: 'scale(0.96)', offset: 0.3 }, { transform: 'scale(1.015)', offset: 0.7 }, { transform: 'scale(1)' }],
+      { duration: growing ? 520 : 480, easing: 'ease-out' }
+    );
+  }
+
+  /**
+   * Annulation: les cases de la pièce reprise se décollent de la grille et
+   * repartent vers la carte de la pièce actuelle; les cases effacées par le
+   * coup reviennent en rembobinant leur explosion.
+   */
+  private playUndo(ev: UndoEvent): void {
+    const board = this.boardRef()?.nativeElement;
+    const layer = this.fxLayerRef()?.nativeElement;
+    if (!board || !layer || this.prefersReducedMotion()) return;
+
+    const cells = this.boardCells(board);
+    if (cells.length !== ev.size * ev.size) return;
+
+    // Petit recul de la grille, comme une bande qu'on rembobine
+    board.animate(
+      [
+        { transform: 'rotate(0deg) scale(1)' },
+        { transform: 'rotate(-1.2deg) scale(0.985)', offset: 0.3 },
+        { transform: 'rotate(0.6deg) scale(1.005)', offset: 0.65 },
+        { transform: 'rotate(0deg) scale(1)' },
+      ],
+      { duration: 420, easing: 'ease-out' }
+    );
+
+    const layerRect = layer.getBoundingClientRect();
+    const target = (document.querySelector('.tb-piece-cur .tb-piece-slot') as HTMLElement | null)
+      ?.getBoundingClientRect();
+    const flyDuration = 480;
+
+    if (ev.removed.length) {
+      // Centre de la pièce reprise, pour garder sa forme pendant le vol
+      const rects = ev.removed.map(p => cells[p.r * ev.size + p.c].getBoundingClientRect());
+      const pcx = rects.reduce((a, r) => a + r.left + r.width / 2, 0) / rects.length;
+      const pcy = rects.reduce((a, r) => a + r.top + r.height / 2, 0) / rects.length;
+      const radius = getComputedStyle(cells[0]).borderRadius;
+
+      ev.removed.forEach((p, i) => {
+        const rect = rects[i];
+        const ghost = document.createElement('div');
+        ghost.className = `${this.getBackgroundColorClass(p.color)} cell-3d`;
+        ghost.style.cssText = `position:absolute;left:${rect.left - layerRect.left}px;top:${rect.top - layerRect.top}px;width:${rect.width}px;height:${rect.height}px;border-radius:${radius};will-change:transform,opacity;`;
+        layer.appendChild(ghost);
+
+        const lift = rect.height * 0.35;
+        let end: string;
+        if (target && target.width) {
+          // Toute la pièce rétrécit autour de son centre en filant vers la carte
+          const scale = 0.4;
+          const tx = target.left + target.width / 2 + (rect.left + rect.width / 2 - pcx) * scale - (rect.left + rect.width / 2);
+          const ty = target.top + target.height / 2 + (rect.top + rect.height / 2 - pcy) * scale - (rect.top + rect.height / 2);
+          end = `translate(${tx}px, ${ty}px) scale(${scale}) rotate(-12deg)`;
+        } else {
+          end = `translate(0, ${-rect.height * 1.5}px) scale(0.3) rotate(-20deg)`;
+        }
+        ghost
+          .animate(
+            [
+              { transform: 'translate(0, 0) scale(1)', opacity: 1, filter: 'brightness(1)' },
+              { transform: `translate(0, ${-lift}px) scale(1.12)`, opacity: 1, filter: 'brightness(1.35)', offset: 0.25 },
+              { transform: end, opacity: 0, filter: 'brightness(1)' },
+            ],
+            { duration: flyDuration, delay: i * 18, easing: 'cubic-bezier(.5,0,.3,1)', fill: 'forwards' }
+          )
+          .finished.finally(() => ghost.remove());
+      });
+
+      // La carte de la pièce actuelle "réceptionne" la pièce
+      (document.querySelector('.tb-piece-cur') as HTMLElement | null)?.animate(
+        [
+          { transform: 'scale(1)' },
+          { transform: 'scale(1.07, 0.93)', offset: 0.3 },
+          { transform: 'scale(0.97, 1.04)', offset: 0.65 },
+          { transform: 'scale(1)' },
+        ],
+        { duration: 360, delay: flyDuration * 0.75, easing: 'ease-out' }
+      );
+    }
+
+    // Les cases effacées par le coup réapparaissent (explosion à l'envers)
+    ev.restored.forEach((p, i) => {
+      const cell = cells[p.r * ev.size + p.c];
+      cell.animate(
+        [
+          { transform: 'scale(0) rotate(90deg)', opacity: 0 },
+          { transform: 'scale(1.15) rotate(-6deg)', opacity: 1, offset: 0.65 },
+          { transform: 'scale(1) rotate(0deg)', opacity: 1 },
+        ],
+        { duration: 380, delay: 120 + (i % 12) * 22, easing: 'cubic-bezier(.3,.7,.4,1)', fill: 'backwards' }
+      );
+    });
   }
 }

@@ -18,16 +18,15 @@ import { LucideAngularModule, Languages } from 'lucide-angular';
       </button>
       
       @if (isOpen()) {
-        <div class="absolute top-10 lg:top-12 right-0 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 py-1.5 lg:py-2 z-50 min-w-[160px] lg:min-w-[200px] max-h-[300px] lg:max-h-[400px] overflow-y-auto">
+        <div class="absolute top-10 lg:top-12 right-0 bg-white rounded-lg shadow-xl border border-slate-200 py-1.5 lg:py-2 z-50 min-w-[160px] lg:min-w-[200px] max-h-[300px] lg:max-h-[400px] overflow-y-auto">
           @for (lang of i18n.availableLanguages; track lang) {
             <button
               (click)="selectLanguage(lang)"
-              class="w-full px-3 lg:px-4 py-1.5 lg:py-2 text-left hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors flex items-center justify-between"
-              [class.bg-cyan-100]="i18n.getLanguage() === lang"
-              [class.dark:bg-cyan-900]="i18n.getLanguage() === lang">
-              <span class="text-sm lg:text-base text-slate-700 dark:text-slate-300">{{ i18n.languageNames[lang] }}</span>
+              class="w-full px-3 lg:px-4 py-1.5 lg:py-2 text-left hover:bg-slate-100 transition-colors flex items-center justify-between"
+              [class.bg-cyan-100]="i18n.getLanguage() === lang">
+              <span class="text-sm lg:text-base text-slate-700">{{ i18n.languageNames[lang] }}</span>
               @if (i18n.getLanguage() === lang) {
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-3.5 h-3.5 lg:w-4 lg:h-4 text-cyan-600 dark:text-cyan-400">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-3.5 h-3.5 lg:w-4 lg:h-4 text-cyan-600">
                   <path d="M20 6 9 17l-5-5"/>
                 </svg>
               }

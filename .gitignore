@@ -27,3 +27,8 @@ android
 *.njsproj
 *.sln
 *.sw?
+.angular/
+.npm-cache/
+.firebase/
+dist/
+.claude/worktrees/

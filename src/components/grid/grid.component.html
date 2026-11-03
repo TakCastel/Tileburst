@@ -1,6 +1,7 @@
 <div class="relative w-full h-full flex items-center justify-center">
   <app-grid-indicator></app-grid-indicator>
     <div 
+      #board
       class="grid tb-board aspect-square w-full max-w-full max-h-full touch-none"
       [style]="gridStyles()"
       [style.--pulse-delay]="pulseDelay()"
@@ -61,7 +62,8 @@
         }
       }
     </div>
-  @if (isShrinking()) {
+  <div #fxLayer class="absolute inset-0 pointer-events-none z-30" aria-hidden="true"></div>
+  @if (isShrinking() && !shrinkBurst()) {
     <div class="absolute inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center rounded-[1.6rem] z-10">
        <p class="text-sm lg:text-xl font-bold tb-card px-4 py-2 animate-pulse">{{ i18n.t().gridShrinking }}</p>
     </div>

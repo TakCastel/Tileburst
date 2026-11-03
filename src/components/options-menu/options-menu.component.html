@@ -18,7 +18,7 @@
       class="fixed top-0 right-0 h-full w-full sm:w-[90vw] sm:max-w-md tb-drawer shadow-2xl sm:rounded-l-3xl z-50 overflow-y-auto transition-transform duration-300 pt-[env(safe-area-inset-top,0px)] pb-[env(safe-area-inset-bottom,0px)]"
       [class.animate-slide-in-right]="!isClosing()"
       [class.animate-slide-out-right]="isClosing()">
-      <div class="p-4 lg:p-6 space-y-4 lg:space-y-6 flex flex-col h-full">
+      <div class="p-4 pb-8 lg:p-6 lg:pb-10 space-y-4 lg:space-y-6 flex flex-col min-h-full">
         <!-- Header -->
         <div class="flex items-center justify-between pb-3 lg:pb-4 mb-2 lg:mb-3">
           <h2 class="text-2xl lg:text-3xl font-pavat">{{ i18n.t().options || 'Options' }}</h2>
@@ -31,6 +31,75 @@
               <line x1="6" y1="6" x2="18" y2="18"/>
             </svg>
           </button>
+        </div>
+
+        <!-- Partie : actions principales -->
+        <div class="grid grid-cols-2 gap-2 lg:gap-3">
+          <button
+            (click)="requestNewGame()"
+            class="tb-btn tb-btn-green h-12 px-2 text-base">
+            {{ i18n.t().newGame }}
+          </button>
+          <button
+            (click)="openRules()"
+            class="tb-btn tb-btn-teal h-12 px-2 text-base">
+            {{ i18n.t().howToPlay || 'Comment jouer' }}
+          </button>
+        </div>
+
+        <!-- Réglages : son + langue -->
+        <div class="tb-panel p-3 lg:p-4 space-y-3">
+          <div class="flex items-center justify-between gap-3 lg:gap-4">
+            <span class="text-base font-semibold">{{ i18n.t().sound || 'Son' }}</span>
+            <button
+              (click)="toggleSound()"
+              type="button"
+              class="tb-switch"
+              [class.on]="isSoundEnabled()"
+              role="switch"
+              [attr.aria-checked]="isSoundEnabled()"
+              [attr.aria-label]="i18n.t().sound || 'Son'">
+              <span class="tb-switch-knob"></span>
+            </button>
+          </div>
+
+          <div class="flex items-center justify-between gap-3 lg:gap-4">
+            <span class="text-base font-semibold">{{ i18n.t().language || 'Langue' }}</span>
+            <div class="relative" data-language-dropdown>
+              <button
+                (click)="toggleLanguageDropdown()"
+                class="tb-well min-w-[9rem] px-3 lg:px-4 py-2 text-left flex items-center justify-between gap-2 transition-all hover:brightness-105"
+                [attr.aria-expanded]="isLanguageDropdownOpen()"
+                [attr.aria-label]="i18n.t().language || 'Langue'">
+                <span class="text-base font-semibold">
+                  {{ i18n.languageNames[i18n.getLanguage()] }}
+                </span>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                     class="w-4 h-4 transition-transform"
+                     [class.rotate-180]="isLanguageDropdownOpen()">
+                  <path d="m6 9 6 6 6-6"/>
+                </svg>
+              </button>
+
+              @if (isLanguageDropdownOpen()) {
+                <div class="!absolute top-full right-0 min-w-full mt-1.5 lg:mt-2 tb-panel py-1.5 lg:py-2 z-50 max-h-64 overflow-y-auto">
+                  @for (lang of i18n.availableLanguages; track lang) {
+                    <button
+                      (click)="setLanguage(lang)"
+                      class="tb-lang-item w-full px-3 lg:px-4 py-2 text-left flex items-center justify-between gap-3 whitespace-nowrap"
+                      [class.active]="i18n.getLanguage() === lang">
+                      <span class="text-base font-medium">{{ i18n.languageNames[lang] }}</span>
+                      @if (i18n.getLanguage() === lang) {
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4" style="color: var(--tb-teal-edge)">
+                          <path d="M20 6 9 17l-5-5"/>
+                        </svg>
+                      }
+                    </button>
+                  }
+                </div>
+              }
+            </div>
+          </div>
         </div>
 
         <!-- Palette de couleurs -->
@@ -49,106 +118,6 @@
           </div>
         </div>
 
-        <!-- Son -->
-        <div class="space-y-2 lg:space-y-3">
-          <h3 class="tb-badge mb-1.5 lg:mb-2">{{ i18n.t().sound || 'Son' }}</h3>
-          <div class="tb-panel p-3 lg:p-4">
-            <div class="flex items-center justify-between gap-3 lg:gap-4">
-              <span class="text-base font-semibold flex-1">
-                {{ isSoundEnabled() ? (i18n.t().soundOn || 'Activé') : (i18n.t().soundOff || 'Désactivé') }}
-              </span>
-              <button
-                (click)="toggleSound()"
-                type="button"
-                class="tb-switch"
-                [class.on]="isSoundEnabled()"
-                role="switch"
-                [attr.aria-checked]="isSoundEnabled()">
-                <span class="tb-switch-knob"></span>
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Thème -->
-        <div class="space-y-2 lg:space-y-3">
-          <h3 class="tb-badge mb-1.5 lg:mb-2">{{ i18n.t().toggleDarkMode || 'Thème' }}</h3>
-          <div class="tb-panel p-3 lg:p-4">
-            <div class="flex items-center justify-between gap-3 lg:gap-4">
-              <span class="text-base font-semibold flex-1">
-                {{ isDarkMode() ? (i18n.t().darkMode || 'Sombre') : (i18n.t().lightMode || 'Clair') }}
-              </span>
-              <button
-                (click)="toggleTheme()"
-                type="button"
-                class="tb-switch"
-                [class.on]="isDarkMode()"
-                role="switch"
-                [attr.aria-checked]="isDarkMode()">
-                <span class="tb-switch-knob"></span>
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Langue -->
-        <div class="space-y-2 lg:space-y-3">
-          <h3 class="tb-badge mb-1.5 lg:mb-2">{{ i18n.t().language || 'Langue' }}</h3>
-          <div class="tb-panel p-3 lg:p-4">
-            <div class="relative" data-language-dropdown>
-              <button
-                (click)="toggleLanguageDropdown()"
-                class="tb-well w-full px-3 lg:px-4 py-2 lg:py-2.5 text-left flex items-center justify-between transition-all hover:brightness-105"
-                [attr.aria-expanded]="isLanguageDropdownOpen()">
-                <span class="text-base font-semibold">
-                  {{ i18n.languageNames[i18n.getLanguage()] }}
-                </span>
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" 
-                     class="w-4 h-4 transition-transform"
-                     [class.rotate-180]="isLanguageDropdownOpen()">
-                  <path d="m6 9 6 6 6-6"/>
-                </svg>
-              </button>
-              
-              @if (isLanguageDropdownOpen()) {
-                <div class="absolute top-full left-0 right-0 mt-1.5 lg:mt-2 tb-panel py-1.5 lg:py-2 z-50 max-h-64 overflow-y-auto">
-                  @for (lang of i18n.availableLanguages; track lang) {
-                    <button
-                      (click)="setLanguage(lang)"
-                      class="tb-lang-item w-full px-3 lg:px-4 py-2 text-left flex items-center justify-between"
-                      [class.active]="i18n.getLanguage() === lang">
-                      <span class="text-base font-medium">{{ i18n.languageNames[lang] }}</span>
-                      @if (i18n.getLanguage() === lang) {
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4" style="color: var(--tb-teal-edge)">
-                          <path d="M20 6 9 17l-5-5"/>
-                        </svg>
-                      }
-                    </button>
-                  }
-                </div>
-              }
-            </div>
-          </div>
-        </div>
-
-        <!-- Regles -->
-        <div class="space-y-2 lg:space-y-3">
-          <h3 class="tb-badge mb-1.5 lg:mb-2">{{ i18n.t().howToPlay || 'Regles' }}</h3>
-          <div class="tb-panel p-3 lg:p-4">
-            <button
-              (click)="openRules()"
-              class="tb-btn tb-btn-teal w-full h-12 text-base">
-              {{ i18n.t().howToPlay || 'Comment jouer' }}
-            </button>
-            <button
-              (click)="requestNewGame()"
-              class="tb-btn tb-btn-green w-full h-12 text-base mt-4">
-              {{ i18n.t().newGame }}
-            </button>
-          </div>
-        </div>
-
-
         <!-- Réinitialiser le score max -->
         <div class="space-y-2 lg:space-y-3 mt-auto">
           <h3 class="tb-badge mb-1.5 lg:mb-2">{{ i18n.t().bestScore || 'Meilleur score' }}</h3>
@@ -160,14 +129,26 @@
               </div>
               <button
                 (click)="resetBestScore()"
-                class="tb-btn tb-btn-coral h-11 px-4 text-sm shrink-0 whitespace-nowrap">
+                class="tb-btn tb-btn-coral tb-btn-padded h-11 text-sm shrink-0 whitespace-nowrap">
                 {{ i18n.t().reset || 'Réinitialiser' }}
               </button>
             </div>
           </div>
         </div>
+
+        <!-- Mentions légales -->
+        <button
+          type="button"
+          (click)="openLegalNotice()"
+          class="text-sm font-semibold underline opacity-70 hover:opacity-100 self-center">
+          {{ i18n.t().legalNotice }}
+        </button>
       </div>
     </div>
+  }
+
+  @if (isLegalNoticeVisible()) {
+    <app-legal-notice (closed)="isLegalNoticeVisible.set(false)" />
   }
 
   @if (isResetBestScoreConfirmVisible()) {

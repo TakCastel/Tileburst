@@ -28,6 +28,9 @@ export class TilePreviewComponent implements AfterViewInit, OnDestroy {
   /** Taille exacte d'une case et de l'espace entre cases (fantôme de drag = taille de la grille). */
   cellPx = input<number | null>(null);
   gapPx = input<number | null>(null);
+  /** Hauteur de case et écart vertical, pour reproduire des cases non carrées (fantôme de drag). */
+  cellHPx = input<number | null>(null);
+  rowGapPx = input<number | null>(null);
   private hostRef = inject<ElementRef<HTMLElement>>(ElementRef);
   private hostSize = signal<{ w: number; h: number }>({ w: 0, h: 0 });
   private optionsService = inject(OptionsService);
@@ -133,11 +136,16 @@ export class TilePreviewComponent implements AfterViewInit, OnDestroy {
 
   gridStyles = computed(() => {
     const tile = this.tile();
+    const rowGap = this.rowGapPx() ?? this.cellGap();
     return {
       'grid-template-columns': `repeat(${tile.width}, minmax(0, 1fr))`,
-      'gap': `${this.cellGap()}px`,
+      'column-gap': `${this.cellGap()}px`,
+      'row-gap': `${rowGap}px`,
     };
   });
+
+  /** Hauteur d'une case: égale à la largeur sauf si cellHPx est fourni (cases non carrées). */
+  cellHeight = computed(() => this.cellHPx() ?? this.cellSize());
 
   cellSize = computed(() => {
     const fixed = this.cellPx();

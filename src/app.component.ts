@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, inject, signal, computed, effect, OnInit } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, signal, computed, effect, OnInit, Injector, afterNextRender } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { GameService } from './services/game.service';
@@ -7,36 +7,37 @@ import { TilePreviewComponent } from './components/tile-preview/tile-preview.com
 import { TutorialComponent } from './components/tutorial/tutorial.component';
 import { TutorialService } from './services/tutorial.service';
 import { SoundService } from './services/sound.service';
-import { ThemeService } from './services/theme.service';
 import { I18nService } from './services/i18n.service';
 import { OptionsService } from './services/options.service';
 import { ColorblindIconService } from './services/colorblind-icon.service';
 import { OptionsMenuComponent } from './components/options-menu/options-menu.component';
 import { LandingPageComponent } from './components/landing-page/landing-page.component';
-import { LucideAngularModule, Volume2, VolumeX, Sun, Moon, Sparkles, ShieldCheck, Undo2, RefreshCw, ArrowRightLeft } from 'lucide-angular';
+import { LucideAngularModule, Volume2, VolumeX, Sun, Moon, Sparkles, ShieldCheck, Undo2, RotateCwSquare, Replace } from 'lucide-angular';
 
+import { CookieBannerComponent } from './components/cookie-banner/cookie-banner.component';
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
   standalone: true,
-  imports: [CommonModule, GridComponent, TilePreviewComponent, TutorialComponent, OptionsMenuComponent, LandingPageComponent, LucideAngularModule],
+  imports: [CommonModule, GridComponent, TilePreviewComponent, TutorialComponent, OptionsMenuComponent, LandingPageComponent, CookieBannerComponent, LucideAngularModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
-    '(window:keydown.r)': 'rotateTile()',
-    '(window:keydown.space)': 'rotateTile()',
-    '(window:keydown.f)': 'onSwapKeyPress()',
-    '(window:keydown.z)': 'onUndoKeyPress()',
+    // Pendant le tuto, ses propres raccourcis prennent le relais: la partie ne bouge pas
+    '(window:keydown.r)': 'tutorialService.isTutorialActive() || rotateTile()',
+    '(window:keydown.space)': 'tutorialService.isTutorialActive() || rotateTile()',
+    '(window:keydown.f)': 'tutorialService.isTutorialActive() || onSwapKeyPress()',
+    '(window:keydown.z)': 'tutorialService.isTutorialActive() || onUndoKeyPress()',
   },
 })
 export class AppComponent implements OnInit {
   protected gameService = inject(GameService);
   protected tutorialService = inject(TutorialService);
   protected soundService = inject(SoundService);
-  protected themeService = inject(ThemeService);
   protected i18n = inject(I18nService);
   protected optionsService = inject(OptionsService);
   protected colorblindIconService = inject(ColorblindIconService);
   private sanitizer = inject(DomSanitizer);
+  private injector = inject(Injector);
 
   // État de la landing page
   showLandingPage = signal(true);
@@ -79,8 +80,8 @@ export class AppComponent implements OnInit {
   readonly SparklesIcon = Sparkles;
   readonly ShieldCheckIcon = ShieldCheck;
   readonly Undo2Icon = Undo2;
-  readonly RotateIcon = RefreshCw;
-  readonly SwapIcon = ArrowRightLeft;
+  readonly RotateIcon = RotateCwSquare;
+  readonly SwapIcon = Replace;
   protected readonly Math = Math;
 
   score = this.gameService.score;
@@ -96,6 +97,7 @@ export class AppComponent implements OnInit {
   undoProgressPoints = this.gameService.undoProgressPoints;
   undoProgress = this.gameService.undoProgress;
   undoPointsPerCharge = this.gameService.undoPointsPerCharge;
+  undoFull = this.gameService.undoFull;
   /** Petit rebond du bouton Annuler quand une annulation est gagnée */
   protected undoGainPulse = signal(false);
   private undoGainEffect = effect(() => {
@@ -106,7 +108,6 @@ export class AppComponent implements OnInit {
   });
   minValidatedGroupSize = this.gameService.minValidatedGroupSize;
   isSoundEnabled = this.soundService.isSoundEnabled;
-  isDarkMode = this.themeService.isDarkMode;
   colorPalette = this.optionsService.colorPalette;
 
   /** Écran portrait (gabarit mobile): les cartes de pièces y sont plus hautes, donc ratio plus petit. */
@@ -124,58 +125,74 @@ export class AppComponent implements OnInit {
   isDragging = signal(false);
   isHintTooltipVisible = signal(false);
   isRestartConfirmVisible = signal(false);
-  // Position du ghost (tuile flottante) pendant un drag, souris ou tactile
+  /** Coin haut-gauche du fantôme (tuile flottante) pendant un drag, souris ou tactile. */
   protected ghostPosition = signal<{ x: number; y: number } | null>(null);
   /** Taille d'une case de la grille et de l'espace entre cases, mesurée au début du drag. */
-  protected ghostCell = signal<{ cell: number; gap: number }>({ cell: 40, gap: 4 });
-  /** Décalage du coin haut-gauche du fantôme pour que la case-pivot soit sous le point visé. */
+  /** Les cases de la grille ne sont pas forcément carrées: largeur/hauteur et écarts mesurés. */
+  protected ghostCell = signal({ cell: 40, cellH: 40, gap: 4, rowGap: 4 });
   /** Quand la pièce survole une place valide de la grille, le fantôme s'aimante sur les cases. */
   protected ghostSnap = signal<{ x: number; y: number } | null>(null);
+  /**
+   * Drag tactile: la pièce suit le doigt librement (pas d'aimantation case par
+   * case, qui donnait des saccades). L'emplacement final est surligné sur la grille.
+   */
+  protected ghostFree = signal(false);
+  /**
+   * Point de la pièce attrapé par le pointeur (en px, à la taille de la grille).
+   * La pièce garde ce point sous le doigt/curseur: elle suit sans sauter.
+   */
+  protected ghostGrab = signal({ x: 0, y: 0 });
+  /** État de départ de l'animation d'envol: taille sur la carte et hauteur à rattraper. */
+  protected ghostEnter = signal({ scaleX: 1, scaleY: 1, lift: 0 });
   protected ghostTransform = computed(() => {
     const pos = this.ghostPosition();
     if (!pos) return '';
-    const snap = this.ghostSnap();
-    const a = this.ghostAnchor();
-    const x = snap ? snap.x : pos.x - a.x;
-    const y = snap ? snap.y : pos.y - a.y;
-    return `translate3d(${x}px, ${y}px, 0)`;
+    const p = this.ghostFree() ? pos : (this.ghostSnap() ?? pos);
+    return `translate3d(${p.x}px, ${p.y}px, 0)`;
   });
 
-  /** Calcule la position aimantée du fantôme pour un point visé (mêmes règles que la grille). */
+  /**
+   * Aimante le fantôme sur la case visée, avec exactement les règles de la grille
+   * (GridComponent.getWorldCellFromClient): même élément, marge ramenée sur la
+   * case du bord. Le fantôme se cale sur la vraie case affichée, donc pile sur
+   * l'aperçu que dessine la grille, sans doublon décalé.
+   */
   private updateGhostSnap(clientX: number, clientY: number): void {
     const tile = this.currentTile();
     const board = document.querySelector('app-grid .tb-board') as HTMLElement | null;
     if (!tile || !board) { this.ghostSnap.set(null); return; }
     const rect = board.getBoundingClientRect();
+    // Hors de la grille: la grille ne reçoit pas l'événement (voir dispatchTileDrag)
+    if (clientX < rect.left || clientX > rect.right || clientY < rect.top || clientY > rect.bottom) {
+      this.ghostSnap.set(null);
+      return;
+    }
     const st = getComputedStyle(board);
     const padL = parseFloat(st.paddingLeft) || 0;
     const padT = parseFloat(st.paddingTop) || 0;
     const innerW = rect.width - padL - (parseFloat(st.paddingRight) || 0);
     const innerH = rect.height - padT - (parseFloat(st.paddingBottom) || 0);
+    if (innerW <= 0 || innerH <= 0) { this.ghostSnap.set(null); return; }
     const n = this.gridSize();
-    const col = Math.floor(((clientX - rect.left - padL) / innerW) * n);
-    const row = Math.floor(((clientY - rect.top - padT) / innerH) * n);
-    if (col < 0 || row < 0 || col >= n || row >= n) { this.ghostSnap.set(null); return; }
+    const col = Math.max(0, Math.min(n - 1, Math.floor(((clientX - rect.left - padL) / innerW) * n)));
+    const row = Math.max(0, Math.min(n - 1, Math.floor(((clientY - rect.top - padT) / innerH) * n)));
     const startRow = row - tile.barycenter.r;
     const startCol = col - tile.barycenter.c;
     if (!this.gameService.canPlaceTile(tile, startRow, startCol)) { this.ghostSnap.set(null); return; }
-    const colGap = parseFloat(st.columnGap) || 0;
-    const rowGap = parseFloat(st.rowGap) || 0;
-    const cellW = (innerW - colGap * (n - 1)) / n;
-    const cellH = (innerH - rowGap * (n - 1)) / n;
-    this.ghostSnap.set({
-      x: rect.left + padL + startCol * (cellW + colGap),
-      y: rect.top + padT + startRow * (cellH + rowGap),
-    });
+    const cellEl = board.querySelectorAll('.cell-base')[startRow * n + startCol] as HTMLElement | undefined;
+    if (!cellEl) { this.ghostSnap.set(null); return; }
+    const c = cellEl.getBoundingClientRect();
+    this.ghostSnap.set({ x: c.left, y: c.top });
   }
 
+  /** Centre de la case-pivot de la pièce, mesuré depuis le coin haut-gauche du fantôme. */
   protected ghostAnchor = computed(() => {
     const tile = this.currentTile();
-    const { cell, gap } = this.ghostCell();
+    const { cell, cellH, gap, rowGap } = this.ghostCell();
     if (!tile) return { x: 0, y: 0 };
     return {
       x: tile.barycenter.c * (cell + gap) + cell / 2,
-      y: tile.barycenter.r * (cell + gap) + cell / 2,
+      y: tile.barycenter.r * (cellH + rowGap) + cellH / 2,
     };
   });
   private mouseStartPosition: { x: number; y: number } | null = null;
@@ -206,8 +223,32 @@ export class AppComponent implements OnInit {
     this.isRestartConfirmVisible.set(false);
   }
 
+  private rotateAnim: Animation | null = null;
+
+  /**
+   * Rotation animée: la nouvelle forme apparaît tournée de -90° (= l'ancienne
+   * position) puis pivote jusqu'à 0° avec un léger rebond.
+   */
   rotateTile(): void {
+    if (!this.currentTile()) return;
     this.gameService.rotateCurrentTile();
+
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    afterNextRender(() => {
+      const el = document.querySelector('.tb-piece-cur .tb-piece-slot > div') as HTMLElement | null;
+      if (!el) return;
+      // Rotations rapides: on repart du début plutôt que d'empiler les animations
+      this.rotateAnim?.cancel();
+      this.rotateAnim = el.animate(
+        [
+          { transform: 'rotate(-90deg) scale(0.9)' },
+          { transform: 'rotate(8deg) scale(1.06)', offset: 0.65 },
+          { transform: 'rotate(-2deg) scale(0.99)', offset: 0.85 },
+          { transform: 'rotate(0deg) scale(1)' },
+        ],
+        { duration: 280, easing: 'cubic-bezier(0.3, 0.7, 0.4, 1)' }
+      );
+    }, { injector: this.injector });
   }
 
   // Animation d'échange: les deux présentoirs glissent l'un vers l'autre,
@@ -313,9 +354,6 @@ export class AppComponent implements OnInit {
     this.soundService.toggleSound();
   }
 
-  toggleTheme(): void {
-    this.themeService.toggleTheme();
-  }
 
 
   // Dispatch des événements de drag vers la grille (partagé souris/tactile).
@@ -349,48 +387,74 @@ export class AppComponent implements OnInit {
     const board = document.querySelector('app-grid .tb-board') as HTMLElement | null;
     const cellEl = board?.querySelector('.cell-base') as HTMLElement | null;
     if (!board || !cellEl) return;
-    const cell = cellEl.getBoundingClientRect().width;
+    const r = cellEl.getBoundingClientRect();
     const style = getComputedStyle(board);
     const gap = parseFloat(style.columnGap) || 0;
-    if (cell > 0) this.ghostCell.set({ cell, gap });
+    const rowGap = parseFloat(style.rowGap) || 0;
+    if (r.width > 0 && r.height > 0) this.ghostCell.set({ cell: r.width, cellH: r.height, gap, rowGap });
   }
 
   /**
-   * Démarre un drag: la pièce de la carte « Pièce actuelle » est masquée et le
-   * fantôme part exactement de sa place et de sa taille, puis glisse vers le
-   * pointeur (technique FLIP). La pièce se détache de la carte au lieu d'être dupliquée.
+   * Démarre un drag depuis le point (startX, startY) où la pièce a été attrapée.
+   * La pièce de la carte est masquée et le fantôme apparaît pile à sa place et à
+   * sa taille, puis grandit jusqu'à la taille de la grille et monte au-dessus du
+   * doigt (animation CSS jouée à l'apparition, voir .tb-ghost-inner).
    */
-  private startDrag(clientX: number, clientY: number, lift: number): void {
+  private startDrag(startX: number, startY: number, lift: number, free = false): void {
+    const tile = this.currentTile();
+    if (!tile) return;
+    this.measureGridCell();
+    const { cell, cellH, gap, rowGap } = this.ghostCell();
+    const w = tile.width * cell + (tile.width - 1) * gap;
+    const h = tile.height * cellH + (tile.height - 1) * rowGap;
     const source = document.querySelector(
       '.tb-piece-cur .tb-piece-slot app-tile-preview .grid'
     ) as HTMLElement | null;
     const from = source?.getBoundingClientRect();
-    this.measureGridCell();
+    if (from && from.width > 0 && from.height > 0) {
+      const fx = Math.min(1, Math.max(0, (startX - from.left) / from.width));
+      const fy = Math.min(1, Math.max(0, (startY - from.top) / from.height));
+      this.ghostGrab.set({ x: fx * w, y: fy * h });
+      this.ghostEnter.set({ scaleX: from.width / w, scaleY: from.height / h, lift });
+    } else {
+      this.ghostGrab.set(this.ghostAnchor());
+      this.ghostEnter.set({ scaleX: 1, scaleY: 1, lift });
+    }
     this.ghostLiftPx = lift;
+    this.ghostFree.set(free);
     this.isDragging.set(true);
-    this.ghostPosition.set({ x: clientX, y: clientY - lift });
-    if (!from || from.width === 0) return;
-    // Attendre le rendu du fantôme pour connaître sa position d'arrivée
-    requestAnimationFrame(() => {
-      const ghost = document.querySelector('.tb-drag-ghost app-tile-preview .grid') as HTMLElement | null;
-      if (!ghost) return;
-      const to = ghost.getBoundingClientRect();
-      if (to.width === 0) return;
-      const scale = from.width / to.width;
-      ghost.animate(
-        [
-          { transformOrigin: '0 0', transform: `translate(${from.left - to.left}px, ${from.top - to.top}px) scale(${scale})` },
-          { transformOrigin: '0 0', transform: 'translate(0, 0) scale(1)' },
-        ],
-        { duration: 160, easing: 'cubic-bezier(0.2, 0.8, 0.3, 1)' }
-      );
-    });
+  }
+
+  /**
+   * Déplace le fantôme sous le pointeur. Le point visé sur la grille est le
+   * centre de la case-pivot de la pièce, là où on la voit.
+   */
+  private moveDrag(clientX: number, clientY: number): void {
+    const g = this.ghostGrab();
+    const a = this.ghostAnchor();
+    const topLeft = { x: clientX - g.x, y: clientY - this.ghostLiftPx - g.y };
+    this.ghostPosition.set(topLeft);
+    const aimX = topLeft.x + a.x;
+    const aimY = topLeft.y + a.y;
+    this.updateGhostSnap(aimX, aimY);
+    this.dispatchTileDrag('tile-drag-move', aimX, aimY);
+  }
+
+  /** Pose la pièce au point visé (si c'est sur la grille) et termine le drag. */
+  private dropDrag(clientX: number, clientY: number): void {
+    const g = this.ghostGrab();
+    const a = this.ghostAnchor();
+    const aimX = clientX - g.x + a.x;
+    const aimY = clientY - this.ghostLiftPx - g.y + a.y;
+    this.endDrag();
+    this.dispatchTileDrag('tile-drag-end', aimX, aimY);
   }
 
   private endDrag(): void {
     this.isDragging.set(false);
     this.ghostPosition.set(null);
     this.ghostSnap.set(null);
+    this.ghostFree.set(false);
     this.ghostLiftPx = 0;
   }
 
@@ -409,13 +473,9 @@ export class AppComponent implements OnInit {
     const movedY = Math.abs(event.clientY - this.mouseStartPosition.y);
     if (!this.isMouseDragActive && (movedX > 5 || movedY > 5)) {
       this.isMouseDragActive = true;
-      this.startDrag(event.clientX, event.clientY, 0);
+      this.startDrag(this.mouseStartPosition.x, this.mouseStartPosition.y, 0);
     }
-    if (this.isMouseDragActive) {
-      this.ghostPosition.set({ x: event.clientX, y: event.clientY });
-      this.updateGhostSnap(event.clientX, event.clientY);
-      this.dispatchTileDrag('tile-drag-move', event.clientX, event.clientY);
-    }
+    if (this.isMouseDragActive) this.moveDrag(event.clientX, event.clientY);
   };
 
   private onWindowMouseUp = (event: MouseEvent): void => {
@@ -424,13 +484,13 @@ export class AppComponent implements OnInit {
     const wasDragging = this.isMouseDragActive;
     this.mouseStartPosition = null;
     this.isMouseDragActive = false;
-    this.endDrag();
     if (!wasDragging) {
       // Simple clic sans déplacement: rotation (comportement historique)
+      this.endDrag();
       this.rotateTile();
       return;
     }
-    this.dispatchTileDrag('tile-drag-end', event.clientX, event.clientY);
+    this.dropDrag(event.clientX, event.clientY);
   };
 
   // Gestion des événements tactiles pour mobile.
@@ -459,14 +519,11 @@ export class AppComponent implements OnInit {
       if (dx < 8 && dy < 8) return;
       this.touchDragStarted = true;
       this.measureGridCell();
-      // La pièce reste visible au-dessus du doigt (environ une case plus haut)
-      this.startDrag(touch.clientX, touch.clientY, Math.round(this.ghostCell().cell * 1.1 + 12));
+      // La pièce reste collée sous le doigt, au point exact où on l'a attrapée
+      const { x, y } = this.touchStartPosition;
+      this.startDrag(x, y, 0, true);
     }
-    // La pièce se pose là où on la voit (au-dessus du doigt), pas sous le doigt
-    const y = touch.clientY - this.ghostLiftPx;
-    this.ghostPosition.set({ x: touch.clientX, y });
-    this.updateGhostSnap(touch.clientX, y);
-    this.dispatchTileDrag('tile-drag-move', touch.clientX, y);
+    this.moveDrag(touch.clientX, touch.clientY);
   }
 
   onTileTouchEnd(event: TouchEvent): void {
@@ -482,7 +539,7 @@ export class AppComponent implements OnInit {
       return;
     }
     // Drag terminé: poser la pièce si on est sur la grille
-    this.dispatchTileDrag('tile-drag-end', touch.clientX, touch.clientY - this.ghostLiftPx);
+    this.dropDrag(touch.clientX, touch.clientY);
     this.resetTouch();
   }
 

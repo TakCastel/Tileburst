@@ -5,7 +5,7 @@
     <div class="grid" [style]="gridStyles()">
       @for (row of currentTile.shape; track $index) {
         @for (cell of row; track $index) {
-          <div [style.width.px]="cellSize()" [style.height.px]="cellSize()" class="flex items-center justify-center">
+          <div [style.width.px]="cellSize()" [style.height.px]="cellHeight()" class="flex items-center justify-center">
             @if (cell === 1) {
               <div 
                 class="w-full h-full rounded-[22%] transition-all tile-preview-piece relative overflow-hidden" 

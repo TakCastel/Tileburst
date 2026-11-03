@@ -3,7 +3,6 @@ import '@angular/compiler';
 import { bootstrapApplication } from '@angular/platform-browser';
 import { AppComponent } from './src/app.component';
 import { provideZonelessChangeDetection } from '@angular/core';
-import { initFirebaseAnalytics } from './src/firebase';
 
 bootstrapApplication(AppComponent, {
   providers: [provideZonelessChangeDetection()],
@@ -18,7 +17,6 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-// Initialisation Firebase Analytics (si supporté)
-initFirebaseAnalytics();
+// Firebase Analytics : démarré uniquement après consentement (ConsentService)
 
 // AI Studio always uses an `index.tsx` file for all project types.

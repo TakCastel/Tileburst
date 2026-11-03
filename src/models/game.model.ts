@@ -29,4 +29,6 @@ export interface GameState {
   isShrinkImminent?: boolean;
   undoCharges: number;
   undoProgressPoints: number;
+  /** Nombre d'annulations débloquées depuis le début de la partie (fait monter le coût) */
+  undoUnlocked?: number;
 }

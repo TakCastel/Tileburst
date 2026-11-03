@@ -1,13 +1,15 @@
 import { Injectable, signal, computed, inject } from '@angular/core';
 import { I18nService } from './i18n.service';
 
+export type TutorialStepId = 'place' | 'tools' | 'line' | 'group' | 'shrink' | 'finish';
+
 export interface TutorialStep {
-  id: 'welcome' | 'clearing' | 'validated' | 'shrinking' | 'goal';
+  id: TutorialStepId;
   title: string;
-  content: string;
 }
 
 const TUTORIAL_SEEN_KEY = 'pavat_tutorial_seen';
+const STEP_IDS: TutorialStepId[] = ['place', 'tools', 'line', 'group', 'shrink', 'finish'];
 
 @Injectable({
   providedIn: 'root',
@@ -16,92 +18,60 @@ export class TutorialService {
   private i18n = inject(I18nService);
   activeStepIndex = signal<number | null>(null);
 
-  readonly allSteps = computed(() => {
-    const t = this.i18n.t();
-    return [
-      {
-        id: 'welcome' as const,
-        title: t.tutorial.welcome.title,
-        content: t.tutorial.welcome.content,
-      },
-      {
-        id: 'clearing' as const,
-        title: t.tutorial.clearing.title,
-        content: t.tutorial.clearing.content,
-      },
-      {
-        id: 'validated' as const,
-        title: t.tutorial.validated.title,
-        content: t.tutorial.validated.content,
-      },
-      {
-        id: 'shrinking' as const,
-        title: t.tutorial.shrinking.title,
-        content: t.tutorial.shrinking.content,
-      },
-      {
-        id: 'goal' as const,
-        title: t.tutorial.goal.title,
-        content: t.tutorial.goal.content,
-      },
-    ];
+  readonly allSteps = computed<TutorialStep[]>(() => {
+    const t = this.i18n.t().tutorial;
+    return STEP_IDS.map(id => ({ id, title: t[id].title }));
   });
 
   isTutorialActive = computed(() => this.activeStepIndex() !== null);
-  
+
   currentStep = computed(() => {
     const index = this.activeStepIndex();
-    const steps = this.allSteps();
-    return index !== null ? steps[index] : null;
+    return index !== null ? this.allSteps()[index] : null;
   });
 
   isFirstStep = computed(() => this.activeStepIndex() === 0);
-  isLastStep = computed(() => {
-    const steps = this.allSteps();
-    return this.activeStepIndex() === steps.length - 1;
-  });
-
-  constructor() {
-    // Vérifier si le tutoriel a déjà été vu au démarrage
-    this.hasSeenTutorial();
-  }
+  isLastStep = computed(() => this.activeStepIndex() === STEP_IDS.length - 1);
 
   private hasSeenTutorial(): boolean {
-    if (typeof window === 'undefined' || !window.localStorage) {
+    try {
+      return localStorage.getItem(TUTORIAL_SEEN_KEY) === 'true';
+    } catch {
       return false;
     }
-    return localStorage.getItem(TUTORIAL_SEEN_KEY) === 'true';
   }
 
   private markTutorialAsSeen(): void {
-    if (typeof window !== 'undefined' && window.localStorage) {
+    try {
       localStorage.setItem(TUTORIAL_SEEN_KEY, 'true');
+    } catch {
+      // Stockage indisponible: le tuto se relancera, ce n'est pas grave
     }
   }
 
+  /** `force` = lancé depuis "Comment jouer": toujours démarrer, même si déjà vu */
   public startTutorial(force: boolean = false): void {
-    // Si on force (bouton "Comment Jouer"), toujours démarrer
-    // Sinon, vérifier si déjà vu
-    if (!force && this.hasSeenTutorial()) {
-      return;
-    }
+    if (!force && this.hasSeenTutorial()) return;
     this.activeStepIndex.set(0);
   }
 
   public endTutorial(): void {
     this.activeStepIndex.set(null);
-    // Marquer comme vu quand on ferme le tutoriel
     this.markTutorialAsSeen();
   }
 
+  public goToStep(index: number): void {
+    if (index < 0 || index >= STEP_IDS.length) return;
+    this.activeStepIndex.set(index);
+  }
+
   public goToNextStep(): void {
-    this.activeStepIndex.update(index => {
-      const steps = this.allSteps();
-      return (index === null || index >= steps.length - 1) ? index : index + 1;
-    });
+    const index = this.activeStepIndex();
+    if (index !== null) this.goToStep(index + 1);
   }
 
   public goToPreviousStep(): void {
-    this.activeStepIndex.update(index => (index === null || index <= 0) ? index : index - 1);
+    const index = this.activeStepIndex();
+    if (index !== null) this.goToStep(index - 1);
   }
 }

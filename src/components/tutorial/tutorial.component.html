@@ -1,150 +1,226 @@
 @if (isTutorialActive() && currentStep(); as step) {
-  <div class="fixed inset-0 tb-backdrop flex items-center justify-center z-[100] p-2 sm:p-4" (click)="close()">
-    <div class="relative tb-card tb-tut w-full max-w-md sm:max-w-lg md:max-w-2xl max-h-[95vh] sm:max-h-[90vh] flex flex-col overflow-hidden" (click)="$event.stopPropagation()">
-      
-        <button 
-        (click)="close()" 
-        class="absolute top-3 right-3 sm:top-4 sm:right-4 tb-btn tb-btn-cream w-10 h-10 !rounded-full z-10"
-        [attr.aria-label]="i18n.t().closeTutorial">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5">
-            <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
-        </svg>
-      </button>
+  <div class="fixed inset-0 tb-backdrop flex items-center justify-center z-[100] sm:p-4">
+    <div class="relative tb-card tb-tut tut-modal flex flex-col overflow-hidden select-none"
+         role="dialog" aria-modal="true" [attr.aria-label]="step.title">
 
-      <!-- Scrollable Content -->
-      <div class="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8">
-        <div class="flex flex-col gap-4 sm:gap-6">
-          <!-- Content -->
-          <div class="text-center">
-              <h2 class="text-2xl sm:text-3xl font-bold tut-title mb-2">{{ step.title }}</h2>
-              <p class="  text-sm mb-4">{{ i18n.t().tutorial.step }} {{ activeStepIndex()! + 1 }} {{ i18n.t().tutorial.of }} {{ totalSteps() }}</p>
-              <p class="  text-base sm:text-lg mb-4 sm:mb-6">{{ step.content }}</p>
-          </div>
-
-          <!-- Visual Aid -->
-          <div class="tut-stage p-3 sm:p-5 flex items-center justify-center min-h-[240px] sm:min-h-[300px]">
-        @switch (step.id) {
-          @case ('welcome') {
-            <div class="flex flex-col gap-2 sm:gap-4 items-center text-center">
-              <p class="text-sm sm:text-base font-semibold ">{{ i18n.t().tutorial.welcome.dragTile }}</p>
-              <div class="grid grid-cols-2 gap-1.5 w-12">
-                <div class="w-6 h-6 bg-green-500 cell-3d rounded-md"></div>
-                <div class="w-6 h-6 bg-green-500 cell-3d rounded-md"></div>
-                <div class="w-6 h-6 bg-green-500 cell-3d rounded-md col-span-2"></div>
-              </div>
-              <p class="text-xl sm:text-2xl font-bold ">&darr;</p>
-              <p class="text-sm sm:text-base font-semibold ">{{ i18n.t().tutorial.welcome.ontoGrid }}</p>
-              <div class="grid grid-cols-5 gap-1 sm:gap-1.5 p-1 sm:p-2 tut-board w-40 h-40 sm:w-48 sm:h-48">
-                  @for (_ of [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24]; track $index) { <div class="tut-empty rounded-sm sm:rounded-md"></div> }
-              </div>
-            </div>
+      <!-- En-tête: progression + fermer -->
+      <div class="flex items-center gap-3 px-4 pt-4 sm:px-6 sm:pt-5">
+        <div class="flex-1 flex items-center gap-1.5" role="tablist">
+          @for (s of steps(); track s.id; let i = $index) {
+            <button type="button"
+              class="tut-dot"
+              [class.tut-dot-active]="i === activeStepIndex()"
+              [class.tut-dot-done]="solved().has(s.id) && i !== activeStepIndex()"
+              [attr.aria-label]="s.title"
+              [attr.aria-current]="i === activeStepIndex() ? 'step' : null"
+              (click)="goTo(i)"></button>
           }
-          @case ('clearing') {
-            <div class="flex flex-col gap-2 sm:gap-4 items-center text-center">
-              <p class="text-sm sm:text-base font-semibold ">{{ i18n.t().tutorial.clearing.fillLine }}</p>
-              <div class="grid grid-cols-5 gap-1 sm:gap-1.5 p-1 sm:p-2 tut-board w-40 h-40 sm:w-48 sm:h-48">
-                @for (_ of [0,1,2,3]; track $index) { <div class="bg-red-500 cell-3d rounded-sm sm:rounded-md"></div> }
-                <div class="bg-red-500 opacity-50 rounded-sm sm:rounded-md"></div>
-                @for (_ of [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]; track $index) { <div class="tut-empty rounded-sm sm:rounded-md"></div> }
-              </div>
-              <p class="text-xl sm:text-2xl font-bold ">&darr;</p>
-              <p class="text-sm sm:text-base font-semibold ">{{ i18n.t().tutorial.clearing.toClear }}</p>
-              <div class="grid grid-cols-5 gap-1 sm:gap-1.5 p-1 sm:p-2 tut-board w-40 h-40 sm:w-48 sm:h-48">
-                @for (_ of [0,1,2,3,4]; track $index) { <div class="bg-red-500 cell-3d rounded-sm sm:rounded-md animate-place"></div> }
-                @for (_ of [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]; track $index) { <div class="tut-empty rounded-sm sm:rounded-md"></div> }
-              </div>
-            </div>
-          }
-          @case ('validated') {
-            <div class="flex flex-col gap-2 sm:gap-4 items-center text-center">
-               <p class="text-sm sm:text-base font-semibold ">{{ i18n.t().tutorial.validated.connectGroup }}</p>
-               <div class="grid grid-cols-6 gap-1 sm:gap-1.5 p-1 sm:p-2 tut-board w-44 h-44 sm:w-56 sm:h-56">
-                  <!-- validated blocks -->
-                  <div class="bg-violet-500 cell-3d rounded-sm sm:rounded-md validated relative"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor" class="absolute-center w-1/2 h-1/2 text-white/90"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" /></svg></div>
-                  <div class="bg-violet-500 cell-3d rounded-sm sm:rounded-md validated relative"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor" class="absolute-center w-1/2 h-1/2 text-white/90"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" /></svg></div>
-                  <div class="tut-empty rounded-sm sm:rounded-md"></div>
-                  <div class="bg-violet-500 cell-3d rounded-sm sm:rounded-md validated relative"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor" class="absolute-center w-1/2 h-1/2 text-white/90"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" /></svg></div>
-                  <div class="bg-violet-500 cell-3d rounded-sm sm:rounded-md validated relative"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor" class="absolute-center w-1/2 h-1/2 text-white/90"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" /></svg></div>
-                   <div class="tut-empty rounded-sm sm:rounded-md"></div>
-                  <!-- row 2 -->
-                  <div class="tut-empty rounded-sm sm:rounded-md"></div>
-                  <div class="bg-violet-500 cell-3d rounded-sm sm:rounded-md validated relative"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor" class="absolute-center w-1/2 h-1/2 text-white/90"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" /></svg></div>
-                  <div class="bg-violet-500 cell-3d rounded-sm sm:rounded-md validated relative"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor" class="absolute-center w-1/2 h-1/2 text-white/90"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" /></svg></div>
-                  <div class="bg-violet-500 cell-3d rounded-sm sm:rounded-md validated relative"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor" class="absolute-center w-1/2 h-1/2 text-white/90"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" /></svg></div>
-                  <div class="tut-empty rounded-sm sm:rounded-md"></div>
-                  <div class="tut-empty rounded-sm sm:rounded-md"></div>
-                  @for (_ of [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23]; track $index) { <div class="tut-empty rounded-sm sm:rounded-md"></div> }
-               </div>
-            </div>
-          }
-          @case ('shrinking') {
-             <div class="flex flex-col gap-2 sm:gap-4 items-center text-center">
-              <p class="text-sm sm:text-base font-semibold ">{{ i18n.t().tutorial.shrinking.ifStuck }}</p>
-              <div class="grid grid-cols-6 gap-1 sm:gap-1.5 p-1 sm:p-2 tut-board w-44 h-44 sm:w-56 sm:h-56">
-                @for (r of [0,1,2,3,4,5]; track r) {
-                  @for (c of [0,1,2,3,4,5]; track c) {
-                    <div class="rounded-sm sm:rounded-md" [class]="(r === 5 || c === 5) ? 'cell-shrinking-warning' : 'tut-empty'"></div>
-                  }
-                }
-              </div>
-               <p class="text-xl sm:text-2xl font-bold ">&darr;</p>
-                <p class="text-sm sm:text-base font-semibold ">{{ i18n.t().tutorial.shrinking.toSmaller }}</p>
-              <div class="grid grid-cols-5 gap-1 sm:gap-1.5 p-1 sm:p-2 tut-board w-40 h-40 sm:w-48 sm:h-48">
-                 @for (_ of [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24]; track $index) { <div class="tut-empty rounded-sm sm:rounded-md"></div> }
-              </div>
-            </div>
-          }
-          @case('goal') {
-            <div class="flex flex-col gap-2 sm:gap-4 items-center text-center">
-                <p class="text-base sm:text-lg font-semibold ">{{ i18n.t().tutorial.goal.aimFor }}</p>
-                <div class="text-5xl sm:text-6xl font-bold tut-gold">
-                  10,000
-                </div>
-                <p class="text-sm sm:text-base ">{{ i18n.t().tutorial.goal.combineStrategy }}</p>
-            </div>
-          }
-        }
-          </div>
         </div>
+        <span class="text-xs font-semibold opacity-60 whitespace-nowrap">
+          {{ activeStepIndex()! + 1 }} / {{ steps().length }}
+        </span>
+        <button type="button" (click)="close()"
+          class="tb-btn tb-btn-cream w-9 h-9 !rounded-full shrink-0"
+          [attr.aria-label]="i18n.t().closeTutorial">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4">
+            <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
+          </svg>
+        </button>
       </div>
 
-      <!-- Navigation (Fixed at bottom) -->
-      <div class="flex justify-between items-center p-4 sm:p-6 md:p-8 pt-2 sm:pt-4 tut-nav">
+      <div class="flex-1 min-h-0 flex flex-col px-4 pb-3 pt-3 sm:px-6">
+        <!-- En-tête de hauteur fixe: titre + consigne, quelle que soit la longueur du texte -->
+        <div class="tut-head">
+          <h2 class="text-2xl sm:text-3xl font-bold tut-title text-center">{{ step.title }}</h2>
+          <!-- Consigne / retour -->
+          <p class="tut-message mt-1 text-center text-sm sm:text-base"
+             [class.font-semibold]="step.id !== 'finish'"
+             [class.tut-message-success]="message().tone === 'success'"
+             [class.tut-message-retry]="message().tone === 'retry'"
+             aria-live="polite">
+            {{ step.id === 'finish' ? i18n.t().tutorial.finish.content : message().text }}
+          </p>
+        </div>
+
+        @if (step.id !== 'finish') {
+          <!-- Grille du mini-jeu -->
+          <div class="tut-stage flex-1 min-h-0 p-3 sm:p-4 flex flex-col items-center justify-center gap-3">
+            <div class="relative">
+              @for (tick of [resizeTick()]; track tick) {
+                <div #board
+                  class="grid tut-board tut-play-board aspect-square touch-none"
+                  [class.tut-board-resize]="tick > 0"
+                  [style.grid-template-columns]="'repeat(' + gridSize() + ', minmax(0, 1fr))'"
+                  (pointermove)="onBoardPointerMove($event)"
+                  (pointerleave)="onBoardPointerLeave()"
+                  (click)="onBoardClick()">
+                  @for (row of grid(); track $index; let r = $index) {
+                    @for (cell of row; track $index; let c = $index) {
+                      <div class="relative w-full h-full overflow-hidden" [class]="cellClass(r, c)">
+                        @if (cellIcon(r, c); as icon) {
+                          <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                            <div class="w-[75%] h-[75%] text-white flex items-center justify-center" [innerHTML]="icon"></div>
+                          </div>
+                        }
+                        @if (showCheck(r, c)) {
+                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="3.4" stroke="currentColor" class="tut-check">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+                          </svg>
+                        }
+                      </div>
+                    }
+                  }
+                </div>
+              }
+              @if (bonus(); as b) {
+                @for (item of [b]; track item.id) {
+                  <div class="tut-bonus">+{{ item.value }}</div>
+                }
+              }
+            </div>
+
+            <!-- Pièces + actions -->
+            <div class="tut-pieces flex items-end justify-center gap-3 w-full">
+              @if (current(); as p) {
+                <div class="flex flex-col items-center gap-1">
+                  <span class="text-[11px] font-bold uppercase tracking-wide opacity-60">{{ i18n.t().currentPiece }}</span>
+                  <div class="tut-tray tut-tray-current touch-none"
+                       [class.tut-tray-lifted]="isDragging()"
+                       [class.tut-tray-pulse]="step.id === 'place' && status() === 'playing'"
+                       role="button" tabindex="0"
+                       [attr.aria-label]="i18n.t().rotateButton"
+                       (pointerdown)="onPiecePointerDown($event)">
+                    <app-tile-preview class="tut-tray-preview" [tile]="asTile(p)" [maxCell]="22"></app-tile-preview>
+                  </div>
+                </div>
+              }
+
+              @if (next(); as n) {
+                <div class="flex flex-col items-center gap-1">
+                  <span class="text-[11px] font-bold uppercase tracking-wide opacity-60">{{ i18n.t().nextShort }}</span>
+                  <button type="button" class="tut-tray tut-tray-next"
+                          [class.tut-tray-pulse]="step.id === 'tools' && status() === 'playing' && current()?.color === 'yellow'"
+                          [attr.aria-label]="i18n.t().swapTilesButton"
+                          (click)="swap()">
+                    <app-tile-preview class="tut-tray-preview" [tile]="asTile(n)" [maxCell]="14"></app-tile-preview>
+                  </button>
+                </div>
+              }
+
+              @if (current() && status() === 'playing' && step.id === 'tools') {
+                <div class="flex flex-col gap-2 pb-1">
+                  <button type="button" (click)="rotate()" class="tb-btn tb-btn-teal h-10 px-3 text-sm gap-1.5"
+                          [attr.aria-label]="i18n.t().rotateButton" [attr.title]="i18n.t().rotate">
+                    <lucide-angular [img]="RotateIcon" class="w-4 h-4"></lucide-angular>
+                    <span>{{ i18n.t().rotate }}</span>
+                  </button>
+                  @if (next()) {
+                    <button type="button" (click)="swap()" class="tb-btn tb-btn-plum h-10 px-3 text-sm gap-1.5"
+                            [attr.aria-label]="i18n.t().swapTilesButton" [attr.title]="i18n.t().swap">
+                      <lucide-angular [img]="SwapIcon" class="w-4 h-4"></lucide-angular>
+                      <span>{{ i18n.t().swap }}</span>
+                    </button>
+                  }
+                </div>
+              }
+
+              @if (!current() && status() === 'success') {
+                <div class="tut-done-badge">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor" class="w-8 h-8">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+                  </svg>
+                </div>
+              }
+            </div>
+
+            <!-- Ligne toujours réservée pour que la grille ne bouge pas -->
+            <p class="tut-gestures text-xs opacity-60 text-center -mt-1"
+               [class.invisible]="!(step.id === 'place' && status() === 'playing')">{{ i18n.t().tutorial.gestures }}</p>
+          </div>
+        } @else {
+          <!-- Récapitulatif -->
+          <ul class="tut-stage flex-1 min-h-0 overflow-y-auto p-4 flex flex-col justify-center gap-3">
+            <li class="flex items-center gap-3">
+              <div class="tut-recap-icon">
+                <div class="grid grid-cols-3 gap-[2px] w-9">
+                  @for (_ of [0,1,2]; track $index) { <div class="aspect-square rounded-[22%] cell-3d" [class]="bgFor('red')"></div> }
+                </div>
+              </div>
+              <span class="text-sm sm:text-base font-semibold">{{ i18n.t().tutorial.finish.recapLine }}</span>
+            </li>
+            <li class="flex items-center gap-3">
+              <div class="tut-recap-icon">
+                <div class="relative w-7 h-7 rounded-[22%] cell-3d" [class]="bgFor('purple')">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="3.4" stroke="currentColor" class="tut-check">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+                  </svg>
+                </div>
+              </div>
+              <span class="text-sm sm:text-base font-semibold">{{ i18n.t().tutorial.finish.recapGroup }}</span>
+            </li>
+            <li class="flex items-center gap-3">
+              <div class="tut-recap-icon">
+                <div class="grid grid-cols-2 gap-[2px] w-7">
+                  <div class="aspect-square rounded-[22%] tut-empty"></div>
+                  <div class="aspect-square rounded-[22%] cell-shrinking-warning"></div>
+                  <div class="aspect-square rounded-[22%] cell-shrinking-warning"></div>
+                  <div class="aspect-square rounded-[22%] cell-shrinking-warning"></div>
+                </div>
+              </div>
+              <span class="text-sm sm:text-base font-semibold">{{ i18n.t().tutorial.finish.recapShrink }}</span>
+            </li>
+            <li class="flex items-center gap-3">
+              <div class="tut-recap-icon tut-gold text-xl font-black">×2</div>
+              <span class="text-sm sm:text-base font-semibold">{{ i18n.t().tutorial.finish.recapScore }}</span>
+            </li>
+          </ul>
+        }
+      </div>
+
+      <!-- Navigation -->
+      <div class="flex justify-between items-center gap-2 px-4 py-3 sm:px-6 sm:py-4 tut-nav">
         @if (!isFirstStep()) {
-          <button 
-            (click)="previous()"
-            class="tb-btn tb-btn-cream h-12 px-5 sm:px-7 text-base"
-            >
+          <button type="button" (click)="previous()" class="tb-btn tb-btn-cream h-11 px-4 text-sm sm:text-base">
             {{ i18n.t().previous }}
           </button>
         } @else {
-          <!-- Placeholder to align the 'Next' button correctly on the first step -->
           <div></div>
         }
 
+
         @if (isLastStep()) {
-          <button 
-            (click)="close()" 
-            class="tb-btn tb-btn-green h-12 px-6 sm:px-8 text-base">
+          <button type="button" (click)="close()" class="tb-btn tb-btn-green h-11 px-6 text-base">
             {{ i18n.t().play }}
           </button>
         } @else {
-          <button 
-            (click)="next()"
-            class="tb-btn tb-btn-teal h-12 px-6 sm:px-8 text-base">
-            {{ i18n.t().next }}
+          <button type="button" (click)="next_()"
+                  class="tb-btn h-11 px-5 text-sm sm:text-base"
+                  [class.tb-btn-teal]="isSolved()"
+                  [class.tb-btn-cream]="!isSolved()"
+                  [class.tut-next-ready]="isSolved()">
+            {{ isSolved() ? i18n.t().next : i18n.t().tutorial.skip }}
           </button>
         }
       </div>
-
     </div>
   </div>
+
+  <!-- Fantôme: pièce qui suit le pointeur (même rendu que le jeu) -->
+  @if (ghostPosition() && current()) {
+    <div
+      class="tb-drag-ghost fixed left-0 top-0"
+      [class.tb-ghost-snapped]="ghostSnap() && !ghostFree()"
+      [class.tb-ghost-over]="ghostSnap() && ghostFree()"
+      [style.transform]="ghostTransform()">
+      <div
+        class="tb-ghost-inner"
+        [style.--ghost-sx]="ghostEnter().scaleX"
+        [style.--ghost-sy]="ghostEnter().scaleY"
+        [style.--ghost-lift]="'0px'"
+        [style.transform-origin]="ghostGrab().x + 'px ' + ghostGrab().y + 'px'">
+        <app-tile-preview [tile]="asTile(current()!)" [cellPx]="ghostCell().cell" [gapPx]="ghostCell().gap"
+          [cellHPx]="ghostCell().cellH" [rowGapPx]="ghostCell().rowGap"></app-tile-preview>
+      </div>
+    </div>
+  }
 }
-<style>
-.absolute-center {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-}
-</style>
