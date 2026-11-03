@@ -7,13 +7,12 @@ import { TilePreviewComponent } from './components/tile-preview/tile-preview.com
 import { TutorialComponent } from './components/tutorial/tutorial.component';
 import { TutorialService } from './services/tutorial.service';
 import { SoundService } from './services/sound.service';
-import { ThemeService } from './services/theme.service';
 import { I18nService } from './services/i18n.service';
 import { OptionsService } from './services/options.service';
 import { ColorblindIconService } from './services/colorblind-icon.service';
 import { OptionsMenuComponent } from './components/options-menu/options-menu.component';
 import { LandingPageComponent } from './components/landing-page/landing-page.component';
-import { LucideAngularModule, Volume2, VolumeX, Sun, Moon, Sparkles, ShieldCheck, Undo2, RefreshCw, ArrowRightLeft } from 'lucide-angular';
+import { LucideAngularModule, Volume2, VolumeX, Sparkles, ShieldCheck, Undo2, RefreshCw, ArrowRightLeft } from 'lucide-angular';
 
 @Component({
   selector: 'app-root',
@@ -32,7 +31,6 @@ export class AppComponent implements OnInit {
   protected gameService = inject(GameService);
   protected tutorialService = inject(TutorialService);
   protected soundService = inject(SoundService);
-  protected themeService = inject(ThemeService);
   protected i18n = inject(I18nService);
   protected optionsService = inject(OptionsService);
   protected colorblindIconService = inject(ColorblindIconService);
@@ -74,8 +72,6 @@ export class AppComponent implements OnInit {
   // Icônes Lucide
   readonly Volume2Icon = Volume2;
   readonly VolumeXIcon = VolumeX;
-  readonly SunIcon = Sun;
-  readonly MoonIcon = Moon;
   readonly SparklesIcon = Sparkles;
   readonly ShieldCheckIcon = ShieldCheck;
   readonly Undo2Icon = Undo2;
@@ -106,7 +102,6 @@ export class AppComponent implements OnInit {
   });
   minValidatedGroupSize = this.gameService.minValidatedGroupSize;
   isSoundEnabled = this.soundService.isSoundEnabled;
-  isDarkMode = this.themeService.isDarkMode;
   colorPalette = this.optionsService.colorPalette;
 
   /** Écran portrait (gabarit mobile): les cartes de pièces y sont plus hautes, donc ratio plus petit. */
@@ -311,10 +306,6 @@ export class AppComponent implements OnInit {
 
   toggleSound(): void {
     this.soundService.toggleSound();
-  }
-
-  toggleTheme(): void {
-    this.themeService.toggleTheme();
   }
 
 

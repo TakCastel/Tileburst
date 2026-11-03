@@ -44,24 +44,6 @@
   <meta name="twitter:title" content="Pavat - Jeu de puzzle stratégique">
   <meta name="twitter:description" content="Placez des tuiles sur une grille, formez des lignes et des groupes validés pour marquer des points. Défiez vos amis !">
   <meta name="twitter:image" content="https://pavat-game.web.app/screenshot.png">
-  <script>
-    // Appliquer le thème immédiatement pour éviter le flash de contenu non stylé
-    (function() {
-      try {
-        const saved = localStorage.getItem('pavat_theme');
-        if (saved === 'dark') {
-          document.documentElement.classList.add('dark');
-        } else if (saved === null) {
-          // Utiliser la préférence système si aucune préférence sauvegardée
-          if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-            document.documentElement.classList.add('dark');
-          }
-        }
-      } catch (e) {
-        // Ignorer les erreurs
-      }
-    })();
-  </script>
 </head>
 <body>
   <app-root></app-root>

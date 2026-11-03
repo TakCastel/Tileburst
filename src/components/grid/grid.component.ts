@@ -4,7 +4,6 @@ import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { GameService } from '../../services/game.service';
 import { Tile, Cell } from '../../models/game.model';
 import { GridIndicatorComponent } from '../grid-indicator/grid-indicator.component';
-import { ThemeService } from '../../services/theme.service';
 import { I18nService } from '../../services/i18n.service';
 import { OptionsService } from '../../services/options.service';
 import { ColorblindIconService } from '../../services/colorblind-icon.service';
@@ -21,7 +20,6 @@ import { ColorblindIconService } from '../../services/colorblind-icon.service';
 export class GridComponent {
   protected gameService = inject(GameService);
   protected i18n = inject(I18nService);
-  private themeService = inject(ThemeService);
   private optionsService = inject(OptionsService);
   private colorblindIconService = inject(ColorblindIconService);
   private sanitizer = inject(DomSanitizer);
@@ -35,7 +33,6 @@ export class GridComponent {
   isShrinking = this.gameService.isShrinking;
   isShrinkImminent = this.gameService.isShrinkImminent;
   changeDirectionIndex = this.gameService.changeDirectionIndex;
-  isDarkMode = this.themeService.isDarkMode; // Dépendance au thème pour forcer la mise à jour
 
   private previewCells = signal<Set<string>>(new Set());
   private clearingPreviewCells = signal<Set<string>>(new Set());
@@ -64,12 +61,6 @@ export class GridComponent {
     const now = typeof performance !== 'undefined' ? performance.now() : Date.now();
     const durationMs = 1000;
     this.pulseDelay.set(`-${Math.round(now % durationMs)}ms`);
-
-    // Forcer la détection de changement quand le thème change
-    effect(() => {
-      this.isDarkMode();
-      this.cdr.markForCheck();
-    });
 
     // Forcer la mise à jour quand les options changent
     effect(() => {
@@ -299,7 +290,7 @@ export class GridComponent {
     }
 
     if (cell.blocked) {
-      return `${classes} cell-blocked bg-stone-700 dark:bg-stone-900 opacity-90`;
+      return `${classes} cell-blocked bg-stone-700 opacity-90`;
     }
 
     if (cell.shrinking) {
@@ -341,8 +332,8 @@ export class GridComponent {
         classes += ' validated';
       }
     } else {
-      // Utiliser des classes Tailwind directement pour une réactivité immédiate au thème
-      classes += ' bg-slate-100 dark:bg-slate-800';
+      // Classes Tailwind de la case vide
+      classes += ' bg-slate-100';
       classes += ' cell-empty';
       // Met en évidence le chemin de rétrécissement/agrandissement
       {
@@ -357,7 +348,7 @@ export class GridComponent {
           case 3: isInPath = wr === 0 || wc === size - 1; break;
         }
         if (isInPath) {
-          classes += ' bg-slate-200 dark:bg-slate-700';
+          classes += ' bg-slate-200';
           classes += ' cell-in-shrink-path';
         }
       }
@@ -365,8 +356,6 @@ export class GridComponent {
       if (hintClass) {
         classes += ` ${hintClass}`;
       }
-      // Forcer la mise à jour en lisant le signal du thème
-      this.isDarkMode();
     }
 
     return classes;

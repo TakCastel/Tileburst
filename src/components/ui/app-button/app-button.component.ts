@@ -78,7 +78,7 @@ export class AppButtonComponent {
       case 'red': return 'bg-gradient-to-b from-rose-400 to-red-600';
       case 'slate':
       default:
-        return 'bg-gradient-to-b from-slate-500 to-slate-700 dark:from-slate-600 dark:to-slate-800';
+        return 'bg-gradient-to-b from-slate-500 to-slate-700';
     }
   }
 

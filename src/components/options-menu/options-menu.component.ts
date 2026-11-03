@@ -4,7 +4,6 @@ import { OptionsService, ColorPalette } from '../../services/options.service';
 import { I18nService, Language } from '../../services/i18n.service';
 import { GameService } from '../../services/game.service';
 import { SoundService } from '../../services/sound.service';
-import { ThemeService } from '../../services/theme.service';
 import { TutorialService } from '../../services/tutorial.service';
 
 @Component({
@@ -22,7 +21,6 @@ export class OptionsMenuComponent {
   protected i18n = inject(I18nService);
   protected gameService = inject(GameService);
   protected soundService = inject(SoundService);
-  protected themeService = inject(ThemeService);
   protected tutorialService = inject(TutorialService);
   isOpen = signal(false);
   isClosing = signal(false);
@@ -31,7 +29,6 @@ export class OptionsMenuComponent {
   colorPalette = this.optionsService.colorPalette;
   bestScore = this.gameService.bestScore;
   isSoundEnabled = this.soundService.isSoundEnabled;
-  isDarkMode = this.themeService.isDarkMode;
 
   colorPalettes: { value: ColorPalette; label: string }[] = [
     { value: 'couleurs', label: 'Couleurs' },
@@ -61,10 +58,6 @@ export class OptionsMenuComponent {
 
   toggleSound(): void {
     this.soundService.toggleSound();
-  }
-
-  toggleTheme(): void {
-    this.themeService.toggleTheme();
   }
 
   toggleLanguageDropdown(): void {

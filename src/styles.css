@@ -28,14 +28,6 @@ html, body {
   --tb-gold: #fcc444;
   --tb-bar: #c05a42;
 }
-.dark {
-  --tb-ink: #fbeedd;
-  --tb-ink-soft: #d8c2b4;
-  --tb-cream: #3b2c3d;
-  --tb-cream-2: #312433;
-  --tb-cream-edge: #1f151f;
-  --tb-cell-empty: #3a2f40;
-}
 
 body {
   color: var(--tb-ink);
@@ -57,20 +49,6 @@ body::before {
   body::before {
     background-image: url('/assets/bg/forest-wide.webp');
     background-position: center 70%;
-  }
-}
-/* Mode sombre: même décor, version crépuscule */
-.dark body { background-color: #3a2632; }
-.dark body::before {
-  background-image:
-    linear-gradient(180deg, rgba(22, 20, 58, 0.78) 0%, rgba(40, 26, 62, 0.62) 55%, rgba(48, 26, 40, 0.6) 100%),
-    url('/assets/bg/forest.webp');
-}
-@media (min-aspect-ratio: 1/1) {
-  .dark body::before {
-    background-image:
-      linear-gradient(180deg, rgba(22, 20, 58, 0.78) 0%, rgba(40, 26, 62, 0.62) 55%, rgba(48, 26, 40, 0.6) 100%),
-      url('/assets/bg/forest-wide.webp');
   }
 }
 
@@ -150,16 +128,14 @@ body::before {
 .cell-3d.validated {
   filter: saturate(1.05);
 }
-.tb-board .cell-empty,
-.dark .tb-board .cell-empty {
+.tb-board .cell-empty {
   background-color: var(--tb-cell-empty);
   box-shadow:
     inset 0 3px 5px rgba(0,0,0,0.35),
     inset 0 -2px 0 rgba(255,255,255,0.05);
 }
 
-.tb-board .cell-empty.cell-in-shrink-path,
-.dark .tb-board .cell-empty.cell-in-shrink-path {
+.tb-board .cell-empty.cell-in-shrink-path {
   background-color: #574a5c;
 }
 
@@ -174,14 +150,6 @@ body::before {
     0 0 0 7px var(--tb-cream-edge),
     0 9px 0 4px var(--tb-cream-edge),
     0 16px 30px rgba(40, 20, 20, 0.3),
-    inset 0 4px 10px rgba(0, 0, 0, 0.45);
-}
-.dark .tb-board {
-  box-shadow:
-    0 0 0 5px #5a4458,
-    0 0 0 7px #2a1d29,
-    0 9px 0 4px #2a1d29,
-    0 16px 30px rgba(0, 0, 0, 0.45),
     inset 0 4px 10px rgba(0, 0, 0, 0.45);
 }
 .tb-board > .cell-base {
@@ -227,12 +195,6 @@ body::before {
 .pulse-color-green { --pulse-color: rgba(74, 222, 128, 0.62); }
 .pulse-color-yellow { --pulse-color: rgba(251, 191, 36, 0.62); }
 .pulse-color-purple { --pulse-color: rgba(192, 132, 252, 0.62); }
-.dark .pulse-color-blue { --pulse-color: rgba(34, 211, 238, 0.22); }
-.dark .pulse-color-red { --pulse-color: rgba(248, 113, 113, 0.22); }
-.dark .pulse-color-green { --pulse-color: rgba(74, 222, 128, 0.22); }
-.dark .pulse-color-yellow { --pulse-color: rgba(251, 191, 36, 0.22); }
-.dark .pulse-color-purple { --pulse-color: rgba(192, 132, 252, 0.22); }
-
 
 /* Boutons "candy" (style jeu mobile): dodus, glossy, avec une épaisse base 3D */
 .btn-3d {
@@ -274,23 +236,12 @@ body::before {
     0 var(--edge-size, 5px) 0 0 var(--tb-cream-edge),
     0 calc(var(--edge-size, 5px) + 6px) 18px rgba(60, 30, 20, 0.2);
 }
-.dark .tb-panel,
-.dark .tb-card {
-  box-shadow:
-    inset 0 2px 0 rgba(255, 255, 255, 0.08),
-    0 var(--edge-size, 5px) 0 0 var(--tb-cream-edge),
-    0 calc(var(--edge-size, 5px) + 6px) 20px rgba(0, 0, 0, 0.4);
-}
 
 /* Zone encastrée dans une carte */
 .tb-well {
   border-radius: 1rem;
   background: rgba(120, 80, 50, 0.1);
   box-shadow: inset 0 3px 6px rgba(80, 40, 20, 0.15);
-}
-.dark .tb-well {
-  background: rgba(0, 0, 0, 0.25);
-  box-shadow: inset 0 3px 8px rgba(0, 0, 0, 0.5);
 }
 
 /* Libellé de carte (Score, Pièce actuelle...) */
@@ -310,11 +261,6 @@ body::before {
 .tb-header-icon {
   background-color: var(--tb-cream);
   border: none;
-  color: var(--tb-ink);
-  --shadow-color: var(--tb-cream-edge);
-}
-.dark .tb-header-icon {
-  background-color: var(--tb-cream);
   color: var(--tb-ink);
   --shadow-color: var(--tb-cream-edge);
 }
@@ -426,16 +372,6 @@ body::before {
     transparent 8px,
     rgba(15, 23, 42, 0.5) 8px,
     rgba(15, 23, 42, 0.5) 16px
-  );
-}
-.dark .invalid-placement-preview {
-  background-color: rgba(0, 0, 0, 0.88);
-  background-image: repeating-linear-gradient(
-    -45deg,
-    transparent,
-    transparent 8px,
-    rgba(0, 0, 0, 0.95) 8px,
-    rgba(0, 0, 0, 0.95) 16px
   );
 }
 
@@ -661,9 +597,6 @@ body::before {
   border-radius: 0.25rem;
   font-size: 0.95em;
 }
-.dark .markdown-content code {
-  background: rgba(30, 41, 59, 0.6);
-}
 
 /* =========================================================
    MISE EN PAGE DU JEU — calquée au pixel sur les maquettes
@@ -704,7 +637,6 @@ body::before {
 /* ---------- Placement: portrait (maquette mobile) ---------- */
 .tb-blob        { --x: 205; --y: -40; --w: 610; --h: 232; --f: 0; }
 .tb-logo        { --x: 298; --y: 31;  --w: 420; --h: 140; --f: 0; }
-.tb-theme-btn   { --x: 41;  --y: 33;  --w: 88;  --h: 70;  --e: 10; --f: 0; }
 .tb-sound-btn   { --x: 808; --y: 30;  --w: 80;  --h: 72;  --e: 8;  --f: 0; }
 .tb-gear        { --x: 913; --y: 30;  --w: 80;  --h: 72;  --e: 8;  --f: 0; }
 .tb-scorecard   { --x: 80;  --y: 190; --w: 864; --h: 107; --e: 8;  --f: 0.12; }
@@ -726,9 +658,8 @@ body::before {
 
 /* ---------- Boutons ---------- */
 .tb-layout .tb-btn { border-radius: calc(var(--r, 40) * var(--u)); padding: 0; }
-.tb-theme-btn, .tb-sound-btn, .tb-gear [data-options-trigger] { --r: 22; }
-.tb-theme-btn lucide-angular, .tb-sound-btn lucide-angular,
-.tb-theme-btn svg, .tb-sound-btn svg {
+.tb-sound-btn, .tb-gear [data-options-trigger] { --r: 22; }
+.tb-sound-btn lucide-angular, .tb-sound-btn svg {
   display: block;
   width: calc(50 * var(--u));
   height: calc(50 * var(--u));
@@ -938,7 +869,6 @@ body::before {
   }
   .tb-blob        { --x: 560; --y: 6;   --w: 520; --h: 220; }
   .tb-logo        { --x: 630; --y: 50;  --w: 404; --h: 134; }
-  .tb-theme-btn   { --x: 1369; --y: 34; --w: 71; --h: 60; --e: 7; }
   .tb-sound-btn   { --x: 1468; --y: 34; --w: 72; --h: 60; --e: 7; }
   .tb-gear        { --x: 1566; --y: 34; --w: 72; --h: 60; --e: 7; }
   .tb-scorecard   { --x: 146;  --y: 244; --w: 325; --h: 374; --e: 8; }
@@ -949,8 +879,8 @@ body::before {
   .tb-swap        { --x: 1160; --y: 622; --w: 372; --h: 90; --e: 10; }
   .tb-undo        { --x: 1164; --y: 733; --w: 364; --h: 71; --e: 8; }
 
-  .tb-theme-btn, .tb-sound-btn, .tb-gear [data-options-trigger] { --r: 20; }
-  .tb-theme-btn svg, .tb-sound-btn svg, .tb-theme-btn lucide-angular, .tb-sound-btn lucide-angular { width: calc(38 * var(--u)); height: calc(38 * var(--u)); }
+  .tb-sound-btn, .tb-gear [data-options-trigger] { --r: 20; }
+  .tb-sound-btn svg, .tb-sound-btn lucide-angular { width: calc(38 * var(--u)); height: calc(38 * var(--u)); }
   .tb-gear [data-options-trigger] svg, .tb-gear [data-options-trigger] lucide-angular { width: calc(40 * var(--u)) !important; height: calc(40 * var(--u)) !important; }
 
   /* Carte de score verticale */
@@ -995,17 +925,14 @@ body::before {
     0 calc(2 * var(--u)) calc(3 * var(--u)) rgba(0,0,0,0.3); }
 }
 
-
 /* Panneau d'options (tiroir): fond sable, cartes crème par-dessus */
 .tb-drawer {
   color: var(--tb-ink);
   background: linear-gradient(180deg, #f6dcb0 0%, #f1d1a0 100%);
 }
-.dark .tb-drawer { background: linear-gradient(180deg, #2a1d2b 0%, #221722 100%); }
 .tb-drawer .tb-badge { font-size: 1rem; font-weight: 700; }
-.dark .tb-drawer .tb-badge, .dark .tb-drawer h2 { color: #fdf2dc; }
 
-/* Interrupteur (son, thème) */
+/* Interrupteur (son) */
 .tb-switch {
   position: relative;
   flex-shrink: 0;
@@ -1058,15 +985,6 @@ body::before {
 /* Coche des blocs validés: épaisse et crème */
 .tb-layout .tb-board svg.text-white\/90 { color: #fff7e4; stroke-width: 3.6; filter: drop-shadow(0 1px 0 rgba(150, 80, 0, 0.35)); width: 46%; height: 46%; }
 
-/* Mode sombre: pastille, séparateur et tranche du plateau assortis */
-.dark .tb-pill { background: rgba(0, 0, 0, 0.28); color: var(--tb-ink-soft); }
-.dark .tb-sc-sep { background: rgba(255, 255, 255, 0.14); }
-.dark .tb-board-box {
-  box-shadow:
-    inset 0 calc(-8 * var(--u)) 0 rgba(0, 0, 0, 0.25),
-    0 calc(10 * var(--u)) calc(24 * var(--u)) rgba(0, 0, 0, 0.4);
-}
-
 /* ---------- Tutoriel ---------- */
 .tb-tut { color: var(--tb-ink); }
 .tb-tut .tut-title { color: var(--tb-teal-edge); }
@@ -1088,8 +1006,6 @@ body::before {
 .tb-tut .bg-red-500    { background-color: #f75a4f; }
 .tb-tut .bg-green-500  { background-color: #34d98e; }
 .tb-tut .bg-violet-500 { background-color: #9a6cf0; }
-.dark .tb-tut .tut-stage { background: rgba(0, 0, 0, 0.18); }
-.dark .tb-tut .tut-nav { border-top-color: rgba(255, 255, 255, 0.08); }
 
 /* ---------- Annuler: jauge de progression + compteur ---------- */
 /* Jauge des annulations dans la carte de score */

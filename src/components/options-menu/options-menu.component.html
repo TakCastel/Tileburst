@@ -70,27 +70,6 @@
           </div>
         </div>
 
-        <!-- Thème -->
-        <div class="space-y-2 lg:space-y-3">
-          <h3 class="tb-badge mb-1.5 lg:mb-2">{{ i18n.t().toggleDarkMode || 'Thème' }}</h3>
-          <div class="tb-panel p-3 lg:p-4">
-            <div class="flex items-center justify-between gap-3 lg:gap-4">
-              <span class="text-base font-semibold flex-1">
-                {{ isDarkMode() ? (i18n.t().darkMode || 'Sombre') : (i18n.t().lightMode || 'Clair') }}
-              </span>
-              <button
-                (click)="toggleTheme()"
-                type="button"
-                class="tb-switch"
-                [class.on]="isDarkMode()"
-                role="switch"
-                [attr.aria-checked]="isDarkMode()">
-                <span class="tb-switch-knob"></span>
-              </button>
-            </div>
-          </div>
-        </div>
-
         <!-- Langue -->
         <div class="space-y-2 lg:space-y-3">
           <h3 class="tb-badge mb-1.5 lg:mb-2">{{ i18n.t().language || 'Langue' }}</h3>
