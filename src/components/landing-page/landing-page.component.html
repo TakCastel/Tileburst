@@ -4,18 +4,17 @@
     <!-- Logo sur son nuage corail (comme dans le jeu) -->
     <div class="lp-logo" aria-hidden="false">
       <svg class="lp-blob" viewBox="0 0 610 232" preserveAspectRatio="none" aria-hidden="true">
-        <g fill="#f8664f">
-          <circle cx="110" cy="170" r="62"/>
-          <circle cx="190" cy="105" r="95"/>
-          <circle cx="305" cy="104" r="100"/>
-          <circle cx="420" cy="105" r="95"/>
-          <circle cx="500" cy="170" r="62"/>
-          <rect x="70" y="150" width="470" height="82" rx="41"/>
-        </g>
-        <g fill="#fb8463" opacity="0.85">
-          <circle cx="205" cy="62" r="34"/>
-          <circle cx="300" cy="30" r="30"/>
-          <circle cx="395" cy="60" r="26"/>
+        <!-- Forme commune: définie une fois, réutilisée pour la tranche, le reflet et la face -->
+        <defs>
+          <g id="lp-cloud-shape"><circle cx="92" cy="146" r="60"/><circle cx="192" cy="100" r="78"/><circle cx="305" cy="86" r="80"/><circle cx="418" cy="100" r="76"/><circle cx="518" cy="146" r="58"/><rect x="92" y="128" width="426" height="80" rx="40"/></g>
+          <clipPath id="lp-cloud-clip"><circle cx="92" cy="146" r="60"/><circle cx="192" cy="100" r="78"/><circle cx="305" cy="86" r="80"/><circle cx="418" cy="100" r="76"/><circle cx="518" cy="146" r="58"/><rect x="92" y="128" width="426" height="80" rx="40"/></clipPath>
+        </defs>
+        <!-- Tranche foncée sous le nuage (relief comme les boutons) -->
+        <use href="#lp-cloud-shape" fill="#d94a3a" transform="translate(0 12)"/>
+        <!-- Reflet clair sur le haut, toujours contenu dans le nuage -->
+        <g clip-path="url(#lp-cloud-clip)">
+          <rect width="610" height="232" fill="#fb8a6c"/>
+          <use href="#lp-cloud-shape" fill="#f8664f" transform="translate(4 9)"/>
         </g>
       </svg>
       <img class="lp-logo-img" src="/assets/brand/logo.webp" alt="Pavat" draggable="false">

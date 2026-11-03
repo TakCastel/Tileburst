@@ -109,13 +109,6 @@ export class AppComponent implements OnInit {
   isDarkMode = this.themeService.isDarkMode;
   colorPalette = this.optionsService.colorPalette;
 
-  /** Progression du score vers le record (0 → 1), pour la barre de la carte de score. */
-  scoreProgress = computed(() => {
-    const best = this.bestScore();
-    if (best <= 0) return 0;
-    return Math.min(1, this.score() / best);
-  });
-
   /** Écran portrait (gabarit mobile): les cartes de pièces y sont plus hautes, donc ratio plus petit. */
   private portraitQuery = typeof window !== 'undefined' ? window.matchMedia('(max-aspect-ratio: 1/1)') : null;
   protected isPortrait = signal(this.portraitQuery?.matches ?? false);
@@ -189,12 +182,8 @@ export class AppComponent implements OnInit {
   private isMouseDragActive = false;
   private touchStartPosition: { x: number; y: number } | null = null;
   protected isTouchDragging = signal(false);
-  private touchDragElement: HTMLElement | null = null;
-  private touchGhostOffset = { x: 0, y: 0 };
-  private touchGhostAnchor = { x: 0, y: 0 }; // point touché dans l'élément source
-  private ghostLiftPx = 0; // 0 au départ, >0 quand on commence réellement à déplacer
-  private rafPending = false;
-  private pendingTouchPoint: { x: number; y: number } | null = null;
+  private touchDragStarted = false;
+  private ghostLiftPx = 0; // hauteur du fantôme au-dessus du doigt pendant un drag tactile
 
   restartGame(): void {
     if (this.isGameOver()) {
@@ -366,6 +355,45 @@ export class AppComponent implements OnInit {
     if (cell > 0) this.ghostCell.set({ cell, gap });
   }
 
+  /**
+   * Démarre un drag: la pièce de la carte « Pièce actuelle » est masquée et le
+   * fantôme part exactement de sa place et de sa taille, puis glisse vers le
+   * pointeur (technique FLIP). La pièce se détache de la carte au lieu d'être dupliquée.
+   */
+  private startDrag(clientX: number, clientY: number, lift: number): void {
+    const source = document.querySelector(
+      '.tb-piece-cur .tb-piece-slot app-tile-preview .grid'
+    ) as HTMLElement | null;
+    const from = source?.getBoundingClientRect();
+    this.measureGridCell();
+    this.ghostLiftPx = lift;
+    this.isDragging.set(true);
+    this.ghostPosition.set({ x: clientX, y: clientY - lift });
+    if (!from || from.width === 0) return;
+    // Attendre le rendu du fantôme pour connaître sa position d'arrivée
+    requestAnimationFrame(() => {
+      const ghost = document.querySelector('.tb-drag-ghost app-tile-preview .grid') as HTMLElement | null;
+      if (!ghost) return;
+      const to = ghost.getBoundingClientRect();
+      if (to.width === 0) return;
+      const scale = from.width / to.width;
+      ghost.animate(
+        [
+          { transformOrigin: '0 0', transform: `translate(${from.left - to.left}px, ${from.top - to.top}px) scale(${scale})` },
+          { transformOrigin: '0 0', transform: 'translate(0, 0) scale(1)' },
+        ],
+        { duration: 160, easing: 'cubic-bezier(0.2, 0.8, 0.3, 1)' }
+      );
+    });
+  }
+
+  private endDrag(): void {
+    this.isDragging.set(false);
+    this.ghostPosition.set(null);
+    this.ghostSnap.set(null);
+    this.ghostLiftPx = 0;
+  }
+
   onTileMouseDown(event: MouseEvent): void {
     if (!this.currentTile() || event.button !== 0) return;
     event.preventDefault();
@@ -381,8 +409,7 @@ export class AppComponent implements OnInit {
     const movedY = Math.abs(event.clientY - this.mouseStartPosition.y);
     if (!this.isMouseDragActive && (movedX > 5 || movedY > 5)) {
       this.isMouseDragActive = true;
-      this.isDragging.set(true);
-      this.measureGridCell();
+      this.startDrag(event.clientX, event.clientY, 0);
     }
     if (this.isMouseDragActive) {
       this.ghostPosition.set({ x: event.clientX, y: event.clientY });
@@ -397,9 +424,7 @@ export class AppComponent implements OnInit {
     const wasDragging = this.isMouseDragActive;
     this.mouseStartPosition = null;
     this.isMouseDragActive = false;
-    this.isDragging.set(false);
-    this.ghostPosition.set(null);
-    this.ghostSnap.set(null);
+    this.endDrag();
     if (!wasDragging) {
       // Simple clic sans déplacement: rotation (comportement historique)
       this.rotateTile();
@@ -408,101 +433,71 @@ export class AppComponent implements OnInit {
     this.dispatchTileDrag('tile-drag-end', event.clientX, event.clientY);
   };
 
-  // Gestion des événements tactiles pour mobile
+  // Gestion des événements tactiles pour mobile.
+  // Un simple appui ne fait rien apparaître: le drag ne commence qu'au premier
+  // vrai déplacement du doigt, sinon c'est un tap (rotation).
   onTileTouchStart(event: TouchEvent): void {
     if (!this.currentTile()) return;
     const touch = event.touches[0];
     this.touchStartPosition = { x: touch.clientX, y: touch.clientY };
     this.isTouchDragging.set(true);
-    this.isDragging.set(true);
-    this.touchDragElement = event.currentTarget as HTMLElement;
-    this.measureGridCell();
-    const rect = this.touchDragElement.getBoundingClientRect();
-    // La pièce est levée au-dessus du doigt dès le départ (pas de saut en cours de geste)
-    this.ghostLiftPx = Math.round(this.ghostCell().cell * 1.4 + 16);
-    this.touchGhostAnchor = {
-      x: touch.clientX - rect.left,
-      y: touch.clientY - rect.top,
-    };
-    this.touchGhostOffset = {
-      x: this.touchGhostAnchor.x,
-      y: this.touchGhostAnchor.y + this.ghostLiftPx,
-    };
-    this.ghostPosition.set({ x: touch.clientX, y: touch.clientY - this.ghostLiftPx });
-    // Empêcher le scroll et les actions par défaut pendant le drag
+    this.touchDragStarted = false;
+    // Empêcher le scroll et les actions par défaut pendant le geste
     event.preventDefault();
     event.stopPropagation();
   }
 
   onTileTouchMove(event: TouchEvent): void {
     if (!this.isTouchDragging() || !this.touchStartPosition) return;
-    // Empêcher le scroll pendant le drag
     event.preventDefault();
     event.stopPropagation();
-    
-    // Trouver l'élément sous le doigt (la grille) et mettre à jour la position
+
     const touch = event.touches[0];
-    // La tuile suit le doigt, légèrement au-dessus pour rester visible
-    this.ghostPosition.set({ x: touch.clientX, y: touch.clientY - this.ghostLiftPx });
+    if (!this.touchDragStarted) {
+      const dx = Math.abs(touch.clientX - this.touchStartPosition.x);
+      const dy = Math.abs(touch.clientY - this.touchStartPosition.y);
+      if (dx < 8 && dy < 8) return;
+      this.touchDragStarted = true;
+      this.measureGridCell();
+      // La pièce reste visible au-dessus du doigt (environ une case plus haut)
+      this.startDrag(touch.clientX, touch.clientY, Math.round(this.ghostCell().cell * 1.1 + 12));
+    }
     // La pièce se pose là où on la voit (au-dessus du doigt), pas sous le doigt
-    this.updateGhostSnap(touch.clientX, touch.clientY - this.ghostLiftPx);
-    this.dispatchTileDrag('tile-drag-move', touch.clientX, touch.clientY - this.ghostLiftPx);
+    const y = touch.clientY - this.ghostLiftPx;
+    this.ghostPosition.set({ x: touch.clientX, y });
+    this.updateGhostSnap(touch.clientX, y);
+    this.dispatchTileDrag('tile-drag-move', touch.clientX, y);
   }
 
   onTileTouchEnd(event: TouchEvent): void {
     if (!this.isTouchDragging()) return;
-    
     const touch = event.changedTouches[0];
-    if (!this.touchStartPosition) {
-      this.isTouchDragging.set(false);
-      this.isDragging.set(false);
-      this.touchStartPosition = null;
-      this.touchDragElement = null;
-      return;
-    }
-    
-    const deltaX = Math.abs(touch.clientX - this.touchStartPosition.x);
-    const deltaY = Math.abs(touch.clientY - this.touchStartPosition.y);
-    
-    // Si le mouvement est très petit, considérer comme un tap (rotation)
-    if (deltaX < 15 && deltaY < 15) {
-      // Petit délai pour éviter les conflits avec le drop
-      setTimeout(() => {
-        this.rotateTile();
-      }, 50);
-      this.isTouchDragging.set(false);
-      this.isDragging.set(false);
-      this.touchStartPosition = null;
-      this.touchDragElement = null;
-      return;
-    }
-    
-    // Si on a dragué, vérifier si on est sur la grille et placer la tuile
-    this.dispatchTileDrag('tile-drag-end', touch.clientX, touch.clientY - this.ghostLiftPx);
-
-    this.isTouchDragging.set(false);
-    this.isDragging.set(false);
-    this.ghostPosition.set(null);
-    this.ghostSnap.set(null);
-    this.touchStartPosition = null;
-    this.touchDragElement = null;
-    this.pendingTouchPoint = null;
-    this.ghostLiftPx = 0;
-    this.touchGhostAnchor = { x: 0, y: 0 };
     event.preventDefault();
     event.stopPropagation();
+
+    if (!this.touchDragStarted) {
+      // Tap sans déplacement: rotation
+      this.resetTouch();
+      this.rotateTile();
+      return;
+    }
+    // Drag terminé: poser la pièce si on est sur la grille
+    this.dispatchTileDrag('tile-drag-end', touch.clientX, touch.clientY - this.ghostLiftPx);
+    this.resetTouch();
   }
 
   onTileTouchCancel(): void {
+    this.resetTouch();
+    document.querySelectorAll('app-grid .grid').forEach((g) => {
+      g.dispatchEvent(new CustomEvent('tile-drag-leave'));
+    });
+  }
+
+  private resetTouch(): void {
     this.isTouchDragging.set(false);
-    this.isDragging.set(false);
-    this.ghostPosition.set(null);
-    this.ghostSnap.set(null);
+    this.touchDragStarted = false;
     this.touchStartPosition = null;
-    this.touchDragElement = null;
-    this.pendingTouchPoint = null;
-    this.ghostLiftPx = 0;
-    this.touchGhostAnchor = { x: 0, y: 0 };
+    this.endDrag();
   }
 
   async shareScore(): Promise<void> {
