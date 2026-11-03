@@ -25,7 +25,7 @@
               { "glob": "**/*", "input": "src/assets", "output": "assets" },
               { "glob": "manifest.json", "input": "src", "output": "/" },
               { "glob": "service-worker.js", "input": "src", "output": "/" },
-              { "glob": "screenshot.png", "input": ".", "output": "/" }
+              { "glob": "og-image.jpg", "input": ".", "output": "/" }
             ],
             "baseHref": "/"
           },

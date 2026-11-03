@@ -3,7 +3,7 @@ const CACHE_NAME = 'pavat-v2';
 const urlsToCache = [
   '/',
   '/index.html',
-  '/screenshot.png',
+  '/og-image.jpg',
   '/manifest.json',
   '/assets/icons/icon-192x192.png',
   '/assets/icons/icon-512x512.png'
